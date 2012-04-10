@@ -21,9 +21,13 @@
  *  }]
 */
 
+var util = require('./util');
+
 module.exports = {
   setup: setup
 };
+
+handleError = util.handleError;
 
 /*
  * app: express server
@@ -32,7 +36,11 @@ module.exports = {
  * FORMS: name of forms collection
  */
 function setup(app, db, idgen, FORMS) {
-// curl http://localhost:3000/surveys/1/forms/2ec140e0-827f-11e1-83d8-bf682a6ee038
+  function getCollection(cb) {
+    return db.collection(FORMS, cb);
+  }
+
+// GET http://localhost:3000/surveys/1/forms/2ec140e0-827f-11e1-83d8-bf682a6ee038
 app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
   var surveyid = req.params.surveyid;
   var formid = req.params.formid;
@@ -62,6 +70,7 @@ app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
 });
 
 // Get all the forms for a survey.
+// GET http://localhost:3000/surveys/{SURVEY ID}/forms
 app.get('/surveys/:sid/forms', function(req, response) {
   console.log('Returning all forms for survey ' + req.params.sid);
   db.collection(FORMS, function(err, collection) {
@@ -86,6 +95,7 @@ app.get('/surveys/:sid/forms', function(req, response) {
 /*
  * Add forms to a survey.
  * This is done before a survey begins, as a setup task.
+ * POST http://localhost:3000/surveys/{SURVEY ID}/forms
  */
 app.post('/surveys/:sid/forms', function(req, response) {
   var forms = req.body.forms;
@@ -113,6 +123,7 @@ app.post('/surveys/:sid/forms', function(req, response) {
 /*
  * Delete all forms from a survey.
  * This is maintainence functionality. Regular clients should not delete forms.
+ * POST http://localhost:3000/surveys/{SURVEY ID}/forms
  */
 app.del('/surveys/:sid/forms', function(req, response) {
   var survey = req.params.sid;
@@ -128,4 +139,23 @@ app.del('/surveys/:sid/forms', function(req, response) {
     });
   });
 });
+
+// Get all forms that reference the specified parcel ID
+// GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
+app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
+  var sid = String(req.params.sid);
+  var pid = String(req.params.pid);
+  console.log('Getting forms for survey ' + sid + ' that reference parcel ' + pid);
+  getCollection(function(err, collection) {
+    if (handleError(err, response)) return;
+    collection.find({survey: sid, 'parcels.parcel_id': pid}, function(err, cursor) {
+      if (handleError(err, response)) return;
+      cursor.toArray(function(err, items) {
+        if (handleError(err, response)) return;
+        response.send({forms: items});
+      }); // toArray
+    }); // find
+  }); // getCollection
+});
+
 }

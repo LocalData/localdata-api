@@ -27,7 +27,7 @@ function seedforms() {
       { parcels: [ {parcel_id: '10', bubblesets: []} ]
       , mapping: {}
       }
-    , { parcels: [ {parcel_id: 11, bubblesets: []} ]
+    , { parcels: [ {parcel_id: '11', bubblesets: []} ]
       , mapping: {}
       }
     ]
@@ -64,7 +64,7 @@ function addform() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/forms';
   var data = {
     forms: [
-      { parcels: [ {parcel_id: 12, bubblesets: []} ]
+      { parcels: [ {parcel_id: '12', bubblesets: []} ]
       , mapping: {}
       }
     ]
@@ -108,6 +108,19 @@ function getallforms() {
       console.log('Received ' + body.forms.length + ' forms:');
       console.log(JSONpretty(body.forms));
     }
+  });
+}
+
+// Get forms for a certain parcel
+function getformsbyparcel(pid) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/parcels/' + pid + '/forms';
+  console.log('Getting forms for parcel: ' + pid);
+  console.log('Getting url: ' + url);
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+    body = JSON.parse(body);
+    console.log('Received ' + body.forms.length + ' forms:');
+    console.log(JSONpretty(body.forms));
   });
 }
 
@@ -186,7 +199,7 @@ function addresponse() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
   var data = {
     responses: [
-      { parcels: [ {parcel_id: 10, responses: {'Q0': 0, 'Q1': 3}} ]
+      { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]
       }
     ]
   };
@@ -305,6 +318,9 @@ switch(cmd) {
     break;
   case 'getallforms':
     getallforms();
+    break;
+  case 'getformsbyparcel':
+    getformsbyparcel(process.argv[3]);
     break;
     
   // Responses
