@@ -1,4 +1,5 @@
 var request = require('request');
+var fs = require('fs');
 
 var BASEURL = 'http://localhost:3000';
 
@@ -286,6 +287,47 @@ function assignwork(cid) {
   });
 }
 
+// Get all of the survey objects
+function getallsurveys() {
+  var url = BASEURL + '/surveys';
+  console.log('Getting url: ' + url);
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var surveys = JSON.parse(body).surveys;
+    console.log('Got ' + surveys.length + ' surveys:');
+    console.log(JSONpretty(surveys));
+  });
+}
+
+// Get a survey object
+function getsurvey(sid) {
+  var url = BASEURL + '/surveys/' + sid;
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var survey = JSON.parse(body).survey;
+    console.log('Got a survey with ID ' + survey.id + ':');
+    console.log(JSONpretty(survey));
+  });
+}
+
+// Add a new survey object
+function addsurvey() {
+  var input_file = 'survey_constructor.json';
+  var url = BASEURL + '/surveys';
+  data = JSON.parse(fs.readFileSync(input_file, 'utf8'));
+  console.log('Adding survey with data:');
+  console.log(JSONpretty(data));
+  request.post({url: url, json: data}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var surveys = body.surveys;
+    console.log('Posted survey:');
+    console.log(JSONpretty(surveys));
+  });
+}
+
 
 var cmd = process.argv[2];
 switch(cmd) {
@@ -333,6 +375,16 @@ switch(cmd) {
     break;
   case 'assignwork':
     assignwork(process.argv[3]);
+    break;
+  // Surveys
+  case 'getallsurveys':
+    getallsurveys();
+    break;
+  case 'getsurvey':
+    getsurvey(process.argv[3]);
+    break;
+  case 'addsurvey':
+    addsurvey();
     break;
   // Default handler
   default:

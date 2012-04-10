@@ -10,10 +10,12 @@ var uuid = require('node-uuid');
 var forms = require('./forms');
 var responses = require('./responses');
 var collectors = require('./collectors');
+var surveys = require('./surveys');
 
 RESPONSES = 'responseCollection';
 FORMS = 'formCollection';
 COLLECTORS = 'collectorCollection';
+SURVEYS = 'surveyCollection';
 
 var app = express.createServer(express.logger());
 
@@ -28,7 +30,7 @@ var idgen = uuid.v1;
 forms.setup(app, db, idgen, FORMS);
 responses.setup(app, db, idgen, RESPONSES);
 collectors.setup(app, db, idgen, COLLECTORS);
-
+surveys.setup(app, db, idgen, SURVEYS);
 
 // Kick things off
 db.open(function() {

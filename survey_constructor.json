@@ -1,0 +1,16 @@
+{
+  "surveys" : [
+    {
+      "name": "Just a survey"
+    , "paperinfo": {
+        "dpi": 150
+      , "regmarks": [
+          {"type": 0, "bbox": [50, 50, 250, 250]}
+        , {"type": 0, "bbox": [50, 1400, 250, 1600]}
+        , {"type": 0, "bbox": [1025, 1400, 1225, 1600]}
+        ]
+      , "barcode": {"bbox": [975, 50, 1225, 300]}
+      }
+    }
+  ]
+}
