@@ -7,6 +7,17 @@ var SURVEYID = 1;
 function JSONpretty(data) {
   return JSON.stringify(data, null, '  ');
 }
+function handleError(error, response, body) {
+  if (error != null) {
+    console.log('Received an error: ' + error.message);
+    return true;
+  } else if (response.statusCode != 200) {
+    console.log('Received non-200 status code: ' + response.statusCode);
+    if (body != null) console.log(body);
+    return true;
+  }
+  return false;
+}
 
 // Seed the database with forms
 function seedforms() {
@@ -198,6 +209,70 @@ function clearresponses() {
   });
 }
 
+// Add a collector
+function addcollector() {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/collectors';
+  console.log('Adding a collector');
+  var collector = {};
+  var data = {collectors: [collector]};
+  request.post({url: url, json: data}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error: ' + error.message);
+    } else if (response.statusCode != 200) {
+      console.log('Received non-200 status code: ' + response.statusCode);
+      console.log(body);
+    } else {
+      console.log('Successfully added a collector:');
+      console.log(JSONpretty(body));
+    }
+  });
+}
+
+// Get a collector
+function getcollector(cid) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/collectors/' + cid;
+  console.log('Getting collector ' + cid);
+  request.get({url: url}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error: ' + error.message);
+    } else if (response.statusCode != 200) {
+      console.log('Received non-200 status code: ' + response.statusCode);
+      console.log(body);
+    } else {
+      body = JSON.parse(body);
+      console.log(JSONpretty(body));
+    }
+  });
+}
+
+// Assign work to a collector
+function assignwork(cid) {
+  var formsUrl = BASEURL + '/surveys/' + SURVEYID + '/forms';
+  var collectorUrl = BASEURL + '/surveys/' + SURVEYID + '/collectors/' + cid;
+  console.log('Getting all forms in survey');
+  request.get({url: formsUrl}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    body = JSON.parse(body);
+    var forms = body.forms;
+    console.log('Getting collector ' + cid);
+    request.get({url: collectorUrl}, function(error, response, body) {
+      if (handleError(error, response, body)) return;
+
+      var collector = JSON.parse(body).collector;
+      collector.forms = forms.map(function(form) { return form.id; } );
+
+      console.log('Updating collector with ' + collector.forms.length + ' forms.');
+      request.put({url: collectorUrl, json: {collector: collector}}, function(error, response, body) {
+        if (handleError(error, response, body)) return;
+
+        console.log(body.collector);
+      });
+    });
+
+  });
+}
+
 
 var cmd = process.argv[2];
 switch(cmd) {
@@ -233,29 +308,18 @@ switch(cmd) {
   case 'getallresponses':
     getallresponses();
     break;
+  // Collectors
+  case 'getcollector':
+    getcollector(process.argv[3]);
+    break;
+  case 'addcollector':
+    addcollector();
+    break;
+  case 'assignwork':
+    assignwork(process.argv[3]);
+    break;
   // Default handler
   default:
-    console.log('Not Implemented');
+    console.log('Not implemented by test client.');
     break;
 }
-/*
-if (cmd === 'seedforms') {
-  seedforms();
-} else if (cmd === 'clearforms') {
-  clearforms();
-} else if (cmd === 'addform') {
-  addform();
-} else if (cmd === 'getform') {
-  getform(process.argv[3]);
-} else if (cmd === 'getallforms') {
-  getallforms();
-} else if (cmd === 'seedresponses') {
-  seedresponses();
-} else if (cmd === 'addresponse') {
-  addresponse();
-} else if (cmd === 'getallresponses') {
-  getallresponses();
-} else if (cmd == 'getresponse') {
-  getresponse(process.argv[3]);
-}
-*/

@@ -3,20 +3,13 @@
  * Responses
  * ==================================================
  */
+var util = require('./util');
 
 module.exports = {
   setup: setup
 };
 
-// Returns true if we handled an error.
-function handleError(err, res) {
-  if (err != null) {
-    console.log('Error: ' + err.message);
-    res.send();
-    return true;
-  }
-  return false;
-}
+var handleError = util.handleError;
 
 /*
  * app: express server
