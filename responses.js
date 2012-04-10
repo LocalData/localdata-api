@@ -40,6 +40,27 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+  
+  
+  // Get all responses for a specific geographic object.
+  // GET http://localhost:3000/surveys/{SURVEY ID}/object/{OBJECT ID}/responses
+  // GET http://localhost:3000/surveys/1/object/{OBJECT ID}/responses
+  app.get('/surveys/:sid/responses', function(req, response) {
+    var surveyid = req.params.sid;
+    getCollection(function(err, collection) {
+      collection.find({'survey': surveyid}, function(err, cursor) {
+        if (err != null) {
+          console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
+          response.send();
+          return;
+        }
+        cursor.toArray(function(err, items) {
+          response.send({responses: items});
+        });
+      });
+    });
+  });
+  
 
   // Get a response for a survey.
   // GET http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
