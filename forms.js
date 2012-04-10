@@ -72,8 +72,8 @@ app.get('/surveys/:sid/forms', function(req, response) {
  */
 app.post('/surveys/:sid/forms', function(req, response) {
   var forms = req.body.forms;
-  console.log('Adding ' + forms.length + ' forms to the database.');
   var total = forms.length;
+  console.log('Adding ' + total + ' forms to the database.');
   var count = 0;
   db.collection(FORMS, function(err, collection) {
     var survey = req.params.sid;
@@ -86,8 +86,7 @@ app.post('/surveys/:sid/forms', function(req, response) {
       collection.insert(form, function() {
         // Check if we've added all of them.
         if (++count === total) {
-          var ids = forms.map(function(form) { return form.id; });
-          response.send({ids: ids});
+          response.send({forms: forms});
         }
       });
     });

@@ -64,7 +64,7 @@ function addform() {
       console.log('Received an error posting forms to the server: ' + error.message);
     } else {
       console.log('Posted form to the server successfully.');
-      console.log('ID: ' + body.form[0].id);
+      console.log('ID: ' + body.forms[0].id);
       console.log('Data:');
       console.log(JSONpretty(body));
     }
@@ -181,8 +181,64 @@ function addresponse() {
   });
 }
 
+// Clear all of the responses for the survey
+function clearresponses() {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
+  console.log('Deleting at url: ' + url);
+  request.del({url: url}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error deleting all responses: ' + error.message);
+    } else if (response.statusCode != 200) {
+      console.log('Received non-200 status code: ' + response.statusCode);
+      console.log(body);
+    } else {
+      body = JSON.parse(body);
+      console.log('Deleted ' + body.count + ' responses successfully.');
+    }
+  });
+}
+
 
 var cmd = process.argv[2];
+switch(cmd) {
+  // Forms
+  case 'seedforms':
+    seedforms();
+    break;
+  case 'clearforms':
+    clearforms();
+    break;
+  case 'addform':
+    addform();
+    break;
+  case 'getform':
+    getform(process.argv[3]);
+    break;
+  case 'getallforms':
+    getallforms();
+    break;
+  // Responses
+  case 'seedresponses':
+    seedresponses();
+    break;
+  case 'clearresponses':
+    clearresponses();
+    break;
+  case 'addresponse':
+    addresponse();
+    break;
+  case'getresponse':
+    getresponse(process.argv[3]);
+    break;
+  case 'getallresponses':
+    getallresponses();
+    break;
+  // Default handler
+  default:
+    console.log('Not Implemented');
+    break;
+}
+/*
 if (cmd === 'seedforms') {
   seedforms();
 } else if (cmd === 'clearforms') {
@@ -202,4 +258,4 @@ if (cmd === 'seedforms') {
 } else if (cmd == 'getresponse') {
   getresponse(process.argv[3]);
 }
-
+*/
