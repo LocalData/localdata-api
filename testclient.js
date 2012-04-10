@@ -153,6 +153,20 @@ function getresponse(responseid) {
   });
 }
 
+// Get responses associated with a parcel
+function getparcelresponses(parcel_id) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/parcels/' + parcel_id + '/responses';
+  console.log('Getting url: ' + url);
+  request.get({url: url}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error getting response for parcel ' + parcel_id + ': ' + error.message);
+    } else {
+      body = JSON.parse(body);
+      console.log(JSONpretty(body.response));
+    }
+  });
+}
+
 // Seed the database with responses
 function seedresponses() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
@@ -308,6 +322,7 @@ switch(cmd) {
   case 'getformsbyparcel':
     getformsbyparcel(process.argv[3]);
     break;
+    
   // Responses
   case 'seedresponses':
     seedresponses();
@@ -321,9 +336,13 @@ switch(cmd) {
   case'getresponse':
     getresponse(process.argv[3]);
     break;
+  case 'getparcelresponses':
+    getparcelresponses(process.argv[3]);
+    break;
   case 'getallresponses':
     getallresponses();
     break;
+      
   // Collectors
   case 'getcollector':
     getcollector(process.argv[3]);
@@ -334,6 +353,7 @@ switch(cmd) {
   case 'assignwork':
     assignwork(process.argv[3]);
     break;
+    
   // Default handler
   default:
     console.log('Not implemented by test client.');

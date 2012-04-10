@@ -2,7 +2,18 @@
  * ==================================================
  * Responses
  * ==================================================
+ * 
+ * Collects responses from web, mobile, and paper forms.
+ * 
+ * Data structure:
+ * responses: [
+ *   { parcels: [ {parcel_id: 10, responses: {'Q0': 0, 'Q1': 3}}, ]
+ *   }, ]
+ *   
  */
+ 
+
+ 
 var util = require('./util');
 
 module.exports = {
@@ -40,7 +51,28 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
-
+  
+  // Get all responses for a specific parcel.
+  // TODO: At some point, parcel should become a generic geographic object ID.
+  // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
+  // GET http://localhost:3000/surveys/1/parcels/{PARCEL ID}/responses
+  app.get('/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
+    var surveyid = req.params.sid;
+    var parcel_id = req.params.parcel_id;
+    getCollection(function(err, collection) {
+      collection.find({'survey': surveyid, 'parcels.parcel_id': parcel_id}, function(err, cursor) {
+        if (err != null) {
+          console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
+          response.send();
+          return;
+        }
+        cursor.toArray(function(err, items) {
+          response.send({responses: items});
+        });
+      });
+    });
+  });
+  
   // Get a response for a survey.
   // GET http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
   // GET http://localhost:3000/surveys/1/responses/2ec140e0-827f-11e1-83d8-bf682a6ee038

@@ -2,7 +2,24 @@
  * ==================================================
  * Forms
  * ==================================================
- */
+ * 
+ * Forms are generated & given to collectors.
+ * Used with paper forms to track which parcels are attached to which printed 
+ *  page.  
+ * Not currently used with web forms. Will probably be used to record a
+ *  generic for structure that can then be rendered in the browser.
+ * 
+ * Data structure: 
+ * forms: [
+ *    { parcels: [ {parcel_id: 10, bubblesets: []} ]
+ *    , mapping: { }   
+ *    , type: "paper"  // collection medium ("paper" or "web")
+ *    , survey: "1" // survey ID as a string
+ *    }
+ *  , { 
+ *      type: "web"
+ *  }]
+*/
 
 var util = require('./util');
 
