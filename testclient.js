@@ -158,7 +158,7 @@ function getparcelresponses(parcel_id) {
       console.log('Received an error getting response for parcel ' + parcel_id + ': ' + error.message);
     } else {
       body = JSON.parse(body);
-      console.log(JSONpretty(body.response));
+      console.log(JSONpretty(body.responses));
     }
   });
 }
@@ -168,10 +168,8 @@ function seedresponses() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
   var data = {
     responses: [
-      { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]
-      }
-    , { parcels: [ {parcel_id: '11', responses: {'Q0': 1, 'Q1': 4}} ]
-      }
+      { parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}}
+    , { parcel_id: '11', responses: {'Q0': 1, 'Q1': 4}}
     ]
   };
   console.log('Posting to url: ' + url);
@@ -195,8 +193,7 @@ function addresponse() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
   var data = {
     responses: [
-      { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]
-      }
+      { parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}}
     ]
   };
   console.log('Posting to url: ' + url);
