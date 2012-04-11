@@ -10,7 +10,6 @@ module.exports = {
   setup: setup
 };
 
-var handleError = util.handleError;
 
 /*
  * app: express server
@@ -26,12 +25,13 @@ function setup(app, db, idgen, collectionName) {
   // Get all surveys
   // GET http://localhost:3000/surveys
   app.get('/surveys', function(req, response) {
+    var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
-      if (handleError(err, response)) return;
+      if (handleError(err)) return;
       collection.find({}, function(err, cursor) {
-        if (handleError(err, response)) return;
+        if (handleError(err)) return;
         cursor.toArray(function(err, items) {
-          if (handleError(err, response)) return;
+          if (handleError(err)) return;
           response.send({surveys: items});
         });
       });
@@ -41,12 +41,13 @@ function setup(app, db, idgen, collectionName) {
   // Get a survey
   // GET http://localhost:3000/surveys/{SURVEY ID}
   app.get('/surveys/:sid', function(req, response) {
+    var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
-      if (handleError(err, response)) return;
+      if (handleError(err)) return;
       collection.find({id: req.params.sid}, function(err, cursor) {
-        if (handleError(err, response)) return;
+        if (handleError(err)) return;
         cursor.toArray(function(err, items) {
-          if (handleError(err, response)) return;
+          if (handleError(err)) return;
           if (items.length == 0) {
             response.send();
             return;

@@ -3,7 +3,7 @@ var fs = require('fs');
 
 var BASEURL = 'http://localhost:3000';
 
-var SURVEYID = 1;
+var SURVEYID = '1';
 
 function JSONpretty(data) {
   return JSON.stringify(data, null, '  ');
@@ -62,14 +62,9 @@ function clearforms() {
 
 // Add a single form
 function addform() {
+  var input_file = 'form_constructor.json';
   var url = BASEURL + '/surveys/' + SURVEYID + '/forms';
-  var data = {
-    forms: [
-      { parcels: [ {parcel_id: '12', bubblesets: []} ]
-      , mapping: {}
-      }
-    ]
-  };
+  data = JSON.parse(fs.readFileSync(input_file, 'utf8'));
   console.log('Posting to url: ' + url);
   request.post({url: url, json: data}, function(error, response, body) {
     if (error != null) {

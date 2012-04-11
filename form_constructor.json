@@ -1,0 +1,28 @@
+{
+  "forms": [
+    { "parcels": [ {"parcel_id": "10", "bubblesets": [
+      { "bubbles" :
+        [ {"center" : [150, 425], "radius" : 15},
+          {"center" : [210, 425], "radius" : 15},
+          {"center" : [270, 425], "radius" : 15},
+          {"center" : [330, 425], "radius" : 15},
+          {"center" : [390, 425], "radius" : 15}
+        ],
+        "name" : "Q0"
+      },
+      { "bubbles" :
+        [ {"center" : [150, 460], "radius" : 15},
+          {"center" : [210, 460], "radius" : 15},
+          {"center" : [270, 460], "radius" : 15},
+          {"center" : [330, 460], "radius" : 15},
+          {"center" : [390, 460], "radius" : 15}
+        ],
+        "name" : "Q1"
+      }
+    ]} ]
+    , "mapping": { }   
+    , "type": "paper"
+    , "survey": "1"
+    }  
+  ]
+}
