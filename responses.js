@@ -102,9 +102,14 @@ function setup(app, db, idgen, collectionName) {
   // Add responses for a survey.
   // POST http://localhost:3000/surveys/{SURVEY ID}/reponses
   // POST http://localhost:3000/surveys/1/reponses
+  // Expects data in the format: 
+  // responses: [
+  //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
+  //
   app.post('/surveys/:sid/responses', function(req, response) {
     var resps = req.body.responses;
     var total = resps.length;
+    console.log(resps);
     console.log('Adding ' + total + ' responses to the database.');
     var count = 0;
     getCollection(function(err, collection) {

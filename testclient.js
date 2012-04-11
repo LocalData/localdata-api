@@ -172,12 +172,13 @@ function seedresponses() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
   var data = {
     responses: [
-      { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]
-      }
-    , { parcels: [ {parcel_id: '11', responses: {'Q0': 1, 'Q1': 4}} ]
-      }
+      { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ] }, 
+      { parcels: [ {parcel_id: '11', responses: {'Q0': 1, 'Q1': 4}} ] }
     ]
   };
+  
+  responses: [{parcel_id:['10'], }]
+  
   console.log('Posting to url: ' + url);
   request.post({url: url, json: data}, function(error, response, body) {
     if (error != null) {
