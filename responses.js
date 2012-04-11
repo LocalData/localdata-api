@@ -7,8 +7,9 @@
  * 
  * Data structure:
  * responses: [
- *   { parcels: [ {parcel_id: 10, responses: {'Q0': 0, 'Q1': 3}}, ]
- *   }, ]
+ *   { parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}},
+ *   { parcel_id: '11', responses: {'Q0': 1, 'Q1': 2}}
+ * ]
  *   
  */
  
@@ -60,7 +61,7 @@ function setup(app, db, idgen, collectionName) {
     var surveyid = req.params.sid;
     var parcel_id = req.params.parcel_id;
     getCollection(function(err, collection) {
-      collection.find({'survey': surveyid, 'parcels.parcel_id': parcel_id}, function(err, cursor) {
+      collection.find({'survey': surveyid, 'parcel_id': parcel_id}, function(err, cursor) {
         if (err != null) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
@@ -107,6 +108,8 @@ function setup(app, db, idgen, collectionName) {
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
   //
   app.post('/surveys/:sid/responses', function(req, response) {
+    console.log(req.body);
+    console.log(JSON.stringify(req.body, null, '  '));
     var resps = req.body.responses;
     var total = resps.length;
     console.log(resps);

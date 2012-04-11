@@ -11,7 +11,26 @@
  * 
  * Data structure: 
  * forms: [
- *    { parcels: [ {parcel_id: 10, bubblesets: []} ]
+ *    { parcels: [ {parcel_id: "10", bubblesets: [
+ *      { "bubbles" :
+ *        [ {"center" : [150, 425], "radius" : 15},
+ *          {"center" : [210, 425], "radius" : 15},
+ *          {"center" : [270, 425], "radius" : 15},
+ *          {"center" : [330, 425], "radius" : 15},
+ *          {"center" : [390, 425], "radius" : 15}
+ *        ],
+ *        "name" : "Q0"
+ *      },
+ *      { "bubbles" :
+ *        [ {"center" : [150, 460], "radius" : 15},
+ *          {"center" : [210, 460], "radius" : 15},
+ *          {"center" : [270, 460], "radius" : 15},
+ *          {"center" : [330, 460], "radius" : 15},
+ *          {"center" : [390, 460], "radius" : 15}
+ *        ],
+ *        "name" : "Q1"
+ *      }
+ *    ]} ]
  *    , mapping: { }   
  *    , type: "paper"  // collection medium ("paper" or "web")
  *    , survey: "1" // survey ID as a string
@@ -26,8 +45,6 @@ var util = require('./util');
 module.exports = {
   setup: setup
 };
-
-handleError = util.handleError;
 
 /*
  * app: express server
@@ -143,15 +160,16 @@ app.del('/surveys/:sid/forms', function(req, response) {
 // Get all forms that reference the specified parcel ID
 // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
 app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
+  var handleError = util.makeErrorHandler(response);
   var sid = String(req.params.sid);
   var pid = String(req.params.pid);
   console.log('Getting forms for survey ' + sid + ' that reference parcel ' + pid);
   getCollection(function(err, collection) {
-    if (handleError(err, response)) return;
+    if (handleError(err)) return;
     collection.find({survey: sid, 'parcels.parcel_id': pid}, function(err, cursor) {
-      if (handleError(err, response)) return;
+      if (handleError(err)) return;
       cursor.toArray(function(err, items) {
-        if (handleError(err, response)) return;
+        if (handleError(err)) return;
         response.send({forms: items});
       }); // toArray
     }); // find
