@@ -334,6 +334,25 @@ function addsurvey() {
   });
 }
 
+// Get a scanned image
+// Writes the data to STDOUT, so probably you want to pipe it to a file
+function getscan(id) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/scans/' + id;
+  request.get({url: url}).pipe(process.stdout);
+}
+
+// Get the data for all of the scanned images
+function getallscandata() {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/scans/';
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var data = JSON.parse(body);
+    console.log('Got ' + data.scans.length + ' scans:');
+    console.log(JSONpretty(data));
+  });
+}
+
 
 var cmd = process.argv[2];
 switch(cmd) {
@@ -397,6 +416,14 @@ switch(cmd) {
     break;
   case 'addsurvey':
     addsurvey();
+    break;
+
+  // Scans
+  case 'getscan':
+    getscan(process.argv[3]);
+    break;
+  case 'getallscandata':
+    getallscandata();
     break;
     
   // Default handler
