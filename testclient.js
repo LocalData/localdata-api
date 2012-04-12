@@ -334,10 +334,24 @@ function addsurvey() {
   });
 }
 
+// Get the data for a scanned image
+// Use getscanimage to download the actual image
+function getscandata(id) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/scans/' + id;
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var data = JSON.parse(body);
+    console.log('Got data for scan: ' + data.id);
+    console.log(JSONpretty(data));
+  });
+}
+
 // Get a scanned image
 // Writes the data to STDOUT, so probably you want to pipe it to a file
-function getscan(id) {
-  var url = BASEURL + '/surveys/' + SURVEYID + '/scans/' + id;
+// This is basically curl, but for completeness we can test the functionality
+// here.
+function getscanimage(url) {
   request.get({url: url}).pipe(process.stdout);
 }
 
@@ -349,6 +363,33 @@ function getallscandata() {
 
     var data = JSON.parse(body);
     console.log('Got ' + data.scans.length + ' scans:');
+    console.log(JSONpretty(data));
+  });
+}
+
+var STATUS_PENDING = 'pending';
+var STATUS_WORKING = 'working';
+var STATUS_COMPLETE = 'complete';
+// Update the scan info with a new status
+function updatescanstatus(id, status) {
+  switch(status) {
+    case STATUS_PENDING:
+    case STATUS_WORKING:
+    case STATUS_COMPLETE:
+    case 'intentional': // Used to confirm that the API rejects bad statuses
+      console.log('Setting status of scan ' + id + ' to ' + status);
+      break;
+    default:
+      console.log('Invalid status: ' + status);
+      return;
+  }
+  var url = BASEURL + '/surveys/' + SURVEYID + '/scans/' + id;
+  data = {scan: {status: status}};
+  request.put({url: url, json: data}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var data = body;
+    console.log('Updated status for scan: ' + data.id);
     console.log(JSONpretty(data));
   });
 }
@@ -419,11 +460,17 @@ switch(cmd) {
     break;
 
   // Scans
-  case 'getscan':
-    getscan(process.argv[3]);
+  case 'getscandata':
+    getscandata(process.argv[3]);
+    break;
+  case 'getscanimage':
+    getscanimage(process.argv[3]);
     break;
   case 'getallscandata':
     getallscandata();
+    break;
+  case 'updatescanstatus':
+    updatescanstatus(process.argv[3], process.argv[4]);
     break;
     
   // Default handler

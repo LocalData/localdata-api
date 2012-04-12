@@ -1,6 +1,16 @@
 /*
  * ==================================================
  * Scans
+ * Data format:
+    {
+      id: 'e4043210-84db-11e1-b34b-dd2b6e24c3e7',
+      survey: '1',
+      filename: 'img001.tif',
+      mimetype: 'image/tiff'
+      url: 'http://localhost:3000/uploaded_files/e4043210-84db-11e1-b34b-dd2b6e24c3e7',
+      status: 'pending'
+    }
+ * status can be 'pending', 'working', or 'complete'
  * ==================================================
  */
 
@@ -12,6 +22,17 @@ module.exports = {
 };
 
 var handleError = util.handleError;
+
+var UPLOAD_DIR = 'uploaded_files';
+var STATUS_PENDING = 'pending';
+var STATUS_WORKING = 'working';
+var STATUS_COMPLETE = 'complete';
+
+// Construct the image download URL using the server's hostname, as it appears
+// to the client.
+function makeDownloadPath(file, req) {
+  return ['http:/', req.header('Host'), UPLOAD_DIR, file].join('/');
+}
 
 /*
  * app: express server
@@ -33,7 +54,7 @@ function setup(app, db, idgen, collectionName) {
     console.log('Client is uploading a file');
     var filename = req.headers['x-file-name'];
     var id = idgen();
-    var fileStream = fs.createWriteStream('uploaded_files/' + id);
+    var fileStream = fs.createWriteStream([UPLOAD_DIR, id].join('/'));
     console.log('Original filename: ' + filename);
     console.log('Assigned ID: ' + id);
 
@@ -43,7 +64,8 @@ function setup(app, db, idgen, collectionName) {
       survey: req.params.sid,
       filename: filename,
       mimetype: req.headers['x-mime-type'],
-      processed: false
+      url: makeDownloadPath(id, req),
+      status: STATUS_PENDING
     };
 
     // Add image info to the database.
@@ -55,7 +77,7 @@ function setup(app, db, idgen, collectionName) {
         });
         req.on('end', function() {
           // TODO: return the DB doc instead?
-          body = JSON.stringify({success: 'true', name: 'uploaded_files/' + filename});
+          body = JSON.stringify({success: 'true', name: [UPLOAD_DIR, filename].join('/')});
           response.end(body);
           console.log('Added file info:');
           console.log(JSON.stringify(data, null, '  '));
@@ -64,11 +86,11 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
-  // Get a scanned form
+  // Get data for a scanned form
   // GET http://localhost:3000/surveys/{SURVEY ID}/scans/{SCAN ID}
   // GET http://localhost:3000/surveys/1/scans/234
   app.get('/surveys/:sid/scans/:id', function(req, response) {
-    console.log('Sending image file to client');
+    console.log('Getting data for a scanned image');
     var handleError = util.makeErrorHandler(response);
     var id = req.params.id;
     var sid = req.params.sid;
@@ -81,10 +103,36 @@ function setup(app, db, idgen, collectionName) {
         cursor.nextObject(function(err, doc) {
           if (handleError(err)) return;
 
+          console.log('Sending data for scan ' + doc.id);
+          // Send the data
+          response.send({scan: doc});
+        });
+      });
+    });
+  });
+
+  // Get a scanned image
+  // GET http://localhost:3000/uploaded_files/{SCAN ID}
+  // GET http://localhost:3000/uploaded_files/234
+  // TODO: add an extension to the stored filename, so that we don't have to
+  // hit the server to determine MIME type
+  app.get('/' + UPLOAD_DIR + '/:id', function(req, response) {
+    console.log('Sending image file to client');
+    var handleError = util.makeErrorHandler(response);
+    var id = req.params.id;
+
+    // Get the image data from the database
+    getCollection(function(err, collection) {
+      if (handleError(err)) return;
+      collection.find({id: id}, function(err, cursor) {
+        if (handleError(err)) return;
+        cursor.nextObject(function(err, doc) {
+          if (handleError(err)) return;
+
           // Set the content-type
           response.header('Content-Type', doc.mimetype);
           // Send the file
-          var fullfilename = 'uploaded_files/' + doc.id;
+          var fullfilename = [UPLOAD_DIR, id].join('/');
           console.log('Sending file: ' + fullfilename);
           response.sendfile(fullfilename);
         });
@@ -107,6 +155,35 @@ function setup(app, db, idgen, collectionName) {
         cursor.toArray(function(err, items) {
           response.send({scans: items});
         });
+      });
+    });
+  });
+
+  // Update scanned form data
+  // PUT http://localhost:3000/surveys/{SURVEY_ID}/scans/{SCAN_ID}
+  app.put('/surveys/:sid/scans/:id', function(req, response) {
+    var id = req.params.id;
+    var survey = req.params.sid;
+    var status = req.body.scan.status;
+    // Check validity of the status
+    switch(status) {
+      case STATUS_PENDING:
+      case STATUS_WORKING:
+      case STATUS_COMPLETE:
+        console.log('Updating scan ' + id + ' with status ' + status);
+        break;
+      default:
+        console.log('Got bad status: ' + status);
+        response.send(400);
+        return;
+    }
+    getCollection(function(err, collection) {
+      if (handleError(err)) return;
+      collection.findAndModify({'survey': survey, 'id': id},
+                               {_id: 1},
+                               {$set: {status: status}},
+                               {new: true}, function(err, object) {
+        response.send({scan: object});
       });
     });
   });
