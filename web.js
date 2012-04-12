@@ -23,6 +23,7 @@ SCANIMAGES = 'scanCollection';
 var app = express.createServer(express.logger());
 
 app.configure(function() {
+  app.use(express.methodOverride());
   app.use(express.bodyParser());
 });
 

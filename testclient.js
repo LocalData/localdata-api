@@ -341,7 +341,7 @@ function getscandata(id) {
   request.get({url: url}, function(error, response, body) {
     if (handleError(error, response, body)) return;
 
-    var data = JSON.parse(body);
+    var data = JSON.parse(body).scan;
     console.log('Got data for scan: ' + data.id);
     console.log(JSONpretty(data));
   });
