@@ -1,0 +1,86 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+	<title>Scanned Form Progress</title>
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<meta name="viewport" content="width=device-width">
+
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<style>
+	body {
+	  padding-top: 60px;
+	  padding-bottom: 40px;
+	}
+	</style>
+	<link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+</head>
+<body style="visibility: hidden">
+
+    <div class="container well">
+      <h1 data-bind="text: surveyName">Survey</h1>
+    </div>
+
+    <div class="container">
+
+      <div class="page-header">
+        <h2>Scanned paper forms</h2>
+      </div>
+
+      <div class="row" data-bind="visible: !pickedSurvey()">
+        <div class="span9">
+          <form class="well form-search">
+            <label>Enter Survey ID:</label>
+            <br/>
+            <input type="text" class="span3" placeholder="ID" data-bind="value: survey_id"/>
+            <button type="submit" class="btn" data-bind="click: setSurvey">Go!</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="row" data-bind="visible: pickedSurvey">
+        <div class="span9">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>File</th>
+                <th>Status</th>
+              <tr>
+            </thead>
+            <tbody data-bind="foreach: scans">
+              <tr>
+                <td data-bind="text: id"/>
+                <td data-bind="text: filename"/>
+                <td data-bind="text: status"/>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row" data-bind="visible: pickedSurvey">
+        <div class="span9">
+          <button data-bind="click: refreshClick">Refresh</button>
+        </div>
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>&copy; Code for America 2012</p>
+      </footer>
+
+    </div> <!-- /container -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="js/bootstrap/bootstrap.min.js"></script>
+<script src="knockout-min.js"></script>
+<script src="progress.js"></script>
+</body>
+</html>
