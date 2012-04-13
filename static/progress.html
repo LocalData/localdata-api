@@ -7,7 +7,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-	<title>Scanned Form Progress</title>
+	<title>Survey Progress</title>
 	<meta name="description" content="">
 	<meta name="author" content="">
 
@@ -25,17 +25,13 @@
 <body style="visibility: hidden">
 
     <div class="container well">
-      <h1 data-bind="text: surveyName">Survey</h1>
+      <h1><span data-bind="text: surveyName">Survey</span> <small>Survey progress</small></h1>
     </div>
 
     <div class="container">
 
-      <div class="page-header">
-        <h2>Scanned paper forms</h2>
-      </div>
-
       <div class="row" data-bind="visible: !pickedSurvey()">
-        <div class="span9">
+        <div class="span5">
           <form class="well form-search">
             <label>Enter Survey ID:</label>
             <br/>
@@ -45,8 +41,30 @@
         </div>
       </div>
 
+      <div data-bind="visible: pickedSurvey">
       <div class="row" data-bind="visible: pickedSurvey">
         <div class="span9">
+          <!-- Submitted results -->
+          <h3>Responses</h3>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Parcel ID</th>
+                <th>Response</th>
+              <tr>
+            </thead>
+            <tbody data-bind="foreach: responses">
+              <tr>
+                <td data-bind="text: id"/>
+                <td data-bind="text: parcel_id"/>
+                <td data-bind="text: JSON.stringify(responses)"/>
+              </tr>
+            </tbody>
+          </table>
+          <hr/>
+          <!-- Scanned paper forms -->
+          <h3>Scanned paper forms</h3>
           <table class="table">
             <thead>
               <tr>
@@ -63,6 +81,22 @@
               </tr>
             </tbody>
           </table>
+          <hr/>
+          <!-- Generated paper forms -->
+          <h3>Generated forms</h3>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+              <tr>
+            </thead>
+            <tbody data-bind="foreach: forms">
+              <tr>
+                <td data-bind="text: id"/>
+                <td data-bind="text: type"/>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
       <div class="row" data-bind="visible: pickedSurvey">
@@ -70,8 +104,9 @@
           <button data-bind="click: refreshClick">Refresh</button>
         </div>
       </div>
+    </div>
 
-      <hr>
+      <hr/>
 
       <footer>
         <p>&copy; Code for America 2012</p>
