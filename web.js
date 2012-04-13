@@ -1,4 +1,3 @@
-// XXX var http = require('http');
 var express = require('express');
 var mongo = require('mongodb')
 var db = new mongo.Db('scratchdb', new mongo.Server('localhost', 27017, {}), {});
@@ -23,6 +22,7 @@ SCANIMAGES = 'scanCollection';
 var app = express.createServer(express.logger());
 
 app.configure(function() {
+  app.use(express.methodOverride());
   app.use(express.bodyParser());
 });
 
@@ -42,7 +42,7 @@ function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
     if (err) {
       console.log(err.message);
-      response.send(); // XXX send a 500 status
+      response.send(500);
       return;
     }
     response.header('Content-Type', type);
@@ -50,26 +50,33 @@ function sendFile(response, filename, type) {
   });
 }
 
-app.get('/static/:sub?/:filename.:format?', function(req, response) {
-  var fileName = [req.params.sub, req.params.filename, '.', req.params.format].join('');
+app.get(/\/static\/(.*)/, function(req, response) {
+  var path = req.params[0];
+  var index = path.lastIndexOf('.');
+  var format = '';
+  if (index > -1) {
+    format = path.substring(index);
+  }
+
   var type;
-  switch (req.params.format) {
-  case 'html':
+  switch (format) {
+  case '.html':
     type = 'text/html';
     break;
-  case 'css':
+  case '.css':
     type = 'text/css';
     break;
-  case 'js':
+  case '.js':
     type = 'application/javascript';
     break;
-  case 'gif':
+  case '.gif':
     type = 'image/gif';
     break;
   default:
     type = 'text/html';
   }
-  sendFile(response, fileName, type);
+
+  sendFile(response, path, type);
 });
 
 
