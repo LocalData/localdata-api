@@ -1,2 +1,3 @@
 node_modules
 uploaded_files/*
+!uploaded_files/README.md
