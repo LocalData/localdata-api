@@ -87,6 +87,12 @@ app.get(/\/static\/(.*)/, function(req, response) {
   sendFile(response, path, type);
 });
 
+function startServer() {
+  var port = process.env.PORT || 3000;
+  app.listen(port, function() {
+    console.log('Listening on ' + port);
+  });
+}
 
 // Kick things off
 console.log('Using the following settings:');
@@ -96,15 +102,16 @@ console.log('Mongo port: ' + mongo_port);
 console.log('Mongo db: ' + mongo_db);
 console.log('Mongo user: ' + mongo_user);
 db.open(function() {
-  db.authenticate(mongo_user, mongo_password, function(err, result) {
-    if (err) {
-      console.log(err.message);
-      return;
-    }
-    var port = process.env.PORT || 3000;
-    app.listen(port, function() {
-      console.log('Listening on ' + port);
+  if (mongo_user != undefined) {
+    db.authenticate(mongo_user, mongo_password, function(err, result) {
+      if (err) {
+        console.log(err.message);
+        return;
+      }
+      startServer();
     });
-  });
+  } else {
+    startServer();
+  }
 });
 
