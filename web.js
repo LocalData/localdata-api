@@ -1,8 +1,16 @@
 var express = require('express');
 var mongo = require('mongodb')
-var db = new mongo.Db('scratchdb', new mongo.Server('localhost', 27017, {}), {});
 var uuid = require('node-uuid');
 var fs = require('fs');
+
+// Set up database
+var mongo_host = process.env.MONGO_HOST || 'localhost';
+var mongo_port = parseInt(process.env.MONGO_PORT, 10);
+if (isNaN(mongo_port)) mongo_port = 27017;
+var mongo_db = process.env.MONGO_DB || 'scratchdb';
+var mongo_user = process.env.MONGO_USER;
+var mongo_password = process.env.MONGO_PASSWORD;
+var db = new mongo.Db(mongo_db, new mongo.Server(mongo_host, mongo_port, {}), {});
 
 /*
  * Routes are split into separate modules.
@@ -81,10 +89,22 @@ app.get(/\/static\/(.*)/, function(req, response) {
 
 
 // Kick things off
+console.log('Using the following settings:');
+console.log('Port: ' + process.env.PORT || 3000);
+console.log('Mongo host: ' + mongo_host);
+console.log('Mongo port: ' + mongo_port);
+console.log('Mongo db: ' + mongo_db);
+console.log('Mongo user: ' + mongo_user);
 db.open(function() {
-  var port = process.env.PORT || 3000;
-  app.listen(port, function() {
-    console.log('Listening on ' + port);
+  db.authenticate(mongo_user, mongo_password, function(err, result) {
+    if (err) {
+      console.log(err.message);
+      return;
+    }
+    var port = process.env.PORT || 3000;
+    app.listen(port, function() {
+      console.log('Listening on ' + port);
+    });
   });
 });
 
