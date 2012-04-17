@@ -14,7 +14,7 @@
  * ==================================================
  */
 
-var fs = require('fs');
+var knox = require('knox');
 var util = require('./util');
 
 module.exports = {
@@ -24,6 +24,7 @@ module.exports = {
 var handleError = util.handleError;
 
 var UPLOAD_DIR = 'uploaded_files';
+var S3_BUCKET = 'cfadetroit_survey';
 var STATUS_PENDING = 'pending';
 var STATUS_WORKING = 'working';
 var STATUS_COMPLETE = 'complete';
@@ -34,6 +35,11 @@ function makeDownloadPath(file, req) {
   return ['http:/', req.header('Host'), UPLOAD_DIR, file].join('/');
 }
 
+// Construct the S3 object location. This does not include the bucket name.
+function makeS3Location(id) {
+  return UPLOAD_DIR + '/' + id;
+}
+
 /*
  * app: express server
  * db: mongodb database
@@ -41,6 +47,13 @@ function makeDownloadPath(file, req) {
  * collectionName: name of scans collection
  */
 function setup(app, db, idgen, collectionName) {
+  var s3client =  knox.createClient({
+    key: process.env.S3_KEY,
+    secret: process.env.S3_SECRET,
+    bucket: S3_BUCKET,
+    secure: false
+  });
+
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
@@ -54,7 +67,7 @@ function setup(app, db, idgen, collectionName) {
     console.log('Client is uploading a file');
     var filename = req.headers['x-file-name'];
     var id = idgen();
-    var fileStream = fs.createWriteStream([UPLOAD_DIR, id].join('/'));
+    var buffers = [];
     console.log('Original filename: ' + filename);
     console.log('Assigned ID: ' + id);
 
@@ -71,16 +84,46 @@ function setup(app, db, idgen, collectionName) {
     // Add image info to the database.
     getCollection(function(err, collection) {
       collection.insert(data, function() {
-        // Record the image data to a file
+        // Store the image data in buffers
         req.on('data', function(data) {
-          fileStream.write(data);
+          buffers.push(data);
         });
+
+        // When the upload has finished, we can figure out the content length
+        // and send to Amazon.
+        // TODO: use S3 Multipart uploads so we don't have to keep the whole
+        // file around in Buffer objects.
         req.on('end', function() {
-          // TODO: return the DB doc instead?
-          body = JSON.stringify({success: 'true', name: [UPLOAD_DIR, filename].join('/')});
-          response.end(body);
-          console.log('Added file info:');
-          console.log(JSON.stringify(data, null, '  '));
+          var contentLength = buffers.reduce(function(len,el) { return len + el.length; }, 0);
+          var s3request = s3client.put(makeS3Location(id), {
+            'Content-Length': contentLength,
+            'Content-Type': data.mimetype
+          });
+
+          // When we receive the S3 response, we're done.
+          s3request.on('response', function(res) {
+            res
+            .on('data', function(chunk) {
+              console.log(chunk.toString());
+            })
+            .on('close', function(error) {
+              console.log(error.message);
+            })
+            .on('end', function() {
+              // TODO: return the DB doc instead?
+              body = JSON.stringify({success: 'true', name: [UPLOAD_DIR, filename].join('/')});
+              response.end(body);
+              console.log('Added file info:');
+              console.log(JSON.stringify(data, null, '  '));
+            });
+          });
+
+          // Write to the S3 request.
+          for (var i=0; i<buffers.length; i++) {
+            console.log('Writing chunk ' + i + ' of ' + buffers.length + ' to S3.');
+            s3request.write(buffers[i]);
+          }
+          s3request.end();
         });
       });
     });
@@ -116,6 +159,7 @@ function setup(app, db, idgen, collectionName) {
   // GET http://localhost:3000/uploaded_files/234
   // TODO: add an extension to the stored filename, so that we don't have to
   // hit the server to determine MIME type
+  // TODO: make the S3 object publicly accessible and just redirect to its URL
   app.get('/' + UPLOAD_DIR + '/:id', function(req, response) {
     console.log('Sending image file to client');
     var handleError = util.makeErrorHandler(response);
@@ -131,10 +175,21 @@ function setup(app, db, idgen, collectionName) {
 
           // Set the content-type
           response.header('Content-Type', doc.mimetype);
-          // Send the file
-          var fullfilename = [UPLOAD_DIR, id].join('/');
-          console.log('Sending file: ' + fullfilename);
-          response.sendfile(fullfilename);
+
+          s3client.get(makeS3Location(id))
+          .on('response', function(s3res) {
+            console.log('Getting data from S3');
+            console.log(s3res.statusCode);
+            console.log(s3res.headers);
+            s3res.on('data', function(chunk) {
+              // Send a chunk to the Survey API client
+              response.write(chunk);
+            })
+            s3res.on('end', function() {
+              // End the response to the Survey API client
+              response.end();
+            });
+          }).end();
         });
       });
     });
