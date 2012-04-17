@@ -22,24 +22,18 @@ function handleError(error, response, body) {
 
 // Seed the database with forms
 function seedforms() {
+  var input_file = 'form_constructor.json';
   var url = BASEURL + '/surveys/' + SURVEYID + '/forms';
-  var data = {
-    forms: [
-      { parcels: [ {parcel_id: '10', bubblesets: []} ]
-      , mapping: {}
-      }
-    , { parcels: [ {parcel_id: '11', bubblesets: []} ]
-      , mapping: {}
-      }
-    ]
-  };
+  data = JSON.parse(fs.readFileSync(input_file, 'utf8'));
+  // Use 3 copies of the form
+  data.forms.push(data.forms[0]);
+  data.forms.push(data.forms[0]);
   console.log('Posting to url: ' + url);
   request.post({url: url, json: data}, function(error, response, body) {
     if (error != null) {
       console.log('Received an error posting forms to the server: ' + error.message);
     } else {
       console.log('Posted forms to the server successfully.');
-      console.log('Count: ' + body.forms.length);
       console.log('Data:');
       console.log(JSONpretty(body));
     }
