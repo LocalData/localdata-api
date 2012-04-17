@@ -45,13 +45,14 @@
       <div class="row" data-bind="visible: pickedSurvey">
         <div class="span9">
           <!-- Submitted results -->
-          <h3>Responses</h3>
+          <h3>Responses <small><span data-bind="text: responses().length"></span> items</small></h3>
           <table class="table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Parcel ID</th>
                 <th>Response</th>
+                <th>Actions</th>
               <tr>
             </thead>
             <tbody data-bind="foreach: responses">
@@ -59,18 +60,20 @@
                 <td data-bind="text: id"/>
                 <td data-bind="text: parcel_id"/>
                 <td data-bind="text: JSON.stringify(responses)"/>
+                <td><a class="btn" data-bind="click: $parent.confirmRemoveResponse">Delete</a></td>
               </tr>
             </tbody>
           </table>
           <hr/>
           <!-- Scanned paper forms -->
-          <h3>Scanned paper forms</h3>
+          <h3>Scanned paper forms <small><span data-bind="text: scans().length"></span> items</small></h3>
           <table class="table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>File</th>
                 <th>Status</th>
+                <th>Actions</th>
               <tr>
             </thead>
             <tbody data-bind="foreach: scans">
@@ -78,22 +81,26 @@
                 <td data-bind="text: id"/>
                 <td data-bind="text: filename"/>
                 <td data-bind="text: status"/>
+                <td><a class="btn" data-bind="click: $parent.confirmRemoveScan">Delete</a></td>
               </tr>
             </tbody>
           </table>
           <hr/>
           <!-- Generated paper forms -->
-          <h3>Generated forms</h3>
+          <h3>Generated forms <small><span data-bind="text: forms().length"></span> items</small></h3>
           <table class="table">
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Type</th>
+                <th>Actions</th>
               <tr>
             </thead>
             <tbody data-bind="foreach: forms">
               <tr>
                 <td data-bind="text: id"/>
                 <td data-bind="text: type"/>
+                <td><a class="btn" data-bind="click: $parent.confirmRemoveForm">Delete</a></td>
               </tr>
             </tbody>
           </table>
@@ -111,6 +118,20 @@
       <footer>
         <p>&copy; Code for America 2012</p>
       </footer>
+
+      <!-- Delete confirmation modal -->
+      <div class="modal hide" id="deleteModal" data-bind="with: deleteModal">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">x</a>
+          <h3>Delete this item?</h3>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete the item?</p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn" data-dismiss="modal">Nope, just kidding ;)</a>
+          <a href="#" class="btn btn-primary" data-bind="click: confirm">Yes, do it! >:]</a>
+        </div>
 
     </div> <!-- /container -->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>

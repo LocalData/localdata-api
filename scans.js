@@ -146,6 +146,12 @@ function setup(app, db, idgen, collectionName) {
         cursor.nextObject(function(err, doc) {
           if (handleError(err)) return;
 
+          if (doc == null) {
+            console.log('No item found with id ' + id);
+            response.send(404);
+            return;
+          }
+
           console.log('Sending data for scan ' + doc.id);
           // Send the data
           response.send({scan: doc});
@@ -242,5 +248,29 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+
+  // Delete a single scanned form entry from a survey
+  // DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
+  // TODO: remove the corresponding S3 object
+  app.del('/surveys/:sid/scans/:id', function(req, response) {
+    var survey = req.params.sid;
+    var id = req.params.id;
+
+    console.log('Removing scan ' + id + ' from the database.');
+    getCollection(function(err, collection) {
+      collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
+        if (error != null) {
+          console.log('Error removing scan ' + id + ' for survey ' + survey + ' from the scan collection: ' + err.message);
+          response.send();
+        } else {
+          if (count != 1) {
+            console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
+          }
+          response.send({count: count});
+        }
+      });
+    });
+  });
+
 }
 

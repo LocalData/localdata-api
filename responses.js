@@ -100,6 +100,27 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+  // Delete a response from a survey
+  // DELETE http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
+  app.del('/surveys/:sid/responses/:rid', function(req, response) {
+    var survey = req.params.sid;
+    var id = req.params.rid;
+    console.log('Removing response ' + id + ' from the database.');
+    getCollection(function(err, collection) {
+      collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
+        if (error != null) {
+          console.log('Error removing response ' + id + ' for survey ' + survey + ' from the response collection: ' + err.message);
+          response.send();
+        } else {
+          if (count != 1) {
+            console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
+          }
+          response.send({count: count});
+        }
+      });
+    });
+  });
+
   // Add responses for a survey.
   // POST http://localhost:3000/surveys/{SURVEY ID}/reponses
   // POST http://localhost:3000/surveys/1/reponses
