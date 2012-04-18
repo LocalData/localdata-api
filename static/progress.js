@@ -11,42 +11,15 @@ function deleteFromAPI(url, cb) {
   });
 }
 
-var DeleteModalVM = function(parent) {
-  var self = this;
-
-  self.parent = parent;
-  // TODO: separate this explicit markup interaction. This ViewModel is already
-  // bound to the View, so we should be able to control the View without
-  // manipulating the markup.
-  self.view = $('#deleteModal');
-
-  self.deleter = undefined;
-  self.confirm = function() {
-    self.dismiss();
-    if (self.deleter != undefined) {
-      self.deleter();
-    }
-  };
-
-  // Activate the Delete Confirmation Modal.
-  // We specify the actual deletion function to call if the user confirms.
-  self.activate = function(deleter) {
-    if (deleter != undefined) {
-      self.deleter = deleter;
-      self.view.modal('show');
-    }
-  };
-
-  self.dismiss = function() {
-    self.view.modal('hide');
-  };
-}
-
+// Main ViewModel for the page
 var ProgressVM = function() {
   var self = this;
 
   // Delete confirmation VM
   self.deleteModal = new DeleteModalVM();
+
+  // Navigation links VM
+  self.links = new LinksVM();
 
   // Track if the user has entered a survey ID or not.
   this.pickedSurvey = ko.observable(false);
@@ -67,46 +40,44 @@ var ProgressVM = function() {
   this.scans_url = '';
   this.forms_url = '';
 
-  this.refreshData = function() {
-    var self = this;
+  self.refreshData = function() {
     console.log('Getting data');
-    $.getJSON(this.responses_url, function(data) {
-      self.processResponsesData(data);
-    });
-    $.getJSON(this.scans_url, function(data) {
-      self.processScanData(data);
-    });
-    $.getJSON(this.forms_url, function(data) {
-      self.processFormsData(data);
-    });
+    $.getJSON(self.responses_url, self.processResponsesData);
+    $.getJSON(self.scans_url, self.processScanData);
+    $.getJSON(self.forms_url, self.processFormsData);
   };
 
   // Process the incoming data
-  this.processResponsesData = function(data) {
-    this.responses(data.responses);
+  self.processResponsesData = function(data) {
+    self.responses(data.responses);
   };
   // Process the incoming data
-  this.processScanData = function(data) {
-    this.scans(data.scans);
+  self.processScanData = function(data) {
+    self.scans(data.scans);
   };
   // Process the incoming data
-  this.processFormsData = function(data) {
+  self.processFormsData = function(data) {
     data.forms.forEach(function(x) {if (x.type == undefined) x.type = '';})
-    this.forms(data.forms);
+    self.forms(data.forms);
   };
 
-  this.refreshClick = function() {
-    this.refreshData();
+  self.refreshClick = function() {
+    self.refreshData();
   };
 
   this.setSurvey = function() {
     this.pickedSurvey(true);
     var id = this.survey_id();
+
+    // Set API endpoint URLs
     this.responses_url = [BASE_URL, 'surveys', id, 'responses'].join('/');
     this.scans_url = [BASE_URL, 'surveys', id, 'scans'].join('/');
     this.forms_url = [BASE_URL, 'surveys', id, 'forms'].join('/');
 
     this.surveyName('Survey ' + id);
+
+    // Update the navigation links
+    self.links.setSurvey(id);
 
     // Get the data
     this.refreshData();

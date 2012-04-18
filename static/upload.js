@@ -1,19 +1,28 @@
 
+// Main ViewModel for the page
 var UploadVM = function() {
   var self = this;
+
+  // Navigation links VM
+  self.links = new LinksVM();
 
   self.pickedSurvey = ko.observable(false);
   self.surveyName = ko.observable('Survey');
   self.survey_id = ko.observable();
 
   self.setSurvey = function() {
+    var id = self.survey_id();
+
     self.pickedSurvey(true);
-    self.surveyName('Survey ' + self.survey_id());
+    self.surveyName('Survey ' + id);
+
+    // Update the navigation links
+    self.links.setSurvey(id);
 
     // Save the state, so that a page refresh doesn't obliterate the survey ID.
     this.saveState();
 
-    self.createUploader(self.survey_id());
+    self.createUploader(id);
 
   };
 
