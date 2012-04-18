@@ -13,7 +13,6 @@
  *   
  */
  
-
  
 var util = require('./util');
 
@@ -56,7 +55,7 @@ function setup(app, db, idgen, collectionName) {
   // Get all responses for a specific parcel.
   // TODO: At some point, parcel should become a generic geographic object ID.
   // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
-  // GET http://localhost:3000/surveys/1/parcels/{PARCEL ID}/responses
+  // GET http://localhost:3000/surveys/1/parcels/3728048/responses
   app.get('/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
     var surveyid = req.params.sid;
     var parcel_id = req.params.parcel_id;
@@ -117,6 +116,7 @@ function setup(app, db, idgen, collectionName) {
     var count = 0;
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
+      
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
         var id = idgen();
@@ -124,6 +124,8 @@ function setup(app, db, idgen, collectionName) {
         resp.survey = surveyid;
         // Add response to database.
         collection.insert(resp, function() {
+          console.log("Inserting:");
+          console.log(resp);
           // Check if we've added all of them.
           if (++count == total) {
             response.send({responses: resps});
