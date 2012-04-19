@@ -54,6 +54,8 @@ function setup(app, db, idgen, collectionName) {
     secure: false
   });
 
+  var workChecker = new WorkChecker();
+
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
@@ -115,6 +117,8 @@ function setup(app, db, idgen, collectionName) {
               response.end(body);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
+              // Track that we have pending scans
+              workChecker.gotWork();
             });
           });
 
@@ -272,5 +276,50 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+  // Use long-polling to supply pending scans to a worker.
+  // GET http://localhost:3000/work
+  app.get('/work', function(req, response) {
+    // Check the timeout.
+    var delay = parseInt(req.headers['x-comet-timeout']);
+    if (isNaN(delay)) delay = 2000;
+    workChecker.onWork(delay, function(haswork) {
+      response.send({haswork: haswork});
+    });
+  });
+
 }
 
+function WorkChecker() {
+  var haswork = true;
+  var callback = null;
+  var timeoutId = null;
+
+  this.onWork = function(delay, cb) {
+    callback = cb;
+    if (haswork) {
+      haswork = false;
+      callback(true);
+    } else {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // Wait until the supplied timeout before we respond that there is no
+      // work.
+      timeoutId = setTimeout(function() {
+        callback(false);
+        timeoutId = null;
+      }, delay);
+      console.log('Waiting ' + delay + ' ms before responding.');
+    }
+  };
+
+  this.gotWork = function() {
+    haswork = true;
+    // See if we're holding onto a callback
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+      callback(true);
+    }
+  };
+}
