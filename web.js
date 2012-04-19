@@ -58,6 +58,10 @@ function sendFile(response, filename, type) {
   });
 }
 
+app.get('/', function(req, response) {
+  response.redirect('/static/progress.html');
+});
+
 app.get(/\/static\/(.*)/, function(req, response) {
   var path = req.params[0];
   var index = path.lastIndexOf('.');

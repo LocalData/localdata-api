@@ -1,9 +1,9 @@
 var request = require('request');
 var fs = require('fs');
 
-var BASEURL = 'http://localhost:3000';
+var BASEURL = process.env.BASEURL || 'http://localhost:3000';
 
-var SURVEYID = '1';
+var SURVEYID = process.env.SURVEYID || '1';
 
 function JSONpretty(data) {
   return JSON.stringify(data, null, '  ');
@@ -22,26 +22,35 @@ function handleError(error, response, body) {
 
 // Seed the database with forms
 function seedforms() {
+  var input_file = 'form_constructor.json';
   var url = BASEURL + '/surveys/' + SURVEYID + '/forms';
-  var data = {
-    forms: [
-      { parcels: [ {parcel_id: '10', bubblesets: []} ]
-      , mapping: {}
-      }
-    , { parcels: [ {parcel_id: '11', bubblesets: []} ]
-      , mapping: {}
-      }
-    ]
-  };
+  data = JSON.parse(fs.readFileSync(input_file, 'utf8'));
+  // Use 3 copies of the form
+  data.forms.push(data.forms[0]);
+  data.forms.push(data.forms[0]);
   console.log('Posting to url: ' + url);
   request.post({url: url, json: data}, function(error, response, body) {
     if (error != null) {
       console.log('Received an error posting forms to the server: ' + error.message);
     } else {
       console.log('Posted forms to the server successfully.');
-      console.log('Count: ' + body.forms.length);
       console.log('Data:');
       console.log(JSONpretty(body));
+    }
+  });
+}
+
+// Delete a single form
+function removeform(formid) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/forms/' + formid;
+  console.log('Deleting at url: ' + url);
+  request.del({url: url}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error deleting form ' + formid + ': ' + error.message);
+    } else {
+      body = JSON.parse(body);
+      console.log(JSONpretty(body.response));
+      console.log('Deleted a form successfully.');
     }
   });
 }
@@ -215,6 +224,21 @@ function addresponse() {
   });
 }
 
+// Delete a single response
+function removeresponse(responseid) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/responses/' + responseid;
+  console.log('Deleting at url: ' + url);
+  request.del({url: url}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error getting response ' + responseid + ': ' + error.message);
+    } else {
+      body = JSON.parse(body);
+      console.log(JSONpretty(body.response));
+      console.log('Deleted a resposne successfully.');
+    }
+  });
+}
+
 // Clear all of the responses for the survey
 function clearresponses() {
   var url = BASEURL + '/surveys/' + SURVEYID + '/responses';
@@ -322,8 +346,9 @@ function getsurvey(sid) {
 }
 
 // Add a new survey object
-function addsurvey() {
-  var input_file = 'survey_constructor.json';
+function addsurvey(input_file) {
+  if (input_file == undefined)
+    input_file = 'survey_constructor.json';
   var url = BASEURL + '/surveys';
   data = JSON.parse(fs.readFileSync(input_file, 'utf8'));
   console.log('Adding survey with data:');
@@ -349,6 +374,22 @@ function getscandata(id) {
     console.log(JSONpretty(data));
   });
 }
+
+// Delete a single scan
+function removescan(scanid) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/scans/' + scanid;
+  console.log('Deleting at url: ' + url);
+  request.del({url: url}, function(error, response, body) {
+    if (error != null) {
+      console.log('Received an error deleting scan ' + scanid + ': ' + error.message);
+    } else {
+      body = JSON.parse(body);
+      console.log(JSONpretty(body.response));
+      console.log('Deleted a scan successfully.');
+    }
+  });
+}
+
 
 // Get a scanned image
 // Writes the data to STDOUT, so probably you want to pipe it to a file
@@ -419,6 +460,9 @@ switch(cmd) {
   case 'getformsbyparcel':
     getformsbyparcel(process.argv[3]);
     break;
+  case 'removeform':
+    removeform(process.argv[3]);
+    break;
     
   // Responses
   case 'seedresponses':
@@ -432,6 +476,9 @@ switch(cmd) {
     break;
   case'getresponse':
     getresponse(process.argv[3]);
+    break;
+  case'removeresponse':
+    removeresponse(process.argv[3]);
     break;
   case 'getparcelresponses':
     getparcelresponses(process.argv[3]);
@@ -459,7 +506,7 @@ switch(cmd) {
     getsurvey(process.argv[3]);
     break;
   case 'addsurvey':
-    addsurvey();
+    addsurvey(process.argv[3]);
     break;
 
   // Scans
@@ -474,6 +521,9 @@ switch(cmd) {
     break;
   case 'updatescanstatus':
     updatescanstatus(process.argv[3], process.argv[4]);
+    break;
+  case 'removescan':
+    removescan(process.argv[3]);
     break;
     
   // Default handler

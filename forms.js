@@ -157,6 +157,28 @@ app.del('/surveys/:sid/forms', function(req, response) {
   });
 });
 
+// Delete a single form from a survey
+// DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
+app.del('/surveys/:sid/forms/:id', function(req, response) {
+  var survey = req.params.sid;
+  var id = req.params.id;
+
+  console.log('Removing form ' + id + ' from the database.');
+  getCollection(function(err, collection) {
+    collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
+      if (error != null) {
+        console.log('Error removing form ' + id + ' for survey ' + survey + ' from the form collection: ' + err.message);
+        response.send();
+      } else {
+        if (count != 1) {
+          console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
+        }
+        response.send({count: count});
+      }
+    });
+  });
+});
+
 // Get all forms that reference the specified parcel ID
 // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
 app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {

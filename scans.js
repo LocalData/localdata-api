@@ -54,6 +54,8 @@ function setup(app, db, idgen, collectionName) {
     secure: false
   });
 
+  var workChecker = new WorkChecker();
+
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
@@ -115,6 +117,8 @@ function setup(app, db, idgen, collectionName) {
               response.end(body);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
+              // Track that we have pending scans
+              workChecker.gotWork();
             });
           });
 
@@ -145,6 +149,12 @@ function setup(app, db, idgen, collectionName) {
         if (handleError(err)) return;
         cursor.nextObject(function(err, doc) {
           if (handleError(err)) return;
+
+          if (doc == null) {
+            console.log('No item found with id ' + id);
+            response.send(404);
+            return;
+          }
 
           console.log('Sending data for scan ' + doc.id);
           // Send the data
@@ -242,5 +252,74 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+
+  // Delete a single scanned form entry from a survey
+  // DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
+  // TODO: remove the corresponding S3 object
+  app.del('/surveys/:sid/scans/:id', function(req, response) {
+    var survey = req.params.sid;
+    var id = req.params.id;
+
+    console.log('Removing scan ' + id + ' from the database.');
+    getCollection(function(err, collection) {
+      collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
+        if (error != null) {
+          console.log('Error removing scan ' + id + ' for survey ' + survey + ' from the scan collection: ' + err.message);
+          response.send();
+        } else {
+          if (count != 1) {
+            console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
+          }
+          response.send({count: count});
+        }
+      });
+    });
+  });
+
+  // Use long-polling to supply pending scans to a worker.
+  // GET http://localhost:3000/work
+  app.get('/work', function(req, response) {
+    // Check the timeout.
+    var delay = parseInt(req.headers['x-comet-timeout']);
+    if (isNaN(delay)) delay = 2000;
+    workChecker.onWork(delay, function(haswork) {
+      response.send({haswork: haswork});
+    });
+  });
+
 }
 
+function WorkChecker() {
+  var haswork = true;
+  var callback = null;
+  var timeoutId = null;
+
+  this.onWork = function(delay, cb) {
+    callback = cb;
+    if (haswork) {
+      haswork = false;
+      callback(true);
+    } else {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // Wait until the supplied timeout before we respond that there is no
+      // work.
+      timeoutId = setTimeout(function() {
+        callback(false);
+        timeoutId = null;
+      }, delay);
+      console.log('Waiting ' + delay + ' ms before responding.');
+    }
+  };
+
+  this.gotWork = function() {
+    haswork = true;
+    // See if we're holding onto a callback
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+      callback(true);
+    }
+  };
+}
