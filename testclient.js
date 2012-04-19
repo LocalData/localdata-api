@@ -3,7 +3,7 @@ var fs = require('fs');
 
 var BASEURL = process.env.BASEURL || 'http://localhost:3000';
 
-var SURVEYID = '1';
+var SURVEYID = process.env.SURVEYID || '1';
 
 function JSONpretty(data) {
   return JSON.stringify(data, null, '  ');
@@ -343,8 +343,9 @@ function getsurvey(sid) {
 }
 
 // Add a new survey object
-function addsurvey() {
-  var input_file = 'survey_constructor.json';
+function addsurvey(input_file) {
+  if (input_file == undefined)
+    input_file = 'survey_constructor.json';
   var url = BASEURL + '/surveys';
   data = JSON.parse(fs.readFileSync(input_file, 'utf8'));
   console.log('Adding survey with data:');
@@ -502,7 +503,7 @@ switch(cmd) {
     getsurvey(process.argv[3]);
     break;
   case 'addsurvey':
-    addsurvey();
+    addsurvey(process.argv[3]);
     break;
 
   // Scans
