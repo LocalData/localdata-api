@@ -1,0 +1,108 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+	<title>All Surveys</title>
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<meta name="viewport" content="width=device-width">
+
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<style>
+	body {
+	  padding-top: 60px;
+	  padding-bottom: 40px;
+	}
+	</style>
+	<link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span2"> <!-- Sidebar -->
+          <ul class="nav nav-list" data-bind="with: links">
+            <li class="nav-header">Global</li>
+            <!-- ko foreach: global_links -->
+            <li data-bind="css: {active: name() == $parent.current}"><a data-bind="attr: { href: page }, text: title">Global Link</a></li>
+            <!-- /ko -->
+            <li class="nav-header">Survey Tools</li>
+            <!-- ko foreach: survey_links -->
+            <li data-bind="css: {active: name() == $parent.current}"><a data-bind="attr: { href: page }, text: title">Survey Link</a></li>
+            <!-- /ko -->
+          </ul>
+        </div> <!-- /Sidebar -->
+
+        <div class="span6"> <!-- Main content -->
+          <div class="well">
+            <h1>
+              Surveys
+              <br/><small>View all the surveys</small>
+            </h1>
+            <a class="btn" data-bind="click: refresh"><i class="icon-refresh"></i> Refresh</a>
+          </div>
+        </div>
+
+          <div class="span6" data-bind="foreach: surveys">
+            <div class="well"> <!-- survey -->
+              <h3>Survey: <span data-bind="text: name"></span></h3>
+              <h4>ID: <span data-bind="text: id"></span></h4>
+              <div data-bind="with: paperinfo">
+                <div>DPI: <span data-bind="text: dpi"/></div>
+                <div>Registration Marks</div>
+                <ul data-bind="foreach: regmarks">
+                  <li>Type: <span data-bind="text: type"></span>, Bounding box: <span data-bind="text: '[' + bbox.join(', ') + ']'"></span></li>
+                </ul>
+                <div>Barcode</div>
+                <ul data-bind="with: barcode">
+                  <li>Bounding box: <span data-bind="text: bbox"></span></li>
+                </ul>
+              </div> <!-- paperinfo -->
+              <a class="btn btn-primary" data-bind="click: $parent.goToSurvey">Survey Info</a>
+              <a class="btn btn-danger" data-bind="click: $parent.confirmDelete">Delete</a>
+            </div> <!-- /survey -->
+        </div>
+
+        </div> <!-- /Main content -->
+
+      </div>
+
+    <div class="container-fluid">
+
+
+
+      <hr/>
+
+      <footer>
+        <p>&copy; Code for America 2012</p>
+      </footer>
+
+      <!-- Delete confirmation modal -->
+      <div class="modal hide" id="deleteModal" data-bind="with: deleteModal">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">x</a>
+          <h3>Delete this item?</h3>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete the item?</p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn" data-dismiss="modal">Nope, just kidding ;)</a>
+          <a href="#" class="btn btn-primary" data-bind="click: confirm">Yes, do it! >:]</a>
+        </div>
+      </div> <!-- /modal -->
+
+
+    </div> <!-- /container -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="js/bootstrap/bootstrap.min.js"></script>
+<script src="knockout-min.js"></script>
+<script src="common.js"></script>
+<script src="surveys.js"></script>
+</body>
+</html>

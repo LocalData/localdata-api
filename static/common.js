@@ -7,14 +7,39 @@ function removeHash(str) {
   return str.slice(0, index);
 }
 
-var LinksVM = function() {
+function navigateToSurvey(id) {
+  window.location = 'progress.html#' + id;
+}
+
+var LinkVM = function(name, title, page) {
   var self = this;
-  self.progress = ko.observable('progress.html');
-  self.upload = ko.observable('upload.html');
+  self.name = ko.observable(name);
+  self.title = ko.observable(title);
+  self.page = ko.observable(page);
+}
+
+var LinksVM = function(current) {
+  var self = this;
+  self.global_links = [
+    new LinkVM('newsurvey', 'New Survey', 'newsurvey.html'),
+    new LinkVM('allsurveys', 'All Surveys', 'surveys.html')
+  ];
+  self.survey_links = [
+    new LinkVM('survey', 'Survey Info', 'survey.html'),
+    new LinkVM('progress', 'Progress', 'progress.html'),
+    new LinkVM('upload', 'Upload Forms', 'upload.html')
+  ];
+
+  self.current = current;
 
   self.setSurvey = function(id) {
-    self.progress(removeHash(self.progress()) + '#' + id);
-    self.upload(removeHash(self.upload()) + '#' + id);
+    for (var i = 0; i < self.survey_links.length; i++) {
+      self.survey_links[i].page(self.survey_links[i].page() + '#' + id);
+    }
+  };
+
+  self.navigate = function(link) {
+    window.location = link.page;
   };
 };
 

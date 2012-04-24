@@ -19,7 +19,7 @@ var ProgressVM = function() {
   self.deleteModal = new DeleteModalVM();
 
   // Navigation links VM
-  self.links = new LinksVM();
+  self.links = new LinksVM('progress');
 
   // Track if the user has entered a survey ID or not.
   this.pickedSurvey = ko.observable(false);

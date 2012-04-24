@@ -4,7 +4,7 @@ var UploadVM = function() {
   var self = this;
 
   // Navigation links VM
-  self.links = new LinksVM();
+  self.links = new LinksVM('upload');
 
   self.pickedSurvey = ko.observable(false);
   self.surveyName = ko.observable('Survey');

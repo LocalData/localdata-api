@@ -27,13 +27,18 @@
   <div class="container-fluid">
     <div class="row-fluid"> <!-- Everything -->
 
-      <div class="span2"> <!-- Sidebar -->
-        <ul class="nav nav-list" data-bind="with: links">
-          <li class="nav-header">Survey Tools</li>
-          <li><a data-bind="attr: { href: progress }">Progress</a></li>
-          <li class="active"><a data-bind="attr: { href: upload }">Upload forms</a></li>
-        </ul>
-      </div> <!-- /Sidebar -->
+        <div class="span2"> <!-- Sidebar -->
+          <ul class="nav nav-list" data-bind="with: links">
+            <li class="nav-header">Global</li>
+            <!-- ko foreach: global_links -->
+            <li data-bind="css: {active: name() == $parent.current}"><a data-bind="attr: { href: page }, text: title">Global Link</a></li>
+            <!-- /ko -->
+            <li class="nav-header">Survey Tools</li>
+            <!-- ko foreach: survey_links -->
+            <li data-bind="css: {active: name() == $parent.current}"><a data-bind="attr: { href: page }, text: title">Survey Link</a></li>
+            <!-- /ko -->
+          </ul>
+        </div> <!-- /Sidebar -->
 
       <div class="span10"> <!-- Main content -->
         <div class="well">
