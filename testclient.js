@@ -181,6 +181,9 @@ function seedresponses() {
     , { parcel_id: '11', responses: {'Q0': 1, 'Q1': 4}}
     ]
   };
+  
+  responses: [{parcel_id:['10'], }]
+  
   console.log('Posting to url: ' + url);
   request.post({url: url, json: data}, function(error, response, body) {
     if (error != null) {

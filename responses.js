@@ -13,7 +13,6 @@
  *   
  */
  
-
  
 var util = require('./util');
 
@@ -56,7 +55,7 @@ function setup(app, db, idgen, collectionName) {
   // Get all responses for a specific parcel.
   // TODO: At some point, parcel should become a generic geographic object ID.
   // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
-  // GET http://localhost:3000/surveys/1/parcels/{PARCEL ID}/responses
+  // GET http://localhost:3000/surveys/1/parcels/3728048/responses
   app.get('/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
     var surveyid = req.params.sid;
     var parcel_id = req.params.parcel_id;
@@ -124,25 +123,35 @@ function setup(app, db, idgen, collectionName) {
   // Add responses for a survey.
   // POST http://localhost:3000/surveys/{SURVEY ID}/reponses
   // POST http://localhost:3000/surveys/1/reponses
+  // Expects data in the format: 
+  // responses: [
+  //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
   app.post('/surveys/:sid/responses', function(req, response) {
-    console.log(req.body);
-    console.log(JSON.stringify(req.body, null, '  '));
     var resps = req.body.responses;
     var total = resps.length;
+    
+    console.log(resps);
     console.log('Adding ' + total + ' responses to the database.');
+    
     var count = 0;
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
+        // Add metadata to the survey response
         var id = idgen();
         resp.id = id;
         resp.survey = surveyid;
+        
         // Add response to database.
         collection.insert(resp, function() {
+          console.log(resp);
           // Check if we've added all of them.
           if (++count == total) {
-            response.send({responses: resps});
+            console.log("returning");
+            response.statusCode = 201;
+            response.header("Access-Control-Allow-Origin", "*");
+            response.send("hey yo");
           }
         });
       });
