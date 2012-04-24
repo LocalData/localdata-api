@@ -126,30 +126,32 @@ function setup(app, db, idgen, collectionName) {
   // Expects data in the format: 
   // responses: [
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
-  //
   app.post('/surveys/:sid/responses', function(req, response) {
-    console.log(req.body);
-    console.log(JSON.stringify(req.body, null, '  '));
     var resps = req.body.responses;
     var total = resps.length;
+    
     console.log(resps);
     console.log('Adding ' + total + ' responses to the database.');
+    
     var count = 0;
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
-      
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
+        // Add metadata to the survey response
         var id = idgen();
         resp.id = id;
         resp.survey = surveyid;
+        
         // Add response to database.
         collection.insert(resp, function() {
-          console.log("Inserting:");
           console.log(resp);
           // Check if we've added all of them.
           if (++count == total) {
-            response.send({responses: resps});
+            console.log("returning");
+            response.statusCode = 201;
+            response.header("Access-Control-Allow-Origin", "*");
+            response.send("hey yo");
           }
         });
       });
