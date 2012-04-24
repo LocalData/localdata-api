@@ -59,7 +59,7 @@ function sendFile(response, filename, type) {
 }
 
 app.get('/', function(req, response) {
-  response.redirect('/static/progress.html');
+  response.redirect('/static/surveys.html');
 });
 
 app.get(/\/static\/(.*)/, function(req, response) {
@@ -83,6 +83,9 @@ app.get(/\/static\/(.*)/, function(req, response) {
     break;
   case '.gif':
     type = 'image/gif';
+    break;
+  case '.png':
+    type = 'image/png';
     break;
   default:
     type = 'text/html';

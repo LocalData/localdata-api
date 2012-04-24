@@ -8,7 +8,7 @@ function removeHash(str) {
 }
 
 function navigateToSurvey(id) {
-  window.location = 'progress.html#' + id;
+  window.location = 'survey.html#' + id;
 }
 
 var LinkVM = function(name, title, page) {
