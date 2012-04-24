@@ -97,7 +97,7 @@
                   </thead>
                   <tbody data-bind="foreach: scans">
                     <tr>
-                      <td data-bind="text: id"/>
+                      <td><a data-bind="attr: {href: url}, text: id"/></td>
                       <td data-bind="text: filename"/>
                       <td data-bind="text: status"/>
                       <td><a class="btn" data-bind="click: $parent.confirmRemoveScan">Delete</a></td>
