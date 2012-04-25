@@ -136,8 +136,10 @@ function setup(app, db, idgen, collectionName) {
     var count = 0;
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
+      
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
+        
         // Add metadata to the survey response
         var id = idgen();
         resp.id = id;
@@ -151,7 +153,7 @@ function setup(app, db, idgen, collectionName) {
             console.log("returning");
             response.statusCode = 201;
             response.header("Access-Control-Allow-Origin", "*");
-            response.send("hey yo");
+            response.send("success");
           }
         });
       });
