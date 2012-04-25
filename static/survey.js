@@ -34,9 +34,9 @@ var PageVM = function() {
 
   self.refreshData = function() {
     console.log('Getting data');
-    var url = BASE_URL + '/surveys';
+    var url = BASE_URL + '/surveys/' + self.survey_id();
     $.getJSON(url, function(data) {
-      var survey_data = data.surveys[0];
+      var survey_data = data.survey;
       self.surveyJSON(JSON.stringify(survey_data, null, '  '));
     });
   };

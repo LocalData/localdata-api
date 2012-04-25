@@ -34,7 +34,7 @@ var PageVM = function() {
   ];
   self.bc_bbox = ko.observableArray();
 
-  // Survey info input
+  // Survey info input/display
   self.bbox_0 = makeBboxObservable(self.regmark_bboxes[0], self);
   self.bbox_1 = makeBboxObservable(self.regmark_bboxes[1], self);
   self.bbox_2 = makeBboxObservable(self.regmark_bboxes[2], self);
@@ -51,14 +51,20 @@ var PageVM = function() {
               {type: 0, bbox: self.regmark_bboxes[0]()},
               {type: 0, bbox: self.regmark_bboxes[1]()},
               {type: 0, bbox: self.regmark_bboxes[2]()}],
-            barcode: {bbox: self.bbox_bc()}
+            barcode: {bbox: self.bc_bbox()}
           }
       }]};
     console.log(JSON.stringify(data));
-    $.post(create_url, data, function(result) {
+    $.ajax(create_url, {
+      contentType: 'application/json',
+      dataType: 'json',
+      type: 'POST',
+      data: JSON.stringify(data)
+    })
+    .done(function(result) {
       var id = result.surveys[0].id;
-      //navigateToSurvey(id);
-    }, 'json');
+      navigateToSurvey(id);
+    });
   };
 };
 
