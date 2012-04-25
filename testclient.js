@@ -12,8 +12,8 @@ function handleError(error, response, body) {
   if (error != null) {
     console.log('Received an error: ' + error.message);
     return true;
-  } else if (response.statusCode != 200) {
-    console.log('Received non-200 status code: ' + response.statusCode);
+  } else if (response.statusCode != 200 && response.statusCode != 201) {
+    console.log('Received non-200/201 status code: ' + response.statusCode);
     if (body != null) console.log(body);
     return true;
   }

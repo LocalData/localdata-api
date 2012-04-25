@@ -111,7 +111,7 @@ function setup(app, db, idgen, collectionName) {
 
             // Add image info to the database.
             collection.insert(data, function() {
-              response.end(body);
+              response.send(body, 201);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
 

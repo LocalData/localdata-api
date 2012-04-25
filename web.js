@@ -32,6 +32,12 @@ var app = express.createServer(express.logger());
 app.configure(function() {
   app.use(express.methodOverride());
   app.use(express.bodyParser());
+  // Add common headers
+  app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    next();
+  });
+
 });
 
 // ID generator

@@ -1280,7 +1280,7 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         
         this._options.onProgress(id, name, size, size);
                 
-        if (xhr.status == 200){
+        if (xhr.status == 200 || xhr.status == 201){
             this.log("xhr - server response received");
             this.log("responseText = " + xhr.responseText);
                         

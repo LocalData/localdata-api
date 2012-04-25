@@ -148,10 +148,8 @@ function setup(app, db, idgen, collectionName) {
           console.log(resp);
           // Check if we've added all of them.
           if (++count == total) {
-            console.log("returning");
-            response.statusCode = 201;
-            response.header("Access-Control-Allow-Origin", "*");
-            response.send("hey yo");
+            console.log('Created ' + total + 'items. Returning.');
+            response.send({responses: resps}, 201);
           }
         });
       });

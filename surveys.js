@@ -78,7 +78,7 @@ function setup(app, db, idgen, collectionName) {
         collection.insert(survey, function() {
           // Check if we've added all of them.
           if (++count == total) {
-            response.send({surveys: surveys});
+            response.send({surveys: surveys}, 201);
           }
         });
       });
