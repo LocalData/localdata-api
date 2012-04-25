@@ -411,6 +411,19 @@ function getallscandata() {
   });
 }
 
+// Get data for all scans with the specified status
+function getscansbystatus(status) {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/scans?status=' + status;
+
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    var data = JSON.parse(body);
+    console.log('Got ' + data.scans.length + ' scans:');
+    console.log(JSONpretty(data));
+  });
+}
+
 var STATUS_PENDING = 'pending';
 var STATUS_WORKING = 'working';
 var STATUS_COMPLETE = 'complete';
@@ -518,6 +531,9 @@ switch(cmd) {
     break;
   case 'getallscandata':
     getallscandata();
+    break;
+  case 'getscansbystatus':
+    getscansbystatus(process.argv[3])
     break;
   case 'updatescanstatus':
     updatescanstatus(process.argv[3], process.argv[4]);

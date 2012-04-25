@@ -204,17 +204,25 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Get all the scanned form data for a survey
+  // Optionally filter according to the status
   // GET http://localhost:3000/surveys/{SURVEY ID}/scans
   // GET http://localhost:3000/surveys/1/scans
+  // GET http://localhost:3000/surveys/1/scans?status=pending
+  // GET http://localhost:3000/surveys/1/scans?status=complete
   app.get('/surveys/:sid/scans', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     var sid = req.params.sid;
+    var status = req.query.status;
 
     // Get the image data from the database
     getCollection(function(err, collection) {
       if (handleError(err)) return;
-      collection.find({survey: sid}, function(err, cursor) {
+
+      var filter = {survey: sid};
+      if (status) filter.status = status;
+      collection.find(filter, function(err, cursor) {
         if (handleError(err)) return;
+
         cursor.toArray(function(err, items) {
           response.send({scans: items});
         });
