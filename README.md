@@ -7,7 +7,7 @@ To install dependencies
     
 To set environment variables:
 
-    $ ./sentenv_local.sh
+    $ source ./sentenv_local.sh
     
 Run with
 
