@@ -362,6 +362,19 @@ function addsurvey(input_file) {
   });
 }
 
+// Remove a survey object from the database
+function removesurvey(id) {
+  var url = BASEURL + '/surveys/' + id;
+  console.log('Removing survey ' + id);
+  request.del({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    body = JSON.parse(body);
+    console.log(JSONpretty(body.response));
+    console.log('Deleted a survey successfully.');
+  });
+}
+
 // Get the data for a scanned image
 // Use getscanimage to download the actual image
 function getscandata(id) {
@@ -520,6 +533,9 @@ switch(cmd) {
     break;
   case 'addsurvey':
     addsurvey(process.argv[3]);
+    break;
+  case 'removesurvey':
+    removesurvey(process.argv[3]);
     break;
 
   // Scans
