@@ -46,7 +46,7 @@
             </h1>
             <div data-bind="visible: pickedSurvey">ID: <span data-bind="text: survey_id"></span></div>
             <br/>
-            <a class="btn" data-bind="click: refreshClick"><i class="icon-refresh"></i> Refresh</a>
+            <a class="btn" data-bind="visible: pickedSurvey, click: refreshData"><i class="icon-refresh"></i> Refresh</a>
           </div>
 
           <div class="row-fluid" data-bind="visible: !pickedSurvey()">
@@ -87,7 +87,7 @@
 
           <!-- refresh button -->
           <div class="row-fluid" data-bind="visible: pickedSurvey">
-            <a class="btn" data-bind="click: refreshClick"><i class="icon-refresh"></i> Refresh</a>
+            <a class="btn" data-bind="click: refreshData"><i class="icon-refresh"></i> Refresh</a>
           </div>
 
 

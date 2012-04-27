@@ -8,31 +8,29 @@ var PageVM = function(pageName) {
   // Delete confirmation VM
   self.deleteModal = new DeleteModalVM();
 
-  // The list of responses
-  self.responses = ko.observableArray([]);
+  // The list of forms
+  this.forms = ko.observableArray([]);
 
-  self.responses_url = ko.computed(function() {
-    return BASE_URL + '/surveys/' + self.survey_id() + '/responses'
+  self.forms_url = ko.computed(function() {
+    return BASE_URL + '/surveys/' + self.survey_id() + '/forms'
   });
 
   self.refreshData = function() {
     console.log('Getting data');
-    $.ajax(self.responses_url(), { dataType: 'json' })
+    $.ajax(self.forms_url(), { dataType: 'json' })
     .done(function(data) {
-      if (data.responses) {
-        self.responses(data.responses);
-      }
+      self.forms(data.forms);
     });
   };
 
-  // Confirm that we should remove a response
-  self.confirmRemoveResponse = function(item) {
-    // Remove a response entry from the database
+  // Confirm that we should remove a form
+  self.confirmRemoveForm = function(item) {
+    // Remove a form entry from the database
     function remover() {
-      var url = BASE_URL + '/surveys/' + self.survey_id() + '/responses/' + item.id;
+      var url = BASE_URL + '/surveys/' + self.survey_id() + '/forms/' + item.id;
       deleteFromAPI(url, function() {
         // If successful, remove the deleted item from the observable list
-        self.responses.remove(item);
+        self.forms.remove(item);
       });
     }
     self.deleteModal.activate(remover);
@@ -48,6 +46,6 @@ var PageVM = function(pageName) {
 
 $(document).ready(function() {
   $('body').css('visibility', 'visible');
-  ko.applyBindings(PageVM('responses'));
+  ko.applyBindings(PageVM('forms'));
 });
 
