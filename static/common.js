@@ -11,6 +11,16 @@ function navigateToSurvey(id) {
   window.location = 'survey.html#' + id;
 }
 
+function deleteFromAPI(url, cb) {
+  // Use header to indicate a DELETE request
+  $.ajax({
+    url: url,
+    type: 'POST',
+    headers: {'X-HTTP-Method-Override': 'DELETE'},
+    success: cb
+  });
+}
+
 var LinkVM = function(name, title, page) {
   var self = this;
   self.name = ko.observable(name);
@@ -27,6 +37,7 @@ var LinksVM = function(current) {
   self.survey_links = [
     new LinkVM('survey', 'Survey Info', 'survey.html'),
     new LinkVM('progress', 'Progress', 'progress.html'),
+    new LinkVM('responses', 'Responses', 'responses.html'),
     new LinkVM('upload', 'Upload Forms', 'upload.html')
   ];
 
