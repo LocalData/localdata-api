@@ -74,7 +74,7 @@
                     <tr>
                   </thead>
                   <tbody data-bind="foreach: scans">
-                    <tr>
+                    <tr data-bind="click: $parent.scanInfoModal.activate">
                       <td><a data-bind="attr: {href: url}, text: id"/></td>
                       <td data-bind="text: filename"/>
                       <td data-bind="text: status"/>
@@ -105,6 +105,23 @@
       <footer>
         <p>&copy; Code for America 2012</p>
       </footer>
+
+      <!-- Scan info modal -->
+      <div class="modal hide" id="scanInfoModal" data-bind="with: scanInfoModal">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">x</a>
+          <h3>Scanned Paper Form</h3>
+        </div>
+        <div class="modal-body">
+          <p>Scanned Form Information (JSON):</p>
+          <pre data-bind="text: scanJSON"></pre>
+          <p>Scanned Image:</p>
+          <a data-bind="attr: {href: imageUrl}"><img width="232" height="300" data-bind="attr: {src: imageUrl}"/></a>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-primary" data-dismiss="modal">Cool, thanks! :)</a>
+        </div>
+      </div> <!-- /modal -->
 
       <!-- Delete confirmation modal -->
       <div class="modal hide" id="deleteModal" data-bind="with: deleteModal">

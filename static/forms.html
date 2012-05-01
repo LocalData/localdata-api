@@ -72,8 +72,8 @@
                     <tr>
                   </thead>
                   <tbody data-bind="foreach: forms">
-                    <tr>
-                      <td data-bind="text: id"/>
+                    <tr data-bind="click: $parent.formInfoModal.activate">
+                      <td><a href="" data-bind="text: id"/></td>
                       <td data-bind="text: type"/>
                       <td><a class="btn" data-bind="click: $parent.confirmRemoveForm">Delete</a></td>
                     </tr>
@@ -102,6 +102,21 @@
       <footer>
         <p>&copy; Code for America 2012</p>
       </footer>
+
+      <!-- Form info modal -->
+      <div class="modal hide" id="formInfoModal" data-bind="with: formInfoModal">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">x</a>
+          <h3>Form Information</h3>
+        </div>
+        <div class="modal-body">
+          <p>Paper Form Description (JSON):</p>
+          <pre data-bind="text: formJSON"></pre>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-primary" data-dismiss="modal">Cool, thanks! :)</a>
+        </div>
+      </div> <!-- /modal -->
 
       <!-- Delete confirmation modal -->
       <div class="modal hide" id="deleteModal" data-bind="with: deleteModal">

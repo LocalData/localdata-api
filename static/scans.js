@@ -1,10 +1,31 @@
 //
 var BASE_URL = 'http://' + window.location.host;
 
+var ScanInfoModalVM = function() {
+  var self = this;
+
+  self.scanJSON = ko.observable();
+  self.imageUrl = ko.observable();
+
+  // TODO: separate this explicit markup interaction. This ViewModel is already
+  // bound to the View, so we should be able to control the View without
+  // manipulating the markup.
+  self.view = $('#scanInfoModal');
+
+  // Activate the modal.
+  self.activate = function(item) {
+    self.scanJSON(JSON.stringify(item, null, '  '));
+    self.imageUrl(item.url);
+    self.view.modal('show');
+  };
+}
+
 // Main ViewModel for the page
 var PageVM = function(pageName) {
   var self = SurveyPageVM(pageName);
 
+  // Scan information VM
+  self.scanInfoModal = new ScanInfoModalVM();
   // Delete confirmation VM
   self.deleteModal = new DeleteModalVM();
 

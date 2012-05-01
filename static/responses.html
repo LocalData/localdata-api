@@ -74,8 +74,8 @@
                     <tr>
                   </thead>
                   <tbody data-bind="foreach: responses">
-                    <tr>
-                      <td data-bind="text: id"/>
+                    <tr data-bind="click: $parent.responseInfoModal.activate">
+                      <td><a href="" data-bind="text: id"/></td>
                       <td data-bind="text: parcel_id"/>
                       <td data-bind="text: JSON.stringify($data)"/>
                       <td><a class="btn" data-bind="click: $parent.confirmRemoveResponse">Delete</a></td>
@@ -105,6 +105,23 @@
       <footer>
         <p>&copy; Code for America 2012</p>
       </footer>
+
+      <!-- Response info modal -->
+      <div class="modal hide" id="responseInfoModal" data-bind="with: responseInfoModal">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">x</a>
+          <h3>Submitted Response</h3>
+        </div>
+        <div class="modal-body">
+          <p>Response Information (JSON):</p>
+          <pre data-bind="text: responseJSON"></pre>
+          <p>Scanned Image:</p>
+          <a data-bind="attr: {href: imageUrl}"><img width="232" height="300" data-bind="attr: {src: imageUrl}"/></a>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-primary" data-dismiss="modal">Cool, thanks! :)</a>
+        </div>
+      </div> <!-- /modal -->
 
       <!-- Delete confirmation modal -->
       <div class="modal hide" id="deleteModal" data-bind="with: deleteModal">

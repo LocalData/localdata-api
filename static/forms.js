@@ -1,9 +1,34 @@
 //
 var BASE_URL = 'http://' + window.location.host;
 
+var FormInfoModalVM = function() {
+  var self = this;
+
+  self.formJSON = ko.observable();
+
+  // TODO: separate this explicit markup interaction. This ViewModel is already
+  // bound to the View, so we should be able to control the View without
+  // manipulating the markup.
+  self.view = $('#formInfoModal');
+
+  // Activate the Delete Confirmation Modal.
+  self.activate = function(item) {
+    self.formJSON(JSON.stringify(item, null, '  '));
+    self.view.modal('show');
+  };
+
+  // XXX
+  //self.dismiss = function() {
+  //  self.view.modal('hide');
+  //};
+}
+
 // Main ViewModel for the page
 var PageVM = function(pageName) {
   var self = SurveyPageVM(pageName);
+
+  // Form information VM
+  self.formInfoModal = new FormInfoModalVM();
 
   // Delete confirmation VM
   self.deleteModal = new DeleteModalVM();
