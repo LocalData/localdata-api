@@ -1,16 +1,6 @@
 //
 var BASE_URL = 'http://' + window.location.host;
 
-function deleteFromAPI(url, cb) {
-  // Use header to indicate a DELETE request
-  $.ajax({
-    url: url,
-    type: 'POST',
-    headers: {'X-HTTP-Method-Override': 'DELETE'},
-    success: cb
-  });
-}
-
 // Main ViewModel for the page
 var ProgressVM = function() {
   var self = this;

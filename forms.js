@@ -130,7 +130,7 @@ app.post('/surveys/:sid/forms', function(req, response) {
       collection.insert(form, function() {
         // Check if we've added all of them.
         if (++count === total) {
-          response.send({forms: forms});
+          response.send({forms: forms}, 201);
         }
       });
     });

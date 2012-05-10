@@ -32,7 +32,7 @@ var STATUS_COMPLETE = 'complete';
 // Construct the image download URL using the server's hostname, as it appears
 // to the client.
 function makeDownloadPath(file, req) {
-  return ['http:/', req.header('Host'), UPLOAD_DIR, file].join('/');
+  return 'http://s3.amazonaws.com/' + S3_BUCKET + '/' + UPLOAD_DIR + '/' + file;
 }
 
 // Construct the S3 object location. This does not include the bucket name.
@@ -111,7 +111,7 @@ function setup(app, db, idgen, collectionName) {
 
             // Add image info to the database.
             collection.insert(data, function() {
-              response.end(body);
+              response.send(body, 201);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
 

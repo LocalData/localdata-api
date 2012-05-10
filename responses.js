@@ -5,10 +5,23 @@
  * 
  * Collects responses from web, mobile, and paper forms.
  * 
- * Data structure:
+ * Data structure for paper-originating response:
  * responses: [
- *   { parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}},
- *   { parcel_id: '11', responses: {'Q0': 1, 'Q1': 2}}
+ *   { parcel_id: "3728049",
+ *     responses: {"type":3,"business":1},
+ *     id: "cf1fa4c0-8e9e-11e1-8159-e53f8dbd1a6a",
+ *     survey: "e458a930-8e27-11e1-b08f-37bd5a7df741",
+ *     source : {type : "paper", scan: "", form: ""}
+ *   }
+ * ]
+ * Data structure for mobile-originating response:
+ * responses: [
+ *   { parcel_id: "3728049",
+ *     responses: {"type":3,"business":1},
+ *     id: "cf1fa4c0-8e9e-11e1-8159-e53f8dbd1a6a",
+ *     survey: "e458a930-8e27-11e1-b08f-37bd5a7df741",
+ *     source : {type : "mobile"}
+ *   }
  * ]
  *   
  */
@@ -150,10 +163,8 @@ function setup(app, db, idgen, collectionName) {
           console.log(resp);
           // Check if we've added all of them.
           if (++count == total) {
-            console.log("returning");
-            response.statusCode = 201;
-            response.header("Access-Control-Allow-Origin", "*");
-            response.send("success");
+            console.log('Created ' + total + 'items. Returning.');
+            response.send({responses: resps}, 201);
           }
         });
       });

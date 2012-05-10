@@ -68,7 +68,7 @@ function setup(app, db, idgen, collectionName) {
         collection.insert(coll, function() {
           // Check if we've added all of them.
           if (++count == total) {
-            response.send({collectors: colls});
+            response.send({collectors: colls}, 201);
           }
         });
       });

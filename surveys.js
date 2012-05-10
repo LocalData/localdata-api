@@ -78,9 +78,31 @@ function setup(app, db, idgen, collectionName) {
         collection.insert(survey, function() {
           // Check if we've added all of them.
           if (++count == total) {
-            response.send({surveys: surveys});
+            response.send({surveys: surveys}, 201);
           }
         });
+      });
+    });
+  });
+
+  // Delete a survey
+  // DELETE http://localhost:5000/surveys/{SURVEY ID}
+  // TODO: We should probably clean up the objects from other collections that
+  // pertain only to this survey.
+  app.del('/surveys/:sid', function(req, response) {
+    var sid = req.params.sid;
+    getCollection(function(err, collection) {
+      collection.remove({id: sid}, {safe: true}, function(error, count) {
+        if (error != null) {
+          console.log('Error removing survey ' + id + 'from the survey collection: ' + err.message);
+          response.send();
+        } else {
+          if (count != 1) {
+            console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
+          }
+          console.log('Deleted survey ' + sid);
+          response.send({count: count});
+        }
       });
     });
   });

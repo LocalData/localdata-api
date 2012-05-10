@@ -43,6 +43,9 @@
             <h1>
               <span data-bind="text: surveyName">Survey</span>
             </h1>
+            <div data-bind="visible: pickedSurvey">ID: <span data-bind="text: survey_id"></span></div>
+            <br/>
+            <a class="btn" data-bind="visible: pickedSurvey, click: refreshData"><i class="icon-refresh"></i> Refresh</a>
           </div>
         </div>
 

@@ -12,8 +12,8 @@ function handleError(error, response, body) {
   if (error != null) {
     console.log('Received an error: ' + error.message);
     return true;
-  } else if (response.statusCode != 200) {
-    console.log('Received non-200 status code: ' + response.statusCode);
+  } else if (response.statusCode != 200 && response.statusCode != 201) {
+    console.log('Received non-200/201 status code: ' + response.statusCode);
     if (body != null) console.log(body);
     return true;
   }
@@ -362,6 +362,19 @@ function addsurvey(input_file) {
   });
 }
 
+// Remove a survey object from the database
+function removesurvey(id) {
+  var url = BASEURL + '/surveys/' + id;
+  console.log('Removing survey ' + id);
+  request.del({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+
+    body = JSON.parse(body);
+    console.log(JSONpretty(body.response));
+    console.log('Deleted a survey successfully.');
+  });
+}
+
 // Get the data for a scanned image
 // Use getscanimage to download the actual image
 function getscandata(id) {
@@ -520,6 +533,9 @@ switch(cmd) {
     break;
   case 'addsurvey':
     addsurvey(process.argv[3]);
+    break;
+  case 'removesurvey':
+    removesurvey(process.argv[3]);
     break;
 
   // Scans
