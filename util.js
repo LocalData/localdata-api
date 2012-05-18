@@ -4,11 +4,6 @@
  *==================================================
  */
 
-module.exports = {
-  handleError: handleError,
-  makeErrorHandler: makeErrorHandler
-}
-
 // Returns true if we handled an error.
 function handleError(err, res) {
   if (err != null) {
@@ -21,6 +16,16 @@ function handleError(err, res) {
 
 // Use currying to avoid some typing every time we handle an error.
 function makeErrorHandler(response) {
-  return function(error) { return handleError(error, response); }
+  return function(error) { return handleError(error, response); };
+}
+
+function isArray(arr) {
+  return Object.prototype.toString.call(arr) === '[object Array]';
+}
+
+module.exports = {
+  handleError: handleError,
+  makeErrorHandler: makeErrorHandler,
+  isArray: isArray
 }
 

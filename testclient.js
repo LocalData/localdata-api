@@ -464,6 +464,15 @@ function updatescanstatus(id, status) {
   });
 }
 
+// Get the survey responses as a csv file
+function getcsv() {
+  var url = BASEURL + '/surveys/' + SURVEYID + '/csv';
+  request.get({url: url}, function(error, response, body) {
+    if (handleError(error, response, body)) return;
+    console.log(body);
+  });
+}
+
 
 var cmd = process.argv[2];
 switch(cmd) {
@@ -512,6 +521,9 @@ switch(cmd) {
   case 'getallresponses':
     getallresponses();
     break;
+  case 'getcsv':
+    getcsv();
+    break;
       
   // Collectors
   case 'getcollector':
@@ -549,7 +561,7 @@ switch(cmd) {
     getallscandata();
     break;
   case 'getscansbystatus':
-    getscansbystatus(process.argv[3])
+    getscansbystatus(process.argv[3]);
     break;
   case 'updatescanstatus':
     updatescanstatus(process.argv[3], process.argv[4]);

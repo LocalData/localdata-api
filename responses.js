@@ -34,6 +34,7 @@ module.exports = {
 };
 
 var handleError = util.handleError;
+var isArray = util.isArray;
 
 /*
  * app: express server
@@ -184,6 +185,106 @@ function setup(app, db, idgen, collectionName) {
         } else {
           response.send({count: count});
         }
+      });
+    });
+  });
+
+  function commasep(row, headers, headerCount) {
+    var arr = [];
+    for (var i = 0; i < row.length; i++) {
+      if (headerCount[headers[i]] === 1) {
+        // No multiple-choice for this column
+        arr.push(row[i]);
+      } else {
+        var len;
+        if (!isArray(row[i])) {
+          arr.push(row[i]);
+          len = 1;
+        } else {
+          len = row[i].length
+          for (var j = 0; j < len; j++) {
+            arr.push(row[i][j]);
+          }
+        }
+        // Padding for multiple-choice situations
+        for (var h = 0; h < headerCount[headers[i]] - len; h++) {
+          arr.push(null);
+        }
+      }
+    }
+
+    return arr.join(',');
+  }
+
+  // Return response data as CSV
+  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
+  app.get('/surveys/:sid/csv', function(req, response) {
+    var sid = req.params.sid;
+    getCollection(function(err, collection) {
+      collection.find({'survey': sid}, function(err, cursor) {
+        if (err != null) {
+          console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
+          response.send(500);
+          return;
+        }
+        cursor.toArray(function(err, items) {
+          var headers = ['parcel_id', 'source'];
+          var headerIndices = {};
+          var headerCount = {};
+          var i;
+          for (i = 0; i < headers.length; i++) {
+            headerIndices[headers[i]] = i;
+            headerCount[headers[i]] = 1;
+          }
+          var rows = [];
+          var len = items.length;
+          // Iterate over each response
+          for (i = 0; i < len; i++) {
+            var responses = items[i].responses;
+
+            // Add context entries (parcel ID, source type)
+            var row = [items[i].parcel_id, items[i].source.type];
+
+            for (var resp in responses) {
+              if (responses.hasOwnProperty(resp)) {
+                // If we haven't encountered this column, track it.
+                if (!headerIndices.hasOwnProperty(resp)) {
+                  headerIndices[resp] = headers.length;
+                  headerCount[resp] = 1;
+                  headers.push(resp);
+                  // Add an empty entry to each existing row, since they didn't
+                  // have this column.
+                  for (var j = 0; j < rows.length; j++) {
+                    rows[j].push('');
+                  }
+                }
+                var entry = responses[resp];
+                // Check if we have multiple answers.
+                if (isArray(entry)) {
+                  if (entry.length > headerCount[resp]) {
+                    headerCount[resp] = entry.length;
+                  }
+                }
+                // Add the response to the CSV row.
+                row[headerIndices[resp]] = responses[resp];
+              }
+            }
+            // Add the CSV row.
+            rows.push(row);
+          }
+
+          response.writeHead(200, {
+            'Content-Type': 'text/csv'
+          });
+          // Turn each row into a CSV line
+          response.write(commasep(headers, headers, headerCount));
+          response.write('\n');
+          for (i = 0; i < len; i++) {
+            response.write(commasep(rows[i], headers, headerCount));
+            response.write('\n');
+          }
+          response.end();
+        });
       });
     });
   });
