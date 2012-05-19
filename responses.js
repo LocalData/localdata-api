@@ -46,7 +46,12 @@ function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
-
+  
+  //function ensureGeoIndex() {
+  //  console.log(db);
+  //  db.RESPONSES.ensureIndex({geo_info: {centroid: "2d"}});
+  //}
+  //
   // Get all responses for a survey.
   // GET http://localhost:3000/surveys/{SURVEY ID}/responses
   // GET http://localhost:3000/surveys/1/responses
@@ -190,6 +195,39 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+  
+  
+  // Get all responses in a bounding box
+  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
+  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/1,2,3,4
+  app.get('/surveys/:sid/responses/in/:bounds', function(req, response) {
+    var surveyid = req.params.sid;
+    var bounds = req.params.bounds;
+    var coords = bounds.split(",");
+    if (coords.length != 4) {
+      // There need to be four points.
+      response.send({}, 400);
+    };
+    var bbox = [[coords[0], coords[1]], [coords[3],  coords[4]]];
+    query = {'centroid': {"$within": { "$box": bbox}}};
+    console.log(query);
+    console.log(bounds);
+    
+    getCollection(function(err, collection) {
+      
+      collection.find({'survey': surveyid, 'geo_info':query}, function(err, cursor) {
+        if (handleError(err, response)) return;
+
+        cursor.toArray(function(err, items) {
+          if (items.length > 0) {
+            response.send({response: items[0]});
+          } else {
+            response.send({});
+          }
+        });
+      });
+    });
+  });
 
   function commasep(row, headers, headerCount) {
     var arr = [];
@@ -203,7 +241,7 @@ function setup(app, db, idgen, collectionName) {
           arr.push(row[i]);
           len = 1;
         } else {
-          len = row[i].length
+          len = row[i].length;
           for (var j = 0; j < len; j++) {
             arr.push(row[i][j]);
           }

@@ -21,12 +21,13 @@ function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
-
+  
   // Get all surveys
   // GET http://localhost:3000/surveys
   app.get('/surveys', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
+            
       if (handleError(err)) return;
       collection.find({}, function(err, cursor) {
         if (handleError(err)) return;
