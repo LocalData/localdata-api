@@ -113,7 +113,7 @@ function ensureGeoIndex() {
   // This really only has to happen on the first run. 
   console.log("Ensuring geospatial indexes");
   db.collection(RESPONSES, function(err, collection){
-    collection.ensureIndex({"geo_info.centroid": "2d"}});
+    collection.ensureIndex({"geo_info.centroid": "2d"}));
   });
 }
 
