@@ -163,6 +163,7 @@ function setup(app, db, idgen, collectionName) {
         var id = idgen();
         resp.id = id;
         resp.survey = surveyid;
+        resp.created = new Date();
         
         // Add response to database.
         collection.insert(resp, function() {
