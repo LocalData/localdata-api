@@ -165,6 +165,14 @@ function setup(app, db, idgen, collectionName) {
         resp.survey = surveyid;
         resp.created = new Date();
         
+        // check if there is a centroid. if yes, make sure the values are floats
+        // TODO: abstract into a testable function.
+        var centroid = resp["geo_info"]["centroid"];
+        if (centroid !== undefined) {
+          resp["geo_info"]["centroid"][0] = parseFloat(centroid[0]);
+          resp["geo_info"]["centroid"][1] = parseFloat(centroid[1]);
+        };    
+        
         // Add response to database.
         collection.insert(resp, function() {
           console.log(resp);
@@ -209,19 +217,25 @@ function setup(app, db, idgen, collectionName) {
       // There need to be four points.
       response.send({}, 400);
     };
-    var bbox = [[coords[0], coords[1]], [coords[3],  coords[4]]];
-    query = {'centroid': {"$within": { "$box": bbox}}};
-    console.log(query);
-    console.log(bounds);
+    for (var i = -1, ln = coords.length; ++i < ln;) {
+      coords[i] = parseFloat(coords[i]);
+    };
+    
+    
+    var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
+    query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
+    console.log("Bounds query ====================");
+    console.log(query['geo_info.centroid']['$within']["$box"]);
     
     getCollection(function(err, collection) {
-      
-      collection.find({'survey': surveyid, 'geo_info':query}, function(err, cursor) {
+      collection.find(query, function(err, cursor) {
         if (handleError(err, response)) return;
 
         cursor.toArray(function(err, items) {
+          console.log("Bounds results =========");
+          console.log(items);
           if (items.length > 0) {
-            response.send({response: items[0]});
+            response.send({"responses":items});
           } else {
             response.send({});
           }
