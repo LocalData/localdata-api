@@ -110,6 +110,8 @@ function startServer() {
 }
 
 function ensureGeoIndex() {
+  // XXX This is causing a problem. Make it a no-op for the demo.
+  return;
   // Make sure we are indexing centroids.
   // This really only has to happen on the first run. 
   console.log("Ensuring geospatial indexes");
