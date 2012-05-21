@@ -166,7 +166,7 @@ function setup(app, db, idgen, collectionName) {
         if (centroid !== undefined) {
           centroid[0] = parseFloat(centroid[0]);
           centroid[1] = parseFloat(centroid[1]);
-        };    
+        }
         
         // Add response to database.
         collection.insert(resp, function() {
@@ -210,11 +210,11 @@ function setup(app, db, idgen, collectionName) {
     var coords = bounds.split(",");
     if (coords.length != 4) {
       // There need to be four points.
-      response.send(s400);
-    };
+      response.send(400);
+    }
     for (var i = -1, ln = coords.length; ++i < ln;) {
       coords[i] = parseFloat(coords[i]);
-    };
+    }
     
     
     var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
@@ -229,11 +229,11 @@ function setup(app, db, idgen, collectionName) {
         cursor.toArray(function(err, items) {
           console.log("Bounds results =========");
           console.log(items);
-          if (items.length > 0) {
-            response.send({"responses":items});
-          } else {
+          if (!items || items.length === 0) {
             response.send({});
+            return;
           }
+          response.send({'responses': items});
         });
       });
     });
