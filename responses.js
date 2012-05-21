@@ -47,11 +47,6 @@ function setup(app, db, idgen, collectionName) {
     return db.collection(collectionName, cb);
   }
   
-  //function ensureGeoIndex() {
-  //  console.log(db);
-  //  db.RESPONSES.ensureIndex({geo_info: {centroid: "2d"}});
-  //}
-  //
   // Get all responses for a survey.
   // GET http://localhost:3000/surveys/{SURVEY ID}/responses
   // GET http://localhost:3000/surveys/1/responses
@@ -169,8 +164,8 @@ function setup(app, db, idgen, collectionName) {
         // TODO: abstract into a testable function.
         var centroid = resp["geo_info"]["centroid"];
         if (centroid !== undefined) {
-          resp["geo_info"]["centroid"][0] = parseFloat(centroid[0]);
-          resp["geo_info"]["centroid"][1] = parseFloat(centroid[1]);
+          centroid[0] = parseFloat(centroid[0]);
+          centroid[1] = parseFloat(centroid[1]);
         };    
         
         // Add response to database.
@@ -215,7 +210,7 @@ function setup(app, db, idgen, collectionName) {
     var coords = bounds.split(",");
     if (coords.length != 4) {
       // There need to be four points.
-      response.send({}, 400);
+      response.send(s400);
     };
     for (var i = -1, ln = coords.length; ++i < ln;) {
       coords[i] = parseFloat(coords[i]);
