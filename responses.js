@@ -46,7 +46,7 @@ function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
-
+  
   // Get all responses for a survey.
   // GET http://localhost:3000/surveys/{SURVEY ID}/responses
   // GET http://localhost:3000/surveys/1/responses
@@ -150,12 +150,23 @@ function setup(app, db, idgen, collectionName) {
     var count = 0;
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
+      
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
+        
         // Add metadata to the survey response
         var id = idgen();
         resp.id = id;
         resp.survey = surveyid;
+        resp.created = new Date();
+        
+        // check if there is a centroid. if yes, make sure the values are floats
+        // TODO: abstract into a testable function.
+        var centroid = resp["geo_info"]["centroid"];
+        if (centroid !== undefined) {
+          centroid[0] = parseFloat(centroid[0]);
+          centroid[1] = parseFloat(centroid[1]);
+        };    
         
         // Add response to database.
         collection.insert(resp, function() {
@@ -188,6 +199,45 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+  
+  
+  // Get all responses in a bounding box
+  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
+  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/1,2,3,4
+  app.get('/surveys/:sid/responses/in/:bounds', function(req, response) {
+    var surveyid = req.params.sid;
+    var bounds = req.params.bounds;
+    var coords = bounds.split(",");
+    if (coords.length != 4) {
+      // There need to be four points.
+      response.send(s400);
+    };
+    for (var i = -1, ln = coords.length; ++i < ln;) {
+      coords[i] = parseFloat(coords[i]);
+    };
+    
+    
+    var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
+    query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
+    console.log("Bounds query ====================");
+    console.log(query['geo_info.centroid']['$within']["$box"]);
+    
+    getCollection(function(err, collection) {
+      collection.find(query, function(err, cursor) {
+        if (handleError(err, response)) return;
+
+        cursor.toArray(function(err, items) {
+          console.log("Bounds results =========");
+          console.log(items);
+          if (items.length > 0) {
+            response.send({"responses":items});
+          } else {
+            response.send({});
+          }
+        });
+      });
+    });
+  });
 
   function commasep(row, headers, headerCount) {
     var arr = [];
@@ -201,7 +251,7 @@ function setup(app, db, idgen, collectionName) {
           arr.push(row[i]);
           len = 1;
         } else {
-          len = row[i].length
+          len = row[i].length;
           for (var j = 0; j < len; j++) {
             arr.push(row[i][j]);
           }

@@ -1,5 +1,5 @@
 var express = require('express');
-var mongo = require('mongodb')
+var mongo = require('mongodb');
 var uuid = require('node-uuid');
 var fs = require('fs');
 
@@ -100,10 +100,20 @@ app.get(/\/static\/(.*)/, function(req, response) {
   sendFile(response, path, type);
 });
 
-function startServer() {
+
+function startServer() {  
   var port = process.env.PORT || 3000;
   app.listen(port, function() {
     console.log('Listening on ' + port);
+  });
+}
+
+function ensureGeoIndex() {
+  // Make sure we are indexing centroids.
+  // This really only has to happen on the first run. 
+  console.log("Ensuring geospatial indexes");
+  db.collection(RESPONSES, function(err, collection){
+    collection.ensureIndex({"geo_info.centroid": "2d"});
   });
 }
 
@@ -121,9 +131,12 @@ db.open(function() {
         console.log(err.message);
         return;
       }
+
+      ensureGeoIndex();
       startServer();
     });
   } else {
+    ensureGeoIndex();
     startServer();
   }
 });
