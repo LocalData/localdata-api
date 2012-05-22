@@ -80,7 +80,8 @@ function setup(app, db, idgen, collectionName) {
       filename: filename,
       mimetype: req.headers['x-mime-type'],
       url: makeDownloadPath(id, req),
-      status: STATUS_PENDING
+      status: STATUS_PENDING,
+      created: new Date()
     };
 
     getCollection(function(err, collection) {
