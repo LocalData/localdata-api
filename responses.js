@@ -162,12 +162,10 @@ function setup(app, db, idgen, collectionName) {
         
         // check if there is a centroid. if yes, make sure the values are floats
         // TODO: abstract into a testable function.
-        if (false) { // XXX
         var centroid = resp["geo_info"]["centroid"];
         if (centroid !== undefined) {
           centroid[0] = parseFloat(centroid[0]);
           centroid[1] = parseFloat(centroid[1]);
-        }
         }
         
         // Add response to database.
