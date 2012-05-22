@@ -110,12 +110,35 @@ function startServer() {
 }
 
 function ensureGeoIndex() {
-  // XXX This is causing a problem. Make it a no-op for the demo.
-  return;
   // Make sure we are indexing centroids.
   // This really only has to happen on the first run. 
   console.log("Ensuring geospatial indexes");
   db.collection(RESPONSES, function(err, collection){
+    
+    
+    collection.find({}, function(err, cursor) {
+      cursor.toArray(function(err, items) {
+        for (var i=0; i < items.length; i++) {
+          var elt = items[i];
+          if('geo_info' in elt) {
+            if('centroid' in elt.geo_info){
+              centroid = elt.geo_info.centroid;
+              centroid[0] = parseFloat(centroid[0]);
+              centroid[1] = parseFloat(centroid[1]);   
+              if (elt.geo_info.centroid == '') {
+                elt.geo_info = {}
+              };     
+              collection.save(elt);         
+            };
+          };
+          console.log(elt);
+          
+        };
+      });
+      
+    });
+    
+    
     collection.ensureIndex({"geo_info.centroid": "2d"});
   });
 }
