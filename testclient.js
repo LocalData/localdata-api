@@ -473,7 +473,6 @@ function getcsv() {
   });
 }
 
-
 var cmd = process.argv[2];
 switch(cmd) {
   // Forms

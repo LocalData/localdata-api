@@ -227,8 +227,6 @@ function setup(app, db, idgen, collectionName) {
         if (handleError(err, response)) return;
 
         cursor.toArray(function(err, items) {
-          console.log("Bounds results =========");
-          console.log(items);
           if (!items || items.length === 0) {
             response.send({});
             return;
@@ -239,6 +237,11 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+
+  /*
+   * Turn a list of parcels into a comma-separated string.
+   * NOTE: Will break if used with strings with commas (doesn't escape')
+   */
   function commasep(row, headers, headerCount) {
     var arr = [];
     for (var i = 0; i < row.length; i++) {
@@ -246,20 +249,17 @@ function setup(app, db, idgen, collectionName) {
         // No multiple-choice for this column
         arr.push(row[i]);
       } else {
+        // There might be multiple items in this cell.
         var len;
         if (!isArray(row[i])) {
+          // This row only has one answer in this column, so just push that.
           arr.push(row[i]);
           len = 1;
         } else {
-          len = row[i].length;
-          for (var j = 0; j < len; j++) {
-            arr.push(row[i][j]);
-          }
+          // If it's an array of responses, join them with a semicolon
+          ar.push(row[i].join(";"));          
         }
-        // Padding for multiple-choice situations
-        for (var h = 0; h < headerCount[headers[i]] - len; h++) {
-          arr.push(null);
-        }
+        
       }
     }
 
@@ -277,8 +277,13 @@ function setup(app, db, idgen, collectionName) {
           response.send(500);
           return;
         }
+        
         cursor.toArray(function(err, items) {
+          
+          // Start with some basic headers
           var headers = ['parcel_id', 'source'];
+          
+          // Record which header is at which index
           var headerIndices = {};
           var headerCount = {};
           var i;
@@ -286,15 +291,21 @@ function setup(app, db, idgen, collectionName) {
             headerIndices[headers[i]] = i;
             headerCount[headers[i]] = 1;
           }
+          
+          // Iterate over each response
           var rows = [];
           var len = items.length;
-          // Iterate over each response
           for (i = 0; i < len; i++) {
             var responses = items[i].responses;
 
             // Add context entries (parcel ID, source type)
-            var row = [items[i].parcel_id, items[i].source.type];
+            var row = [
+              items[i].parcel_id, 
+              items[i].source.type,
+              items[i].
+            ];
 
+            // Then, add data about the element
             for (var resp in responses) {
               if (responses.hasOwnProperty(resp)) {
                 // If we haven't encountered this column, track it.
@@ -309,20 +320,25 @@ function setup(app, db, idgen, collectionName) {
                   }
                 }
                 var entry = responses[resp];
+                
                 // Check if we have multiple answers.
                 if (isArray(entry)) {
                   if (entry.length > headerCount[resp]) {
                     headerCount[resp] = entry.length;
                   }
                 }
+                
                 // Add the response to the CSV row.
                 row[headerIndices[resp]] = responses[resp];
               }
             }
+            
             // Add the CSV row.
             rows.push(row);
-          }
+          } // End loop over every result
 
+
+          // CSV output
           response.writeHead(200, {
             'Content-Type': 'text/csv'
           });
@@ -334,8 +350,9 @@ function setup(app, db, idgen, collectionName) {
             response.write('\n');
           }
           response.end();
-        });
-      });
+          
+        }); // end cursor.toArray()
+      }); // end find results for survey
     });
   });
 
