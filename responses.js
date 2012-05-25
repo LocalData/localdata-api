@@ -30,11 +30,43 @@
 var util = require('./util');
 
 module.exports = {
-  setup: setup
+  setup: setup,
+  commasep: commasep
 };
 
 var handleError = util.handleError;
 var isArray = util.isArray;
+
+
+/*
+ * Turn a list of parcels into a comma-separated string.
+ * NOTE: Will break if used with strings with commas (doesn't escape')
+ */
+function commasep(row, headers, headerCount) {
+  var arr = [];
+  for (var i = 0; i < row.length; i++) {
+    if (headerCount[headers[i]] === 1) {
+      // No multiple-choice for this column
+      arr.push(row[i]);
+    } else {
+      // There might be multiple items in this cell.
+      var len;
+      if (!isArray(row[i])) {
+        // This row only has one answer in this column, so just push that.
+        arr.push(row[i]);
+        len = 1;
+      } else {
+        // If it's an array of responses, join them with a semicolon
+        ar.push(row[i].join(";"));          
+      }
+      
+    }
+  }
+
+  return arr.join(',');
+};
+
+
 
 /*
  * app: express server
@@ -238,34 +270,6 @@ function setup(app, db, idgen, collectionName) {
   });
 
 
-  /*
-   * Turn a list of parcels into a comma-separated string.
-   * NOTE: Will break if used with strings with commas (doesn't escape')
-   */
-  function commasep(row, headers, headerCount) {
-    var arr = [];
-    for (var i = 0; i < row.length; i++) {
-      if (headerCount[headers[i]] === 1) {
-        // No multiple-choice for this column
-        arr.push(row[i]);
-      } else {
-        // There might be multiple items in this cell.
-        var len;
-        if (!isArray(row[i])) {
-          // This row only has one answer in this column, so just push that.
-          arr.push(row[i]);
-          len = 1;
-        } else {
-          // If it's an array of responses, join them with a semicolon
-          ar.push(row[i].join(";"));          
-        }
-        
-      }
-    }
-
-    return arr.join(',');
-  }
-
   // Return response data as CSV
   // GET http://localhost:5000/surveys/{SURVEY ID}/csv
   app.get('/surveys/:sid/csv', function(req, response) {
@@ -301,8 +305,7 @@ function setup(app, db, idgen, collectionName) {
             // Add context entries (parcel ID, source type)
             var row = [
               items[i].parcel_id, 
-              items[i].source.type,
-              items[i].
+              items[i].source.type
             ];
 
             // Then, add data about the element
