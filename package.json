@@ -4,7 +4,7 @@
   , "private": true
   , "engines" : { "node" : "0.6.x" }
   , "dependencies": {
-      "express": "2.5.8"
+      "express": "3.0.x"
     , "mongodb" : ">= 0.9.9-7"
     , "request" : "2.9.x"
     , "node-uuid" : "1.3.3"
