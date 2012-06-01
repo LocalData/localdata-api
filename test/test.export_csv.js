@@ -10,6 +10,11 @@ suite('csvExport', function(){
     'third': 1
   };
   var complexRow = ['a', [1,2,3], 4];
+  var complexHeaderCount = {
+    'first': 1,
+    'second': 3,
+    'third': 1
+  };
   
   test('commasep should turn a simple list into a csv string', function(){
     var csv = commasep(row, headers, headerCount);
@@ -17,9 +22,8 @@ suite('csvExport', function(){
     assert.equal(csv,expected);
   });
   
-  
   test('arrays should be serialized with semicolons', function() {
-    var csv = commasep(complexRow, headers, headerCount);
+    var csv = commasep(complexRow, headers, complexHeaderCount);
     var expected = 'a,1;2;3,4';
     assert.equal(csv,expected);
   });

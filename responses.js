@@ -57,7 +57,7 @@ function commasep(row, headers, headerCount) {
         len = 1;
       } else {
         // If it's an array of responses, join them with a semicolon
-        ar.push(row[i].join(";"));          
+        arr.push(row[i].join(";"));          
       }
       
     }
@@ -285,7 +285,7 @@ function setup(app, db, idgen, collectionName) {
         cursor.toArray(function(err, items) {
           
           // Start with some basic headers
-          var headers = ['parcel_id', 'source'];
+          var headers = ['parcel_id', 'collector', 'timestamp', 'source'];
           
           // Record which header is at which index
           var headerIndices = {};
@@ -305,6 +305,8 @@ function setup(app, db, idgen, collectionName) {
             // Add context entries (parcel ID, source type)
             var row = [
               items[i].parcel_id, 
+              items[i].source.collector,
+              items[i].created,
               items[i].source.type
             ];
 
