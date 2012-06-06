@@ -31,7 +31,7 @@ var util = require('./util');
 
 module.exports = {
   setup: setup,
-  commasep: commasep
+  listToCSVString: listToCSVString
 };
 
 var handleError = util.handleError;
@@ -42,7 +42,7 @@ var isArray = util.isArray;
  * Turn a list of parcels into a comma-separated string.
  * NOTE: Will break if used with strings with commas (doesn't escape')
  */
-function commasep(row, headers, headerCount) {
+function listToCSVString(row, headers, headerCount) {
   var arr = [];
   for (var i = 0; i < row.length; i++) {
     if (headerCount[headers[i]] === 1) {
@@ -67,6 +67,22 @@ function commasep(row, headers, headerCount) {
 };
 
 
+/*
+ * Don't limit the results in any way
+ */
+function limitAllResults(items) {
+  return items;
+}
+
+/* 
+ * Return only the most recent result for each parcel
+ */
+function limitToMostRecent(items) {
+  latest = {};
+  
+  // Array to list
+  return latest;
+}
 
 /*
  * app: express server
@@ -268,25 +284,27 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+  
 
-
-  // Return response data as CSV
-  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
-  app.get('/surveys/:sid/csv', function(req, response) {
-    var sid = req.params.sid;
+  function exportSurveyAsCSV(surveyId, listOfLimitingFunctions){
     getCollection(function(err, collection) {
-      collection.find({'survey': sid}, function(err, cursor) {
+      collection.find({'survey': surveyId}, function(err, cursor) {
         if (err != null) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send(500);
           return;
         }
-        
+
         cursor.toArray(function(err, items) {
-          
+
+          // Limit the items
+          //if list:
+          //  for each in list: 
+          //    items = each(list)
+
           // Start with some basic headers
           var headers = ['parcel_id', 'collector', 'timestamp', 'source'];
-          
+
           // Record which header is at which index
           var headerIndices = {};
           var headerCount = {};
@@ -295,7 +313,7 @@ function setup(app, db, idgen, collectionName) {
             headerIndices[headers[i]] = i;
             headerCount[headers[i]] = 1;
           }
-          
+
           // Iterate over each response
           var rows = [];
           var len = items.length;
@@ -325,19 +343,19 @@ function setup(app, db, idgen, collectionName) {
                   }
                 }
                 var entry = responses[resp];
-                
+
                 // Check if we have multiple answers.
                 if (isArray(entry)) {
                   if (entry.length > headerCount[resp]) {
                     headerCount[resp] = entry.length;
                   }
                 }
-                
+
                 // Add the response to the CSV row.
                 row[headerIndices[resp]] = responses[resp];
               }
             }
-            
+
             // Add the CSV row.
             rows.push(row);
           } // End loop over every result
@@ -348,17 +366,29 @@ function setup(app, db, idgen, collectionName) {
             'Content-Type': 'text/csv'
           });
           // Turn each row into a CSV line
-          response.write(commasep(headers, headers, headerCount));
+          response.write(listToCSVString(headers, headers, headerCount));
           response.write('\n');
           for (i = 0; i < len; i++) {
-            response.write(commasep(rows[i], headers, headerCount));
+            response.write(listToCSVString(rows[i], headers, headerCount));
             response.write('\n');
           }
           response.end();
-          
+
         }); // end cursor.toArray()
       }); // end find results for survey
     });
+  };
+
+
+
+
+
+  // Return response data as CSV
+  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
+  app.get('/surveys/:sid/csv', function(req, response) {
+    var sid = req.params.sid;
+
+    exportSurveyAsCSV(sid, []);
   });
 
 } // setup()
