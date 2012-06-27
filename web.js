@@ -107,18 +107,7 @@ function startServer() {
   app.listen(port, function() {
     console.log('Listening on ' + port);
   });
-}
-
-function ensureGeoIndex() {
-  // XXX This is causing a problem. Make it a no-op for the demo.
-  return;
-  // Make sure we are indexing centroids.
-  // This really only has to happen on the first run. 
-  console.log("Ensuring geospatial indexes");
-  db.collection(RESPONSES, function(err, collection){
-    collection.ensureIndex({"geo_info.centroid": "2d"});
-  });
-}
+};
 
 // Kick things off
 console.log('Using the following settings:');
@@ -134,12 +123,9 @@ db.open(function() {
         console.log(err.message);
         return;
       }
-
-      ensureGeoIndex();
       startServer();
     });
   } else {
-    ensureGeoIndex();
     startServer();
   }
 });

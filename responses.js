@@ -30,11 +30,183 @@
 var util = require('./util');
 
 module.exports = {
-  setup: setup
+  setup: setup,
+  listToCSVString: listToCSVString,
+  filterAllResults: filterAllResults,
+  filterToMostRecent: filterToMostRecent,
+  filterToOneRowPerUse: filterToOneRowPerUse
 };
 
 var handleError = util.handleError;
 var isArray = util.isArray;
+
+
+/*
+ * Turn a list of parcels into a comma-separated string.
+ * NOTE: Will break if used with strings with commas (doesn't escape!)
+ */
+function listToCSVString(row, headers, maxEltsInCell) {
+  var arr = [];
+  for (var i = 0; i < row.length; i++) {
+    if (maxEltsInCell[headers[i]] === 1) {
+      // No multiple-choice for this column
+      arr.push(row[i]);
+    } else {
+      // There might be multiple items in this cell.
+      var len;
+      if (!isArray(row[i])) {
+        // This row only has one answer in this column, so just push that.
+        arr.push(row[i]);
+        len = 1;
+      } else {
+        // If it's an array of responses, join them with a semicolon
+        arr.push(row[i].join(";"));          
+      }
+    }
+  }
+  return arr.join(',');
+};
+
+
+/*
+ * Don't limit the results in any way
+ */
+function filterAllResults(items) {
+  return items;
+};
+
+
+
+/* Helper for the following fn */
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+
+function clone(obj) {
+    if (null == obj || "object" != typeof obj) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+    }
+    return copy;
+}
+
+/* 
+ * Ugly function to separate uses (aka use1, use2, use3) into separate results
+ * Really shouldn't need this after the WSU test.
+ */
+function filterToOneRowPerUse(items) {
+  var results = [];
+  var matchEndsWithDashNumber = /-\d+$/;
+  // Go through every result
+  for (var idx=0; idx < items.length; idx++) {
+    
+    var newResult;
+    var result = items[idx];
+    var useCount = parseInt(result['responses']['use-count'], 10);
+    
+    // If there are multiple uses, loop through all of them.
+    if (useCount > 1) {
+      var toInclude = {};
+      
+      // Loop through all the uses
+      for (var i=2; i <= useCount; i++) {
+        var toFind = "-" + i.toString();      
+        toInclude = {};
+
+        // If the the key ends in toFind, let's include it.
+        for (var key in result['responses']) {
+          if (result['responses'].hasOwnProperty(key)) {
+            
+            var m = key.match(matchEndsWithDashNumber);
+            if (m != null) {
+              if (key.endsWith(toFind)) {
+                // Strip off the -#
+                var endIdx = m['index'];
+                var newKey = key.substring(0,endIdx);
+                toInclude[newKey] = result['responses'][key];
+              };
+            }else {
+              // Find keys that don't end in -#. 
+              // Make sure we don't already have something like this:
+              if(!toInclude.hasOwnProperty(key)) {
+                toInclude[key] = result['responses'][key];        
+              }
+            }
+            
+          };
+        };
+
+        newResult = clone(result);
+        newResult['responses'] = toInclude;
+              
+        results.push(newResult);            
+      }; // End loop through uses
+      
+      
+      // catch that first set of uses
+      toInclude = {};
+      for (key in result['responses']) {
+        if (result['responses'].hasOwnProperty(key)) {
+          if (key.match(/-\d+$/) == null) {
+            // Ok, now check if we already have something like this:
+            toInclude[key] = result['responses'][key];        
+          };
+        };
+      };
+      newResult = clone(result);
+      newResult['responses'] = toInclude;
+      results.push(newResult);                  
+    }else {
+      results.push(result);
+    }
+  }
+  
+  return results;
+};
+
+
+
+/* 
+ * Return only the most recent result for each parcel
+ */
+function filterToMostRecent(items) {
+  // Keep track of the latest result for each object ID
+  var latest = {};
+
+  // Loop through all the items
+  for (var i=0; i < items.length; i++) {
+    var item = items[i];
+    var parcelId = item.parcel_id;
+    
+    // console.log("testing========");
+    // console.log(item);
+    // console.log("--");
+    // console.log(latest);
+    // console.log("----");
+    
+    if (latest[parcelId] == undefined){
+      // If there isn't a most recent result yet, just add it
+      latest[parcelId] = item;
+    } else {
+      // We need to check if this result is newer than the latest one
+      var oldDate = new Date(latest[parcelId].created);
+      var newDate = new Date(item.created);
+      if (oldDate.getTime() < newDate.getTime()) {
+        latest[parcelId] = item;
+      };
+    };
+  };
+  
+  // Covert the keyed array to a plain ol' list
+  var latest_list = [];
+  for (var key in latest) {
+    if (latest.hasOwnProperty(key)) {
+      latest_list.push(latest[key]);
+    };
+  };
+  return latest_list;
+}
 
 /*
  * app: express server
@@ -229,8 +401,6 @@ function setup(app, db, idgen, collectionName) {
         if (handleError(err, response)) return;
 
         cursor.toArray(function(err, items) {
-          console.log("Bounds results =========");
-          console.log(items);
           if (!items || items.length === 0) {
             response.send({});
             return;
@@ -240,69 +410,61 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
+  
 
-  function commasep(row, headers, headerCount) {
-    var arr = [];
-    for (var i = 0; i < row.length; i++) {
-      if (headerCount[headers[i]] === 1) {
-        // No multiple-choice for this column
-        arr.push(row[i]);
-      } else {
-        var len;
-        if (!isArray(row[i])) {
-          arr.push(row[i]);
-          len = 1;
-        } else {
-          len = row[i].length;
-          for (var j = 0; j < len; j++) {
-            arr.push(row[i][j]);
-          }
-        }
-        // Padding for multiple-choice situations
-        for (var h = 0; h < headerCount[headers[i]] - len; h++) {
-          arr.push(null);
-        }
-      }
-    }
-
-    return arr.join(',');
-  }
-
-  // Return response data as CSV
-  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
-  app.get('/surveys/:sid/csv', function(req, response) {
-    var sid = req.params.sid;
+  function exportSurveyAsCSV(surveyId, response, listOfFilteringFunctions){
     getCollection(function(err, collection) {
-      collection.find({'survey': sid}, function(err, cursor) {
+      collection.find({'survey': surveyId}, function(err, cursor) {
+        
         if (err != null) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send(500);
           return;
         }
+
         cursor.toArray(function(err, items) {
-          var headers = ['parcel_id', 'source'];
+
+          // Filter the items
+          for (var idx in listOfFilteringFunctions) {
+            //console.log(items);
+            items = listOfFilteringFunctions[idx](items);
+            
+          };
+          //console.log(items);
+
+          // Start with some basic headers
+          var headers = ['parcel_id', 'collector', 'timestamp', 'source'];
+
+          // Record which header is at which index
           var headerIndices = {};
-          var headerCount = {};
+          var maxEltsInCell = {};
           var i;
           for (i = 0; i < headers.length; i++) {
             headerIndices[headers[i]] = i;
-            headerCount[headers[i]] = 1;
+            maxEltsInCell[headers[i]] = 1;
           }
+
+          // Iterate over each response
           var rows = [];
           var len = items.length;
-          // Iterate over each response
           for (i = 0; i < len; i++) {
             var responses = items[i].responses;
 
             // Add context entries (parcel ID, source type)
-            var row = [items[i].parcel_id, items[i].source.type];
+            var row = [
+              items[i].parcel_id, 
+              items[i].source.collector,
+              items[i].created,
+              items[i].source.type
+            ];
 
+            // Then, add data about the element
             for (var resp in responses) {
               if (responses.hasOwnProperty(resp)) {
                 // If we haven't encountered this column, track it.
                 if (!headerIndices.hasOwnProperty(resp)) {
                   headerIndices[resp] = headers.length;
-                  headerCount[resp] = 1;
+                  maxEltsInCell[resp] = 1;
                   headers.push(resp);
                   // Add an empty entry to each existing row, since they didn't
                   // have this column.
@@ -311,34 +473,57 @@ function setup(app, db, idgen, collectionName) {
                   }
                 }
                 var entry = responses[resp];
+
                 // Check if we have multiple answers.
                 if (isArray(entry)) {
-                  if (entry.length > headerCount[resp]) {
-                    headerCount[resp] = entry.length;
+                  if (entry.length > maxEltsInCell[resp]) {
+                    maxEltsInCell[resp] = entry.length;
                   }
                 }
+
                 // Add the response to the CSV row.
                 row[headerIndices[resp]] = responses[resp];
               }
             }
+
             // Add the CSV row.
             rows.push(row);
-          }
+          } // End loop over every result
 
+
+          // CSV output
           response.writeHead(200, {
             'Content-Type': 'text/csv'
           });
           // Turn each row into a CSV line
-          response.write(commasep(headers, headers, headerCount));
+          response.write(listToCSVString(headers, headers, maxEltsInCell));
           response.write('\n');
           for (i = 0; i < len; i++) {
-            response.write(commasep(rows[i], headers, headerCount));
+            response.write(listToCSVString(rows[i], headers, maxEltsInCell));
             response.write('\n');
           }
           response.end();
-        });
-      });
+
+        }); // end cursor.toArray()
+      }); // end find results for survey
     });
+  };
+
+
+  // Return response data as CSV
+  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
+  app.get('/surveys/:sid/csv', function(req, response) {
+    var sid = req.params.sid;
+    exportSurveyAsCSV(sid, response, []);
   });
+  
+  
+  // Return CSV for WSU use
+  // GET http://localhost:5000/surveys/{SURVEY ID}/csv-recent-peruse
+  app.get('/surveys/:sid/csv-recent-peruse', function(req, response) {
+    var sid = req.params.sid;
+    exportSurveyAsCSV(sid, response, [filterToMostRecent, filterToOneRowPerUse]);
+  });
+  
 
 } // setup()
