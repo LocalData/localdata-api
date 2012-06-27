@@ -117,29 +117,23 @@ function filterToOneRowPerUse(items) {
         // If the the key ends in toFind, let's include it.
         for (var key in result['responses']) {
           if (result['responses'].hasOwnProperty(key)) {
-            if (key.endsWith(toFind)) {
             
-              // Strip off the -#
-              var m = key.match(matchEndsWithDashNumber);
-              var endIdx = m['index'];
-              var newKey = key.substring(0,endIdx);
-              toInclude[newKey] = result['responses'][key];
-              //delete toInclude[key];
-            
-              // toInclude[key] = result['responses'][key];
-            };
-          };
-        };
-
-        // Find keys that don't end in -# 
-        for (key in result['responses']) {
-          if (result['responses'].hasOwnProperty(key)) {
-            if (key.match(matchEndsWithDashNumber) == null) {
-              // Ok, now make sure we don't already have something like this:
+            var m = key.match(matchEndsWithDashNumber);
+            if (m != null) {
+              if (key.endsWith(toFind)) {
+                // Strip off the -#
+                var endIdx = m['index'];
+                var newKey = key.substring(0,endIdx);
+                toInclude[newKey] = result['responses'][key];
+              };
+            }else {
+              // Find keys that don't end in -#. 
+              // Make sure we don't already have something like this:
               if(!toInclude.hasOwnProperty(key)) {
                 toInclude[key] = result['responses'][key];        
               }
-            };
+            }
+            
           };
         };
 
