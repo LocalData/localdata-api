@@ -91,12 +91,16 @@ function clone(obj) {
     return copy;
 }
 
-/* Really shouldn't need this after the WSU test */
+/* 
+ * Ugly function to separate uses (aka use1, use2, use3) into separate results
+ * Really shouldn't need this after the WSU test.
+ */
 function filterToOneRowPerUse(items) {
   var results = [];
   
   // Go through every result
   for (var idx in items) {
+    var newResult;
     var result = items[idx];
     var useCount = parseInt(result['responses']['use-count'], 10);
     
@@ -136,7 +140,7 @@ function filterToOneRowPerUse(items) {
           };
         };
 
-        var newResult = clone(result);
+        newResult = clone(result);
         newResult['responses'] = toInclude;
               
         results.push(newResult);            
@@ -151,7 +155,7 @@ function filterToOneRowPerUse(items) {
           toInclude[key] = result['responses'][key];        
         };
       };
-      var newResult = clone(result);
+      newResult = clone(result);
       newResult['responses'] = toInclude;
       results.push(newResult);                  
     }else {
@@ -418,9 +422,12 @@ function setup(app, db, idgen, collectionName) {
         cursor.toArray(function(err, items) {
 
           // Filter the items
-          //if list:
-          //  for each in list: 
-          //    items = each(list)
+          for (var idx in listOfFilteringFunctions) {
+            //console.log(items);
+            items = listOfFilteringFunctions[idx](items);
+            
+          };
+          //console.log(items);
 
           // Start with some basic headers
           var headers = ['parcel_id', 'collector', 'timestamp', 'source'];
@@ -500,15 +507,22 @@ function setup(app, db, idgen, collectionName) {
   };
 
 
-
-
-
   // Return response data as CSV
   // GET http://localhost:5000/surveys/{SURVEY ID}/csv
   app.get('/surveys/:sid/csv', function(req, response) {
     var sid = req.params.sid;
-
     exportSurveyAsCSV(sid, response, []);
   });
+  
+  
+  // Return CSV for WSU use
+  // GET http://localhost:5000/surveys/{SURVEY ID}/csv-recent-peruse
+  app.get('/surveys/:sid/csv-recent-peruse', function(req, response) {
+    var sid = req.params.sid;
+    exportSurveyAsCSV(sid, response, [filterToMostRecent, filterToOneRowPerUse]);
+  });
+  
+  
+  
 
 } // setup()
