@@ -77,8 +77,7 @@ app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
           if (items.length > 0) {
             response.send({form: items[0]});
           } else {
-            // TODO: Is this the right way to indicate that we found no such form?
-            response.send({});
+            response.send(404);
           }
         });
       }
