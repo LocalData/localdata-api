@@ -98,9 +98,9 @@ function clone(obj) {
 function filterToOneRowPerUse(items) {
   var results = [];
   var matchEndsWithDashNumber = /-\d+$/;
-  
   // Go through every result
-  for (var idx=0; i < items.length; i++) {
+  for (var idx=0; idx < items.length; idx++) {
+    
     var newResult;
     var result = items[idx];
     var useCount = parseInt(result['responses']['use-count'], 10);
@@ -123,14 +123,14 @@ function filterToOneRowPerUse(items) {
               var m = key.match(matchEndsWithDashNumber);
               var endIdx = m['index'];
               var newKey = key.substring(0,endIdx);
-              toInclude[newKey] = toInclude[key];
-              delete toInclude[key];
+              toInclude[newKey] = result['responses'][key];
+              //delete toInclude[key];
             
-              toInclude[key] = result['responses'][key];
+              // toInclude[key] = result['responses'][key];
             };
           };
         };
-                
+
         // Find keys that don't end in -# 
         for (key in result['responses']) {
           if (result['responses'].hasOwnProperty(key)) {

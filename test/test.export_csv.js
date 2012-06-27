@@ -94,7 +94,7 @@ suite('In csvExport,', function(){
   
   test('the filterToOneRowPerUse should split results with use_counts > 1 into n rows', function() {
     var filteredResults = filterToOneRowPerUse(fakeResults);
-    console.log(filteredResults);
+    // console.log(filteredResults);
     if(filteredResults[3] == undefined){
       assert(false);
     };
