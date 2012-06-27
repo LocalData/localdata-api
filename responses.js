@@ -97,9 +97,10 @@ function clone(obj) {
  */
 function filterToOneRowPerUse(items) {
   var results = [];
+  var matchEndsWithDashNumber = /-\d+$/;
   
   // Go through every result
-  for (var idx in items) {
+  for (var idx=0; i < items.length; i++) {
     var newResult;
     var result = items[idx];
     var useCount = parseInt(result['responses']['use-count'], 10);
@@ -114,6 +115,7 @@ function filterToOneRowPerUse(items) {
         toInclude = {};
 
         // If the the key ends in toFind, let's include it.
+        
         for (var key in result['responses']) {
           if (key.endsWith(toFind)) {
             toInclude[key] = result['responses'][key];
@@ -122,8 +124,9 @@ function filterToOneRowPerUse(items) {
         
         // Strip off the -#
         for (key in toInclude) {
-          if (key.match(/-\d+$/) != null) {
-            var endIdx = key.match(/-\d+$/)['index'];
+          var m = key.match(matchEndsWithDashNumber);
+          if (m != null) {
+            var endIdx = m['index'];
             var newKey = key.substring(0,endIdx);
             toInclude[newKey] = toInclude[key];
             delete toInclude[key];
@@ -132,7 +135,7 @@ function filterToOneRowPerUse(items) {
         
         // Find keys that don't end in -# 
         for (key in result['responses']) {
-          if (key.match(/-\d+$/) == null) {
+          if (key.match(matchEndsWithDashNumber) == null) {
             // Ok, now make sure we don't already have something like this:
             if(!toInclude.hasOwnProperty(key)) {
               toInclude[key] = result['responses'][key];        
