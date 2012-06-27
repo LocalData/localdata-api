@@ -115,31 +115,31 @@ function filterToOneRowPerUse(items) {
         toInclude = {};
 
         // If the the key ends in toFind, let's include it.
-        
         for (var key in result['responses']) {
-          if (key.endsWith(toFind)) {
-            toInclude[key] = result['responses'][key];
+          if (result['responses'].hasOwnProperty(key)) {
+            if (key.endsWith(toFind)) {
+            
+              // Strip off the -#
+              var m = key.match(matchEndsWithDashNumber);
+              var endIdx = m['index'];
+              var newKey = key.substring(0,endIdx);
+              toInclude[newKey] = toInclude[key];
+              delete toInclude[key];
+            
+              toInclude[key] = result['responses'][key];
+            };
           };
         };
-        
-        // Strip off the -#
-        for (key in toInclude) {
-          var m = key.match(matchEndsWithDashNumber);
-          if (m != null) {
-            var endIdx = m['index'];
-            var newKey = key.substring(0,endIdx);
-            toInclude[newKey] = toInclude[key];
-            delete toInclude[key];
-          };
-        };
-        
+                
         // Find keys that don't end in -# 
         for (key in result['responses']) {
-          if (key.match(matchEndsWithDashNumber) == null) {
-            // Ok, now make sure we don't already have something like this:
-            if(!toInclude.hasOwnProperty(key)) {
-              toInclude[key] = result['responses'][key];        
-            }
+          if (result['responses'].hasOwnProperty(key)) {
+            if (key.match(matchEndsWithDashNumber) == null) {
+              // Ok, now make sure we don't already have something like this:
+              if(!toInclude.hasOwnProperty(key)) {
+                toInclude[key] = result['responses'][key];        
+              }
+            };
           };
         };
 
@@ -153,9 +153,11 @@ function filterToOneRowPerUse(items) {
       // catch that first set of uses
       toInclude = {};
       for (key in result['responses']) {
-        if (key.match(/-\d+$/) == null) {
-          // Ok, now check if we already have something like this:
-          toInclude[key] = result['responses'][key];        
+        if (result['responses'].hasOwnProperty(key)) {
+          if (key.match(/-\d+$/) == null) {
+            // Ok, now check if we already have something like this:
+            toInclude[key] = result['responses'][key];        
+          };
         };
       };
       newResult = clone(result);
@@ -205,7 +207,9 @@ function filterToMostRecent(items) {
   // Covert the keyed array to a plain ol' list
   var latest_list = [];
   for (var key in latest) {
-    latest_list.push(latest[key]);
+    if (latest.hasOwnProperty(key)) {
+      latest_list.push(latest[key]);
+    };
   };
   return latest_list;
 }
@@ -526,8 +530,6 @@ function setup(app, db, idgen, collectionName) {
     var sid = req.params.sid;
     exportSurveyAsCSV(sid, response, [filterToMostRecent, filterToOneRowPerUse]);
   });
-  
-  
   
 
 } // setup()
