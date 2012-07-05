@@ -33,7 +33,7 @@ var app = express.createServer(express.logger());
 // accept text/plain treat it as JSON.
 // TODO: if we need to accept text/plain in the future, then we need to adjust
 // this
-express.bodyParser.parse['text/plain'] = function (req, options, callback) {
+function textParser(req, options, callback) {
   console.log('Got text/plain');
   var buf = '';
   req.setEncoding('utf8');
@@ -52,18 +52,35 @@ express.bodyParser.parse['text/plain'] = function (req, options, callback) {
       callback(err);
     }
   });
-};
+}
+
+express.bodyParser.parse['text/plain'] = textParser;
 
 app.configure(function() {
+  app.set('jsonp callback', true);
   app.use(express.methodOverride());
+
+  // Default to text/plain if no content-type was provided.
+  app.use(function(req, res, next) {
+    if (req.body) { return next(); }
+    if ('GET' === req.method || 'HEAD' === req.method) { return next(); }
+
+    if (!req.headers['content-type']) {
+      req.body = {};
+      textParser(req, null, next);
+    } else {
+      next();
+    }
+  });
+
   app.use(express.bodyParser());
+
   // Add common headers
   app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Mime-Type, X-Requested-With, X-File-Name, Content-Type");
     next();
   });
-
 });
 
 // ID generator
