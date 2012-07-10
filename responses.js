@@ -126,6 +126,12 @@ function filterToOneRowPerUse(items) {
     var result = items[idx];
     var useCount = parseInt(result['responses']['use-count'], 10);
     
+    // Correct for a bug in WSU survey that stored condition as condition-1
+    // TODO: REMOVE LATER!
+    if (result['responses'].hasOwnProperty('condition-1')) {
+      result['responses']['condition'] = result['responses']['condition-1'];
+    }
+    
     // If there are multiple uses, loop through all of them.
     if (useCount > 1) {
       var toInclude = {};

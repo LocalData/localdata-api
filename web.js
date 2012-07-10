@@ -29,6 +29,31 @@ SCANIMAGES = 'scanCollection';
 
 var app = express.createServer(express.logger());
 
+// IE 8 and 9 can't post application/json for cross-origin requests, so we
+// accept text/plain treat it as JSON.
+// TODO: if we need to accept text/plain in the future, then we need to adjust
+// this
+express.bodyParser.parse['text/plain'] = function (req, options, callback) {
+  console.log('Got text/plain');
+  var buf = '';
+  req.setEncoding('utf8');
+  req.on('data', function(chunk){
+    buf += chunk;
+  });
+  req.on('end', function(){
+    try {
+      if (!buf.length) {
+        req.body = {};
+      } else {
+        req.body = JSON.parse(buf);
+      }
+      callback();
+    } catch (err) {
+      callback(err);
+    }
+  });
+};
+
 app.configure(function() {
   app.use(express.methodOverride());
   app.use(express.bodyParser());
