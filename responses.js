@@ -602,5 +602,43 @@ function setup(app, db, idgen, collectionName) {
   
   
   
+  // Maintenance
+  // Finds all results. Updates geo_info.polygon of each result to be the 
+  // polygon of that parcel as GeoJSON.
+  app.get('/surveys/maintenance/polygons', function(req, response){
+
+    getCollection(function(err, collection) {
+      collection.find({}, function(err, cursor) {
+        if (err != null) {
+          console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
+          response.send();
+          return;
+        }
+        
+        cursor.toArray(function(err, items) {
+          for (var i=0; i < items.length; i++) {
+            var elt = items[i];
+            // Get centroid
+            var centroid = elt.geo_info.centroid;
+            var lat = parseFloat(centroid[0]);
+            var lng = parseFloat(centroid[1]);
+            
+            // Get geodata from server
+            var url = 'http://stormy-mountain-3909.herokuapp.com/detroit/parcel?lat=' + lat + '&lng=' + lng;
+            console.log(url);
+            apiGet(url).done(function (data) {
+              console.log(data);
+            });
+            
+          };
+        });
+        
+        
+      });
+    });
+    
+    
+  });
+  
 
 } // setup()
