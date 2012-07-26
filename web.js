@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var express = require('express');
 var mongo = require('mongodb');
 var uuid = require('node-uuid');
@@ -6,7 +9,7 @@ var fs = require('fs');
 // Set up database
 var mongo_host = process.env.MONGO_HOST || 'localhost';
 var mongo_port = parseInt(process.env.MONGO_PORT, 10);
-if (isNaN(mongo_port)) mongo_port = 27017;
+if (isNaN(mongo_port)) { mongo_port = 27017; }
 var mongo_db = process.env.MONGO_DB || 'scratchdb';
 var mongo_user = process.env.MONGO_USER;
 var mongo_password = process.env.MONGO_PASSWORD;
@@ -21,11 +24,11 @@ var collectors = require('./collectors');
 var surveys = require('./surveys');
 var scans = require('./scans');
 
-RESPONSES = 'responseCollection';
-FORMS = 'formCollection';
-COLLECTORS = 'collectorCollection';
-SURVEYS = 'surveyCollection';
-SCANIMAGES = 'scanCollection';
+var RESPONSES = 'responseCollection';
+var FORMS = 'formCollection';
+var COLLECTORS = 'collectorCollection';
+var SURVEYS = 'surveyCollection';
+var SCANIMAGES = 'scanCollection';
 
 var app = express.createServer(express.logger());
 
@@ -159,7 +162,7 @@ console.log('Mongo port: ' + mongo_port);
 console.log('Mongo db: ' + mongo_db);
 console.log('Mongo user: ' + mongo_user);
 db.open(function() {
-  if (mongo_user != undefined) {
+  if (mongo_user !== undefined) {
     db.authenticate(mongo_user, mongo_password, function(err, result) {
       if (err) {
         console.log(err.message);
