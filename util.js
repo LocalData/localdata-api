@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  *==================================================
  * Utilities
@@ -6,9 +9,9 @@
 
 // Returns true if we handled an error.
 function handleError(err, res) {
-  if (err != null) {
+  if (err) {
     console.log('Error: ' + err.message);
-    res.send();
+    res.send(500);
     return true;
   }
   return false;
