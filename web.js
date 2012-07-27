@@ -90,6 +90,16 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
 }
 
+// Ensure certain database structure.
+function ensureStructure(db, callback) {
+  db.collection(RESPONSES, function (error, collection) {
+    if (error) { throw error; }
+    collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
+      callback(error);
+    });
+  });
+}
+
 // Static files
 // TODO: host these separately? Shift other routes to /api/ROUTES?
 function sendFile(response, filename, type) {
@@ -157,11 +167,12 @@ function run(settings, cb) {
   console.log('Mongo db: ' + settings.mongo_db);
   console.log('Mongo user: ' + settings.mongo_user);
   // Set up database
-  db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
-                                                        settings.mongo_port,
-                                                        {}), {});
+  if (!db) {
+    db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
+                                                          settings.mongo_port,
+                                                          {}), {});
+  }
   setupRoutes(db, settings);
-
   db.open(function() {
     if (settings.mongo_user !== undefined) {
       db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
@@ -169,10 +180,16 @@ function run(settings, cb) {
           console.log(err.message);
           return;
         }
-        startServer(settings.port, cb);
+        ensureStructure(db, function (error) {
+          if (error) { throw error; }
+          startServer(settings.port, cb);
+        });
       });
     } else {
-      startServer(settings.port, cb);
+      ensureStructure(db, function (error) {
+        if (error) { throw error; }
+        startServer(settings.port, cb);
+      });
     }
   });
 }

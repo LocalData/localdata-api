@@ -1,5 +1,5 @@
 /*jslint node: true, indent: 2, white: true, vars: true */
-/*globals suite, test, setup, done, teardown */
+/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
 var server = require('../web.js');
@@ -11,10 +11,17 @@ var settings = require('../settings-test.js');
 
 var BASEURL = 'http://localhost:' + settings.port;
 
-var app;
-server.run(settings);
-
 suite('Surveys', function () {
+  suiteSetup(function (done) {
+    server.run(settings, function () {
+      setTimeout(done, 1000);
+    });
+  });
+
+  suiteTeardown(function () {
+    server.stop();
+  });
+
   suite('POST', function () {
     var data = {
       "surveys" : [ {
