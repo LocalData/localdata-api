@@ -12,10 +12,49 @@ var settings = require('../settings-test.js');
 var BASEURL = 'http://localhost:' + settings.port;
 
 suite('Surveys', function () {
+  var data_one = {
+    "surveys" : [ {
+      "name": "Just a survey",
+      "paperinfo": {
+        "dpi": 150,
+        "regmarks": [
+          {"type": 0, "bbox": [20, 20, 70, 70]},
+          {"type": 0, "bbox": [20, 1580, 70, 1630]},
+          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
+        ],
+        "barcode": {"bbox": [1055, 20, 1255, 220]}
+      }
+    } ]
+  };
+
+  var data_two = {
+    "surveys" : [ {
+      "name": "Test survey 1",
+      "paperinfo": {
+        "dpi": 150,
+        "regmarks": [
+          {"type": 0, "bbox": [20, 20, 70, 70]},
+          {"type": 0, "bbox": [20, 1580, 70, 1630]},
+          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
+        ],
+        "barcode": {"bbox": [1055, 20, 1255, 220]}
+      }
+    }, {
+      "name": "Test survey 2",
+      "paperinfo": {
+        "dpi": 150,
+        "regmarks": [
+          {"type": 0, "bbox": [20, 20, 70, 70]},
+          {"type": 0, "bbox": [20, 1580, 70, 1630]},
+          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
+        ],
+        "barcode": {"bbox": [1055, 20, 1255, 220]}
+      }
+    } ]
+  };
+
   suiteSetup(function (done) {
-    server.run(settings, function () {
-      setTimeout(done, 1000);
-    });
+    server.run(settings, done);
   });
 
   suiteTeardown(function () {
@@ -23,42 +62,16 @@ suite('Surveys', function () {
   });
 
   suite('POST', function () {
-    var data = {
-      "surveys" : [ {
-        "name": "Test survey 1",
-        "paperinfo": {
-          "dpi": 150,
-          "regmarks": [
-            {"type": 0, "bbox": [20, 20, 70, 70]},
-            {"type": 0, "bbox": [20, 1580, 70, 1630]},
-            {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-          ],
-          "barcode": {"bbox": [1055, 20, 1255, 220]}
-        }
-      }, {
-        "name": "Test survey 2",
-        "paperinfo": {
-          "dpi": 150,
-          "regmarks": [
-            {"type": 0, "bbox": [20, 20, 70, 70]},
-            {"type": 0, "bbox": [20, 1580, 70, 1630]},
-            {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-          ],
-          "barcode": {"bbox": [1055, 20, 1255, 220]}
-        }
-      } ]
-    };
-
     var url = BASEURL + '/surveys';
     test('Posting JSON to /surveys', function (done) {
-      request.post({url: url, json: data}, function (error, response, body) {
+      request.post({url: url, json: data_two}, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
 
         var i;
-        for (i = 0; i < data.surveys.length; i += 1) {
-          assert.equal(data.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
-          assert.deepEqual(data.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
+        for (i = 0; i < data_two.surveys.length; i += 1) {
+          assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
+          assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
         }
@@ -70,24 +83,9 @@ suite('Surveys', function () {
 
   suite('GET', function () {
     var id;
-    var data = {
-      "surveys" : [ {
-        "name": "Just a survey",
-        "paperinfo": {
-          "dpi": 150,
-          "regmarks": [
-            {"type": 0, "bbox": [20, 20, 70, 70]},
-            {"type": 0, "bbox": [20, 1580, 70, 1630]},
-            {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-          ],
-          "barcode": {"bbox": [1055, 20, 1255, 220]}
-        }
-      } ]
-    };
-
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys', json: data}, function(error, response, body) {
+      request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
         if (error) { done(error); }
         id = body.surveys[0].id;
         done();
@@ -122,8 +120,8 @@ suite('Surveys', function () {
         assert.ok(parsed.survey, 'Parsed response body should have a property called "survey".');
 
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
-        assert.equal(data.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
-        assert.deepEqual(data.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
+        assert.equal(data_one.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
+        assert.deepEqual(data_one.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
 
         done();
       });
@@ -132,23 +130,9 @@ suite('Surveys', function () {
 
   suite('DEL', function () {
     var id;
-    var data = {
-      "surveys" : [ {
-        "name": "Just a survey",
-        "paperinfo": {
-          "dpi": 150,
-          "regmarks": [
-            {"type": 0, "bbox": [20, 20, 70, 70]},
-            {"type": 0, "bbox": [20, 1580, 70, 1630]},
-            {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-          ],
-          "barcode": {"bbox": [1055, 20, 1255, 220]}
-        }
-      } ]
-    };
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys', json: data}, function(error, response, body) {
+      request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
         if (error) { done(error); }
         id = body.surveys[0].id;
         done();
