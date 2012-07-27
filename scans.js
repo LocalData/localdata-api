@@ -46,10 +46,10 @@ function makeS3Location(id) {
  * idgen: unique ID generator
  * collectionName: name of scans collection
  */
-function setup(app, db, idgen, collectionName) {
+function setup(app, db, idgen, collectionName, settings) {
   var s3client =  knox.createClient({
-    key: process.env.S3_KEY,
-    secret: process.env.S3_SECRET,
+    key: settings.s3_key,
+    secret: settings.s3_secret,
     bucket: S3_BUCKET,
     secure: false
   });
