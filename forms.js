@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Forms
@@ -42,10 +45,6 @@
 
 var util = require('./util');
 
-module.exports = {
-  setup: setup
-};
-
 /*
  * app: express server
  * db: mongodb database
@@ -64,7 +63,7 @@ app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
   console.log('Getting form ' + formid + ' of survey ' + surveyid);
   db.collection(FORMS, function(err, collection) {
     collection.find({'survey': surveyid, 'id': formid}, function(err, cursor) {
-      if (err != null) {
+      if (err) {
         console.log('Error retrieving form ' + formid + ' of survey ' + surveyid + ': ' + err.message);
         response.send();
       } else {
@@ -91,14 +90,14 @@ app.get('/surveys/:sid/forms', function(req, response) {
   console.log('Returning all forms for survey ' + req.params.sid);
   db.collection(FORMS, function(err, collection) {
     collection.find({'survey': req.params.sid}, function(err, cursor) {
-      if (err != null) {
+      if (err) {
         console.log('Error finding forms for survey ' + req.params.sid + ': ' + err);
         response.send();
         return;
       }
       var arr = [];
       cursor.each(function(err, doc) {
-        if (doc == null) {
+        if (doc === null) {
           response.send({forms: arr});
         } else {
           arr.push(doc);
@@ -128,7 +127,8 @@ app.post('/surveys/:sid/forms', function(req, response) {
       // Add form to database.
       collection.insert(form, function() {
         // Check if we've added all of them.
-        if (++count === total) {
+        count += 1;
+        if (count === total) {
           response.send({forms: forms}, 201);
         }
       });
@@ -146,7 +146,7 @@ app.del('/surveys/:sid/forms', function(req, response) {
   console.log('!!! Deleting forms for survey ' + survey + ' from the database.');
   db.collection(FORMS, function(err, collection) {
     collection.remove({survey: survey}, {safe: true}, function(error, count) {
-      if (error != null) {
+      if (error) {
         console.log('Error removing forms for survey ' + survey + ' from the form collection: ' + err.message);
         response.send();
       } else {
@@ -165,11 +165,11 @@ app.del('/surveys/:sid/forms/:id', function(req, response) {
   console.log('Removing form ' + id + ' from the database.');
   getCollection(function(err, collection) {
     collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
-      if (error != null) {
+      if (error) {
         console.log('Error removing form ' + id + ' for survey ' + survey + ' from the form collection: ' + err.message);
         response.send();
       } else {
-        if (count != 1) {
+        if (count !== 1) {
           console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
         }
         response.send({count: count});
@@ -186,11 +186,11 @@ app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
   var pid = String(req.params.pid);
   console.log('Getting forms for survey ' + sid + ' that reference parcel ' + pid);
   getCollection(function(err, collection) {
-    if (handleError(err)) return;
+    if (handleError(err)) { return; }
     collection.find({survey: sid, 'parcels.parcel_id': pid}, function(err, cursor) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       cursor.toArray(function(err, items) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         response.send({forms: items});
       }); // toArray
     }); // find
@@ -198,3 +198,7 @@ app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
 });
 
 }
+
+module.exports = {
+  setup: setup
+};
