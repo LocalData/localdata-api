@@ -534,7 +534,7 @@ function setup(app, db, idgen, collectionName) {
               items[i].source.collector,
               items[i].created,
               items[i].source.type,
-              String(items[i].geo_info.centroid[1]) + ',' + String(items[i].geo_info.centroid[0])
+              items[i].geo_info.centroid[1].toString() + ',' + String(items[i].geo_info.centroid[0])
             ];
 
             // Then, add data about the element
