@@ -1,16 +1,10 @@
+/*jslint node: true */
+'use strict';
+
 var express = require('express');
 var mongo = require('mongodb');
 var uuid = require('node-uuid');
 var fs = require('fs');
-
-// Set up database
-var mongo_host = process.env.MONGO_HOST || 'localhost';
-var mongo_port = parseInt(process.env.MONGO_PORT, 10);
-if (isNaN(mongo_port)) mongo_port = 27017;
-var mongo_db = process.env.MONGO_DB || 'scratchdb';
-var mongo_user = process.env.MONGO_USER;
-var mongo_password = process.env.MONGO_PASSWORD;
-var db = new mongo.Db(mongo_db, new mongo.Server(mongo_host, mongo_port, {}), {});
 
 /*
  * Routes are split into separate modules.
@@ -21,13 +15,14 @@ var collectors = require('./collectors');
 var surveys = require('./surveys');
 var scans = require('./scans');
 
-RESPONSES = 'responseCollection';
-FORMS = 'formCollection';
-COLLECTORS = 'collectorCollection';
-SURVEYS = 'surveyCollection';
-SCANIMAGES = 'scanCollection';
+var RESPONSES = 'responseCollection';
+var FORMS = 'formCollection';
+var COLLECTORS = 'collectorCollection';
+var SURVEYS = 'surveyCollection';
+var SCANIMAGES = 'scanCollection';
 
 var app = express.createServer(express.logger());
+var db;
 
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
 // accept text/plain treat it as JSON.
@@ -87,11 +82,23 @@ app.configure(function() {
 var idgen = uuid.v1;
 
 // Set up routes for forms
-forms.setup(app, db, idgen, FORMS);
-responses.setup(app, db, idgen, RESPONSES);
-collectors.setup(app, db, idgen, COLLECTORS);
-surveys.setup(app, db, idgen, SURVEYS);
-scans.setup(app, db, idgen, SCANIMAGES);
+function setupRoutes(db, settings) {
+  forms.setup(app, db, idgen, FORMS);
+  responses.setup(app, db, idgen, RESPONSES);
+  collectors.setup(app, db, idgen, COLLECTORS);
+  surveys.setup(app, db, idgen, SURVEYS);
+  scans.setup(app, db, idgen, SCANIMAGES, settings);
+}
+
+// Ensure certain database structure.
+function ensureStructure(db, callback) {
+  db.collection(RESPONSES, function (error, collection) {
+    if (error) { throw error; }
+    collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
+      callback(error);
+    });
+  });
+}
 
 // Static files
 // TODO: host these separately? Shift other routes to /api/ROUTES?
@@ -144,31 +151,60 @@ app.get(/\/static\/(.*)/, function(req, response) {
 });
 
 
-function startServer() {  
-  var port = process.env.PORT || 3000;
-  app.listen(port, function() {
+function startServer(port, cb) {  
+  app.listen(port, function(err) {
     console.log('Listening on ' + port);
+    if (cb !== undefined) { cb(err); }
   });
+}
+
+function run(settings, cb) {
+  // Kick things off
+  console.log('Using the following settings:');
+  console.log('Port: ' + settings.port);
+  console.log('Mongo host: ' + settings.mongo_host);
+  console.log('Mongo port: ' + settings.mongo_port);
+  console.log('Mongo db: ' + settings.mongo_db);
+  console.log('Mongo user: ' + settings.mongo_user);
+  // Set up database
+  if (!db) {
+    db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
+                                                          settings.mongo_port,
+                                                          {}), {});
+  }
+  setupRoutes(db, settings);
+  db.open(function() {
+    if (settings.mongo_user !== undefined) {
+      db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
+        if (err) {
+          console.log(err.message);
+          return;
+        }
+        ensureStructure(db, function (error) {
+          if (error) { throw error; }
+          startServer(settings.port, cb);
+        });
+      });
+    } else {
+      ensureStructure(db, function (error) {
+        if (error) { throw error; }
+        startServer(settings.port, cb);
+      });
+    }
+  });
+}
+
+function stop() {
+  app.close();
+  db.close();
+}
+
+module.exports = {
+  run: run,
+  stop: stop
 };
 
-// Kick things off
-console.log('Using the following settings:');
-console.log('Port: ' + process.env.PORT || 3000);
-console.log('Mongo host: ' + mongo_host);
-console.log('Mongo port: ' + mongo_port);
-console.log('Mongo db: ' + mongo_db);
-console.log('Mongo user: ' + mongo_user);
-db.open(function() {
-  if (mongo_user != undefined) {
-    db.authenticate(mongo_user, mongo_password, function(err, result) {
-      if (err) {
-        console.log(err.message);
-        return;
-      }
-      startServer();
-    });
-  } else {
-    startServer();
-  }
-});
-
+// If this was run directly, run!
+if (require.main === module) {
+  run(require('./settings.js'));
+}

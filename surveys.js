@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Surveys
@@ -5,10 +8,6 @@
  */
 
 var util = require('./util');
-
-module.exports = {
-  setup: setup
-};
 
 
 /*
@@ -28,11 +27,11 @@ function setup(app, db, idgen, collectionName) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
             
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       collection.find({}, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
-          if (handleError(err)) return;
+          if (handleError(err)) { return; }
           response.send({surveys: items});
         });
       });
@@ -44,12 +43,12 @@ function setup(app, db, idgen, collectionName) {
   app.get('/surveys/:sid', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       collection.find({id: req.params.sid}, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
-          if (handleError(err)) return;
-          if (items.length == 0) {
+          if (handleError(err)) { return; }
+          if (items.length === 0) {
             response.send();
             return;
           }
@@ -67,6 +66,7 @@ function setup(app, db, idgen, collectionName) {
   // Add a survey
   // POST http://localhost:3000/surveys
   app.post('/surveys', function(req, response) {
+    var handleError = util.makeErrorHandler(response);
     var surveys = req.body.surveys;
     var total = surveys.length;
     var count = 0;
@@ -76,9 +76,12 @@ function setup(app, db, idgen, collectionName) {
         var id = idgen();
         survey.id = id;
         // Add to database.
-        collection.insert(survey, function() {
+        collection.insert(survey, function(error) {
+          if (handleError(error)) { return; }
+
           // Check if we've added all of them.
-          if (++count == total) {
+          count += 1;
+          if (count === total) {
             response.send({surveys: surveys}, 201);
           }
         });
@@ -94,11 +97,11 @@ function setup(app, db, idgen, collectionName) {
     var sid = req.params.sid;
     getCollection(function(err, collection) {
       collection.remove({id: sid}, {safe: true}, function(error, count) {
-        if (error != null) {
-          console.log('Error removing survey ' + id + 'from the survey collection: ' + err.message);
-          response.send();
+        if (error) {
+          console.log('Error removing survey ' + sid + 'from the survey collection: ' + error.message);
+          response.send(500);
         } else {
-          if (count != 1) {
+          if (count !== 1) {
             console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
           }
           console.log('Deleted survey ' + sid);
@@ -109,3 +112,7 @@ function setup(app, db, idgen, collectionName) {
   });
 
 }
+
+module.exports = {
+  setup: setup
+};

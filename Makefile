@@ -1,4 +1,6 @@
+MOCHA = "./node_modules/.bin/mocha"
+
 test:
-	@./node_modules/.bin/mocha --ui tdd
+	@$(MOCHA) --ui tdd --reporter spec
 
 .PHONY: test
