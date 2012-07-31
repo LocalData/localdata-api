@@ -10,6 +10,7 @@
  */
 
 db.responseCollection.find({'geo_info.centroid':{$type:2}}).forEach(function(elt){
+  // type:2 is String: http://www.mongodb.org/display/DOCS/Advanced+Queries#AdvancedQueries-%24type
   var centroid = elt.geo_info.centroid;
   centroid[0] = parseFloat(centroid[0]);
   centroid[1] = parseFloat(centroid[1]);

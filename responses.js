@@ -42,7 +42,7 @@ var isArray = util.isArray;
 
 
 /*
- * Turn a list of parcels into a comma-separated string.
+ * Turn a list of parcel attributes into a comma-separated string.
  * NOTE: Will break if used with strings with commas (doesn't escape!)
  */
 function listToCSVString(row, headers, maxEltsInCell) {
@@ -66,6 +66,27 @@ function listToCSVString(row, headers, maxEltsInCell) {
   }
   return arr.join(',');
 };
+
+
+/* 
+ * Turn a list of parcel attributes into a KML string
+ */ 
+function listToKMLString(row, headers, maxEltsInCell) {
+  var elt = "\n<Placemark>";
+  elt += "<name></name>";
+  elt += "<description></description>";
+  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>"; 
+  elt += "<ExtendedData>";
+  for (var i = 0; i < row.length; i++) {
+      elt += "<Data name=\"" + headers[i] + "\">";
+      elt += "<displayName>" + headers[i] + "</displayName>";  
+      elt += "<value>" + row[i] + "</value>";              
+      elt += "</Data>";
+  }
+  elt += "</ExtendedData></Placemark>\n";
+  
+  return elt;
+}
 
 
 /*
@@ -417,8 +438,61 @@ function setup(app, db, idgen, collectionName) {
     });
   });
   
+  
+  // Take a list of rows and export them as CSV
+  function CSVWriter(response, rows, headers, maxEltsInCell) {
+    // CSV output
+    response.writeHead(200, {
+      'Content-Type': 'text/csv'
+    });
+    // Turn each row into a CSV line
+    response.write(listToCSVString(headers, headers, maxEltsInCell));
+    response.write('\n');
+    for (i = 0; i < rows.length; i++) {
+      response.write(listToCSVString(rows[i], headers, maxEltsInCell));
+      response.write('\n');
+    }
+    response.end();
+  }
+  
 
-  function exportSurveyAsCSV(surveyId, response, listOfFilteringFunctions){
+  // Take a list of rows and export them as KML
+  function KMLWriter(response, rows, headers, maxEltsInCell){
+    // KML output
+    response.writeHead(200, {
+      'Content-Type': 'application/vnd.google-earth.kml+xml'
+    });
+    
+    response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+    response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
+    response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
+        
+    // Turn each row into a CSV line
+    for (i = 0; i < rows.length; i++) {
+      response.write(listToKMLString(rows[i], headers, maxEltsInCell));
+      response.write('\n');
+    }
+    
+    response.write("\n</Folder></Document></kml>");
+    
+    response.end();
+  }
+  
+
+  /**
+  * Export a given survey. Includes options to filter and format the results.
+  * 
+  * @method exportSurveyAs
+  * @param surveyID {String}
+  * @param response {Object}
+  * @param listOfFilteringFunctions {Array} Prepares the results for exporting 
+  *           Each function in the array iterates through objects in the 
+  *           survey and manipulates them, eg selects the most recent results
+  * @param writer {Function} Writes a given record to a string
+  */
+  // 
+  function exportSurveyAs(response, surveyId, listOfFilteringFunctions, writer){
     getCollection(function(err, collection) {
       collection.find({'survey': surveyId}, function(err, cursor) {
         
@@ -432,14 +506,11 @@ function setup(app, db, idgen, collectionName) {
 
           // Filter the items
           for (var idx in listOfFilteringFunctions) {
-            //console.log(items);
             items = listOfFilteringFunctions[idx](items);
-            
           };
-          //console.log(items);
 
           // Start with some basic headers
-          var headers = ['parcel_id', 'collector', 'timestamp', 'source'];
+          var headers = ['parcel_id', 'collector', 'timestamp', 'source', 'centroid'];
 
           // Record which header is at which index
           var headerIndices = {};
@@ -456,12 +527,14 @@ function setup(app, db, idgen, collectionName) {
           for (i = 0; i < len; i++) {
             var responses = items[i].responses;
 
+            // console.log(items[i]);
             // Add context entries (parcel ID, source type)
             var row = [
               items[i].parcel_id, 
               items[i].source.collector,
               items[i].created,
-              items[i].source.type
+              items[i].source.type,
+              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0]
             ];
 
             // Then, add data about the element
@@ -497,39 +570,34 @@ function setup(app, db, idgen, collectionName) {
           } // End loop over every result
 
 
-          // CSV output
-          response.writeHead(200, {
-            'Content-Type': 'text/csv'
-          });
-          // Turn each row into a CSV line
-          response.write(listToCSVString(headers, headers, maxEltsInCell));
-          response.write('\n');
-          for (i = 0; i < len; i++) {
-            response.write(listToCSVString(rows[i], headers, maxEltsInCell));
-            response.write('\n');
-          }
-          response.end();
+          // Write the response
+          writer(response, rows, headers, maxEltsInCell);
+          
 
         }); // end cursor.toArray()
       }); // end find results for survey
     });
   };
 
-
   // Return response data as CSV
   // GET http://localhost:5000/surveys/{SURVEY ID}/csv
   app.get('/surveys/:sid/csv', function(req, response) {
     var sid = req.params.sid;
-    exportSurveyAsCSV(sid, response, []);
+    exportSurveyAs(response, sid, [], CSVWriter);
   });
-  
   
   // Return CSV for WSU use
   // GET http://localhost:5000/surveys/{SURVEY ID}/csv-recent-peruse
   app.get('/surveys/:sid/csv-recent-peruse', function(req, response) {
     var sid = req.params.sid;
-    exportSurveyAsCSV(sid, response, [filterToMostRecent, filterToOneRowPerUse]);
+    exportSurveyAs(response, sid, [filterToMostRecent, filterToOneRowPerUse], CSVWriter);
   });
   
+  // Return response data as KML
+  // GET http://localhost:5000/surveys/{SURVEY ID}/kml
+  app.get('/surveys/:sid/kml', function(req, response) {
+    var sid = req.params.sid;
+    exportSurveyAs(response, sid, [], KMLWriter);
+  });  
 
 } // setup()
