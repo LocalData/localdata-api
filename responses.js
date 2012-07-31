@@ -448,7 +448,8 @@ function setup(app, db, idgen, collectionName) {
     // Turn each row into a CSV line
     response.write(listToCSVString(headers, headers, maxEltsInCell));
     response.write('\n');
-    for (i = 0; i < rows.length; i++) {
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
       response.write(listToCSVString(rows[i], headers, maxEltsInCell));
       response.write('\n');
     }
