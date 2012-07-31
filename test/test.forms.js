@@ -42,8 +42,28 @@ suite('Forms', function () {
     });
 
     test('Get all forms for a survey', function (done) {
-      should(false);
-      done();
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/forms'},
+                  function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('forms');
+        parsed.forms.length.should.be.above(0);
+        var i;
+        var index = -1;
+        for (i = 0; i < parsed.forms.length; i += 1) {
+          parsed.forms[i].survey.should.equal(surveyId);
+          if (parsed.forms[i].id === id) {
+            index = i;
+          }
+        }
+        // Make sure the form we added is in this set.
+        index.should.be.above(-1);
+
+        done();
+      });
     });
 
     test('Get a form by ID', function (done) {
@@ -65,7 +85,8 @@ suite('Forms', function () {
     });
 
     test('Get forms by parcel ID', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/03001529./forms'},
+      var parcelId = '03001529.';
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/' + parcelId + '/forms'},
                   function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
@@ -76,12 +97,24 @@ suite('Forms', function () {
         parsed.forms.length.should.be.above(0);
         var i;
         var index = -1;
+        var j;
+        var parcelIndex;
         for (i = 0; i < parsed.forms.length; i += 1) {
           parsed.forms[i].survey.should.equal(surveyId);
           if (parsed.forms[i].id === id) {
             index = i;
           }
+          parcelIndex = -1;
+
+          // Make sure each form returned references the requested parcel ID.
+          for (j = 0; j < parsed.forms[i].parcels.length; j += 1) {
+            if (parsed.forms[i].parcels[j].parcel_id === parcelId) {
+              parcelIndex = j;
+            }
+          }
+          parcelIndex.should.be.above(-1);
         }
+        // Make sure the form we just added is in this set.
         index.should.be.above(-1);
 
         done();
