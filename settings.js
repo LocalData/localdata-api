@@ -14,6 +14,8 @@ settings.mongo_password = process.env.MONGO_PASSWORD;
 // S3
 settings.s3_key = process.env.S3_KEY;
 settings.s3_secret = process.env.S3_SECRET;
+settings.s3_bucket = process.env.S3_BUCKET;
+settings.s3_dir = process.env.S3_UPLOAD_DIR;
 
 // Web server
 settings.port = process.env.PORT || 3000;

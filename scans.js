@@ -23,8 +23,8 @@ module.exports = {
 
 var handleError = util.handleError;
 
-var UPLOAD_DIR = 'uploaded_files';
-var S3_BUCKET = 'cfadetroit_survey';
+var UPLOAD_DIR;
+var S3_BUCKET;
 var STATUS_PENDING = 'pending';
 var STATUS_WORKING = 'working';
 var STATUS_COMPLETE = 'complete';
@@ -47,10 +47,12 @@ function makeS3Location(id) {
  * collectionName: name of scans collection
  */
 function setup(app, db, idgen, collectionName, settings) {
+  UPLOAD_DIR = settings.s3_dir;
+  S3_BUCKET = settings.s3_bucket;
   var s3client =  knox.createClient({
     key: settings.s3_key,
     secret: settings.s3_secret,
-    bucket: S3_BUCKET,
+    bucket: settings.s3_bucket,
     secure: false
   });
 
@@ -108,11 +110,11 @@ function setup(app, db, idgen, collectionName, settings) {
           .on('close', function(error) { console.log(error.message); })
           .on('end', function() {
             // TODO: return the DB doc instead?
-            body = JSON.stringify({success: 'true', name: [UPLOAD_DIR, filename].join('/')});
+            var responseData = {success: 'true', name: [UPLOAD_DIR, filename].join('/'), id: id};
 
             // Add image info to the database.
             collection.insert(data, function() {
-              response.send(body, 201);
+              response.send(responseData, 201);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
 
