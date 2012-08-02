@@ -100,6 +100,115 @@ suite('Scans', function () {
         done();
       });
     });
+
+    test('Get all scanned form data for a survey', function (done) {
+      request({url: BASEURL + '/surveys/' + surveyId + '/scans'},
+              function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('scans');
+        var i;
+        var index = -1;
+        for (i = 0; i < parsed.scans.length; i += 1) {
+          parsed.scans[i].survey.should.equal(surveyId);
+          parsed.scans[i].should.have.property('id');
+          if (parsed.scans[i].id === id) {
+            index = i;
+          }
+          parsed.scans[i].should.have.property('filename');
+          parsed.scans[i].should.have.property('mimetype');
+          parsed.scans[i].should.have.property('url');
+          parsed.scans[i].should.have.property('status');
+          parsed.scans[i].should.have.property('created');
+        }
+        index.should.be.above(-1);
+        done();
+      });
+    });
+
+    test('Get all scanned form data, with status pending, for a survey',
+         function (done) {
+      request({
+        url: BASEURL + '/surveys/' + surveyId + '/scans?status=pending'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('scans');
+        var i;
+        for (i = 0; i < parsed.scans.length; i += 1) {
+          parsed.scans[i].should.have.property('status');
+          parsed.scans[i].status.should.equal('pending');
+          parsed.scans[i].survey.should.equal(surveyId);
+          parsed.scans[i].should.have.property('id');
+          parsed.scans[i].should.have.property('filename');
+          parsed.scans[i].should.have.property('mimetype');
+          parsed.scans[i].should.have.property('url');
+          parsed.scans[i].should.have.property('created');
+        }
+
+        done();
+      });
+    });
+
+    test('Get all scanned form data, with status working, for a survey',
+         function (done) {
+      request({
+        url: BASEURL + '/surveys/' + surveyId + '/scans?status=working'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('scans');
+        var i;
+        for (i = 0; i < parsed.scans.length; i += 1) {
+          parsed.scans[i].should.have.property('status');
+          parsed.scans[i].status.should.equal('working');
+          parsed.scans[i].survey.should.equal(surveyId);
+          parsed.scans[i].should.have.property('id');
+          parsed.scans[i].should.have.property('filename');
+          parsed.scans[i].should.have.property('mimetype');
+          parsed.scans[i].should.have.property('url');
+          parsed.scans[i].should.have.property('created');
+        }
+
+        done();
+      });
+    });
+
+    test('Get all scanned form data, with status completed, for a survey',
+         function (done) {
+      request({
+        url: BASEURL + '/surveys/' + surveyId + '/scans?status=completed'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('scans');
+        var i;
+        for (i = 0; i < parsed.scans.length; i += 1) {
+          parsed.scans[i].should.have.property('status');
+          parsed.scans[i].status.should.equal('completed');
+          parsed.scans[i].survey.should.equal(surveyId);
+          parsed.scans[i].should.have.property('id');
+          parsed.scans[i].should.have.property('filename');
+          parsed.scans[i].should.have.property('mimetype');
+          parsed.scans[i].should.have.property('url');
+          parsed.scans[i].should.have.property('created');
+        }
+
+        done();
+      });
+    });
   });
 
   suite('POST', function () {
