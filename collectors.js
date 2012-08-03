@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Collectors
@@ -5,10 +8,6 @@
  */
 
 var util = require('./util');
-
-module.exports = {
-  setup: setup
-};
 
 var handleError = util.handleError;
 
@@ -31,7 +30,7 @@ function setup(app, db, idgen, collectionName) {
     var cid = req.params.cid;
     getCollection(function(err, collection) {
       collection.find({'survey': surveyid, 'id': cid}, function(err, cursor) {
-        if (handleError(err, response)) return;
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (items.length > 1) {
@@ -67,7 +66,8 @@ function setup(app, db, idgen, collectionName) {
         // Add collectors to database.
         collection.insert(coll, function() {
           // Check if we've added all of them.
-          if (++count == total) {
+          count += 1;
+          if (count === total) {
             response.send({collectors: colls}, 201);
           }
         });
@@ -84,11 +84,18 @@ function setup(app, db, idgen, collectionName) {
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
       var cid = req.params.cid;
-      collection.findAndModify({'survey': surveyid, 'id': cid}, {_id: 1}, {$set: {forms: coll.forms}},
-                               {new: true}, function(err, object) {
-        if (handleError(err, response)) return;
+      collection.findAndModify({'survey': surveyid, 'id': cid},
+                               {'_id': 1},
+                               {$set: {forms: coll.forms}},
+                               {'new': true},
+                               function(err, object) {
+        if (handleError(err, response)) { return; }
         response.send({collector: object});
       });
     });
   });
 }
+
+module.exports = {
+  setup: setup
+};
