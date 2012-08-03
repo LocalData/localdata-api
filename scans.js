@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Scans
@@ -17,14 +20,10 @@
 var knox = require('knox');
 var util = require('./util');
 
-module.exports = {
-  setup: setup
-};
-
 var handleError = util.handleError;
 
-var UPLOAD_DIR = 'uploaded_files';
-var S3_BUCKET = 'cfadetroit_survey';
+var UPLOAD_DIR;
+var S3_BUCKET;
 var STATUS_PENDING = 'pending';
 var STATUS_WORKING = 'working';
 var STATUS_COMPLETE = 'complete';
@@ -47,10 +46,12 @@ function makeS3Location(id) {
  * collectionName: name of scans collection
  */
 function setup(app, db, idgen, collectionName, settings) {
+  UPLOAD_DIR = settings.s3_dir;
+  S3_BUCKET = settings.s3_bucket;
   var s3client =  knox.createClient({
     key: settings.s3_key,
     secret: settings.s3_secret,
-    bucket: S3_BUCKET,
+    bucket: settings.s3_bucket,
     secure: false
   });
 
@@ -108,11 +109,11 @@ function setup(app, db, idgen, collectionName, settings) {
           .on('close', function(error) { console.log(error.message); })
           .on('end', function() {
             // TODO: return the DB doc instead?
-            body = JSON.stringify({success: 'true', name: [UPLOAD_DIR, filename].join('/')});
+            var responseData = {success: 'true', name: [UPLOAD_DIR, filename].join('/'), id: id};
 
             // Add image info to the database.
             collection.insert(data, function() {
-              response.send(body, 201);
+              response.send(responseData, 201);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
 
@@ -123,7 +124,8 @@ function setup(app, db, idgen, collectionName, settings) {
         });
 
         // Write to the S3 request.
-        for (var i=0; i<buffers.length; i++) {
+        var i;
+        for (i = 0; i < buffers.length; i += 1) {
           console.log('Writing chunk ' + i + ' of ' + buffers.length + ' to S3.');
           s3request.write(buffers[i]);
         }
@@ -143,13 +145,13 @@ function setup(app, db, idgen, collectionName, settings) {
 
     // Get the image data from the database
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       collection.find({id: id, survey: sid}, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         cursor.nextObject(function(err, doc) {
-          if (handleError(err)) return;
+          if (handleError(err)) { return; }
 
-          if (doc == null) {
+          if (doc === null) {
             console.log('No item found with id ' + id);
             response.send(404);
             return;
@@ -176,11 +178,11 @@ function setup(app, db, idgen, collectionName, settings) {
 
     // Get the image data from the database
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       collection.find({id: id}, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         cursor.nextObject(function(err, doc) {
-          if (handleError(err)) return;
+          if (handleError(err)) { return; }
 
           // Set the content-type
           response.header('Content-Type', doc.mimetype);
@@ -193,7 +195,7 @@ function setup(app, db, idgen, collectionName, settings) {
             s3res.on('data', function(chunk) {
               // Send a chunk to the Survey API client
               response.write(chunk);
-            })
+            });
             s3res.on('end', function() {
               // End the response to the Survey API client
               response.end();
@@ -217,12 +219,12 @@ function setup(app, db, idgen, collectionName, settings) {
 
     // Get the image data from the database
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
 
       var filter = {survey: sid};
-      if (status) filter.status = status;
+      if (status) { filter.status = status; }
       collection.find(filter, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
 
         cursor.toArray(function(err, items) {
           response.send({scans: items});
@@ -330,3 +332,7 @@ function WorkChecker() {
     }
   };
 }
+
+module.exports = {
+  setup: setup
+};

@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Responses
@@ -29,14 +32,6 @@
  
 var util = require('./util');
 
-module.exports = {
-  setup: setup,
-  listToCSVString: listToCSVString,
-  filterAllResults: filterAllResults,
-  filterToMostRecent: filterToMostRecent,
-  filterToOneRowPerUse: filterToOneRowPerUse
-};
-
 var handleError = util.handleError;
 var isArray = util.isArray;
 
@@ -47,7 +42,8 @@ var isArray = util.isArray;
  */
 function listToCSVString(row, headers, maxEltsInCell) {
   var arr = [];
-  for (var i = 0; i < row.length; i++) {
+  var i;
+  for (i = 0; i < row.length; i += 1) {
     if (maxEltsInCell[headers[i]] === 1) {
       // No multiple-choice for this column
       arr.push(row[i]);
@@ -72,12 +68,13 @@ function listToCSVString(row, headers, maxEltsInCell) {
  * Turn a list of parcel attributes into a KML string
  */ 
 function listToKMLString(row, headers, maxEltsInCell) {
+  var i;
   var elt = "\n<Placemark>";
   elt += "<name></name>";
   elt += "<description></description>";
   elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>"; 
   elt += "<ExtendedData>";
-  for (var i = 0; i < row.length; i++) {
+  for (i = 0; i < row.length; i += 1) {
       elt += "<Data name=\"" + headers[i] + "\">";
       elt += "<displayName>" + headers[i] + "</displayName>";  
       elt += "<value>" + row[i] + "</value>";              
@@ -104,10 +101,15 @@ String.prototype.endsWith = function(suffix) {
 };
 
 function clone(obj) {
-    if (null == obj || "object" != typeof obj) return obj;
+    if (null === obj || undefined === obj || "object" !== typeof obj) {
+      return obj;
+    }
     var copy = obj.constructor();
-    for (var attr in obj) {
-        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+    var attr;
+    for (attr in obj) {
+      if (obj.hasOwnProperty(attr)) {
+        copy[attr] = obj[attr];
+      }
     }
     return copy;
 }
@@ -120,16 +122,17 @@ function filterToOneRowPerUse(items) {
   var results = [];
   var matchEndsWithDashNumber = /-\d+$/;
   // Go through every result
-  for (var idx=0; idx < items.length; idx++) {
+  var idx;
+  for (idx = 0; idx < items.length; idx += 1) {
     
     var newResult;
     var result = items[idx];
-    var useCount = parseInt(result['responses']['use-count'], 10);
+    var useCount = parseInt(result.responses['use-count'], 10);
     
     // Correct for a bug in WSU survey that stored condition as condition-1
     // TODO: REMOVE LATER!
-    if (result['responses'].hasOwnProperty('condition-1')) {
-      result['responses']['condition'] = result['responses']['condition-1'];
+    if (result.responses.hasOwnProperty('condition-1')) {
+      result.responses['condition'] = result['responses']['condition-1'];
     }
     
     // If there are multiple uses, loop through all of them.
@@ -448,7 +451,8 @@ function setup(app, db, idgen, collectionName) {
     // Turn each row into a CSV line
     response.write(listToCSVString(headers, headers, maxEltsInCell));
     response.write('\n');
-    for (i = 0; i < rows.length; i++) {
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
       response.write(listToCSVString(rows[i], headers, maxEltsInCell));
       response.write('\n');
     }
@@ -601,3 +605,11 @@ function setup(app, db, idgen, collectionName) {
   });  
 
 } // setup()
+
+module.exports = {
+  setup: setup,
+  listToCSVString: listToCSVString,
+  filterAllResults: filterAllResults,
+  filterToMostRecent: filterToMostRecent,
+  filterToOneRowPerUse: filterToOneRowPerUse
+};
