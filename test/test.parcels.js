@@ -23,7 +23,7 @@ function shouldBeParcel(item) {
   item.polygon.should.have.property('type');
   item.polygon.type.should.equal('Polygon');
   item.polygon.should.have.property('coordinates');
-  item.polygon.coordinates.should.be.an('array');
+  item.polygon.coordinates.should.be.an.instanceOf(Array);
   item.should.have.property('address');
 }
 
@@ -79,7 +79,7 @@ suite('Parcels', function () {
 
         var parsed = JSON.parse(body);
         // Expect an array, since condos could have parcels that overlap.
-        parsed.should.be.an('array');
+        parsed.should.be.an.instanceOf(Array);
         parsed.length.should.be.above(0);
         var i;
         for (i = 0; i < parsed.length; i += 1) {
@@ -98,6 +98,42 @@ suite('Parcels', function () {
         // We should get "400 Bad Request" if we specify both a bounding box
         // and a point.
         response.statusCode.should.equal(400);
+
+        done();
+      });
+    });
+
+    test('Point query with no results', function (done) {
+      // lon=105.436096, lat=-6.152738 is in the water, in Indonesia, so we
+      // should not find any parcels.
+      request({
+        url: BASEURL + '/parcels?lon=105.436096&lat=-6.152738'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json
+
+        var parsed = JSON.parse(body);
+        parsed.should.be.an.instanceOf(Array);
+        parsed.should.have.lengthOf(0);
+
+        done();
+      });
+    });
+
+    test('Bounding box query with no results', function (done) {
+      // bounding box 105.43,-6.154,105.44,-6.144 is in the water, in
+      // Indonesia, so we should not find any parcels.
+      request({
+        url: BASEURL + '/parcels?bbox=105.43,-6.154,105.44,-6.144'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json
+
+        var parsed = JSON.parse(body);
+        parsed.should.be.an.instanceOf(Array);
+        parsed.should.have.lengthOf(0);
 
         done();
       });
