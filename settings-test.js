@@ -18,5 +18,11 @@ settings.s3_secret = process.env.S3_SECRET || 'FAKE_SECRET';
 settings.s3_bucket = 'cfadetroit_survey';
 settings.s3_dir = 'uploaded_test_files';
 
+// Postgresql parcel server
+settings.psqlHost = process.env.PSQL_HOST;
+settings.psqlName = process.env.PSQL_NAME;
+settings.psqlUser = process.env.PSQL_USER;
+settings.psqlPass = process.env.PSQL_PASS;
+
 // Web server
 settings.port = 3030;
