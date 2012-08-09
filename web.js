@@ -5,6 +5,7 @@ var express = require('express');
 var mongo = require('mongodb');
 var uuid = require('node-uuid');
 var fs = require('fs');
+var s3 = require('connect-s3');
 
 /*
  * Routes are split into separate modules.
@@ -22,7 +23,7 @@ var COLLECTORS = 'collectorCollection';
 var SURVEYS = 'surveyCollection';
 var SCANIMAGES = 'scanCollection';
 
-var app = express.createServer(express.logger());
+var app = express(express.logger());
 var db;
 
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
@@ -82,28 +83,7 @@ app.configure(function() {
 // ID generator
 var idgen = uuid.v1;
 
-// Set up routes for forms
-function setupRoutes(db, settings) {
-  forms.setup(app, db, idgen, FORMS);
-  responses.setup(app, db, idgen, RESPONSES);
-  collectors.setup(app, db, idgen, COLLECTORS);
-  surveys.setup(app, db, idgen, SURVEYS);
-  scans.setup(app, db, idgen, SCANIMAGES, settings);
-  parcels.setup(app, settings);
-}
-
-// Ensure certain database structure.
-function ensureStructure(db, callback) {
-  db.collection(RESPONSES, function (error, collection) {
-    if (error) { throw error; }
-    collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
-      callback(error);
-    });
-  });
-}
-
-// Static files
-// TODO: host these separately? Shift other routes to /api/ROUTES?
+// Local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
     if (err) {
@@ -116,42 +96,87 @@ function sendFile(response, filename, type) {
   });
 }
 
-app.get('/', function(req, response) {
-  response.redirect('/static/surveys.html');
-});
+// Set up routes
+function setupRoutes(db, settings) {
+  forms.setup(app, db, idgen, FORMS);
+  responses.setup(app, db, idgen, RESPONSES);
+  collectors.setup(app, db, idgen, COLLECTORS);
+  surveys.setup(app, db, idgen, SURVEYS);
+  scans.setup(app, db, idgen, SCANIMAGES, settings);
+  parcels.setup(app, settings);
 
-app.get(/\/static\/(.*)/, function(req, response) {
-  var path = req.params[0];
-  var index = path.lastIndexOf('.');
-  var format = '';
-  if (index > -1) {
-    format = path.substring(index);
-  }
+  // Mobile collection app
+  app.use(s3({
+    pathPrefix: '/mobile',
+    remotePrefix: settings.mobilePrefix
+  }));
 
-  var type;
-  switch (format) {
-  case '.html':
-    type = 'text/html';
-    break;
-  case '.css':
-    type = 'text/css';
-    break;
-  case '.js':
-    type = 'application/javascript';
-    break;
-  case '.gif':
-    type = 'image/gif';
-    break;
-  case '.png':
-    type = 'image/png';
-    break;
-  default:
-    type = 'text/html';
-  }
+  // Ringleader's administration/dashboard app
+  app.use(s3({
+    pathPrefix: '/',
+    remotePrefix: settings.adminPrefix
+  }));
 
-  sendFile(response, path, type);
-});
+  // Internal operational management app
+  // TODO: move this to S3
+  var opsPrefix = '/ops';
+  app.use(function (req, res, next) {
+    var path;
+    var url = req.url;
 
+    if (url.length < opsPrefix.length ||
+       url.substr(0, opsPrefix.length) !== opsPrefix) {
+      return next();
+    }
+
+    path = url.substr(opsPrefix.length);
+    if (path === '' || path === '/') {
+      res.redirect('/static/surveys.html');
+      res.statusCode = 302;
+      res.setHeader('Location', req.url + '/');
+      res.end();
+    } else {
+      var index = path.lastIndexOf('.');
+      var format = '';
+      if (index > -1) {
+        format = path.substring(index);
+      }
+
+      var type;
+      switch (format) {
+        case '.html':
+          type = 'text/html';
+        break;
+        case '.css':
+          type = 'text/css';
+        break;
+        case '.js':
+          type = 'application/javascript';
+        break;
+        case '.gif':
+          type = 'image/gif';
+        break;
+        case '.png':
+          type = 'image/png';
+        break;
+        default:
+          type = 'text/html';
+      }
+
+      sendFile(res, path, type);
+    }
+  });
+}
+
+// Ensure certain database structure.
+function ensureStructure(db, callback) {
+  db.collection(RESPONSES, function (error, collection) {
+    if (error) { throw error; }
+    collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
+      callback(error);
+    });
+  });
+}
 
 function startServer(port, cb) {  
   app.listen(port, function(err) {
