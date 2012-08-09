@@ -5,6 +5,7 @@
 var server = require('../web.js');
 var request = require('request');
 var should = require('should');
+var crypto = require('crypto');
 
 var settings = require('../settings-test.js');
 
@@ -20,6 +21,22 @@ suite('Static', function () {
   });
 
   suite('Mobile client', function () {
+    var digest;
+
+    suiteSetup(function (done) {
+      request({
+        url: settings.mobilePrefix + '/index.html'
+      }, function (error, response, body) {
+        if (error) { return done(error); }
+
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        digest = hash.digest('hex');
+
+        done();
+      });
+    });
+
     test('base without slash', function (done) {
       request({
         url: BASEURL + '/mobile'
@@ -27,6 +44,10 @@ suite('Static', function () {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        hash.digest('hex').should.equal(digest);
 
         done();
       });
@@ -40,6 +61,10 @@ suite('Static', function () {
         response.statusCode.should.equal(200);
         response.should.be.html;
 
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        hash.digest('hex').should.equal(digest);
+
         done();
       });
     });
@@ -52,12 +77,32 @@ suite('Static', function () {
         response.statusCode.should.equal(200);
         response.should.be.html;
 
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        hash.digest('hex').should.equal(digest);
+
         done();
       });
     });
   });
 
-  suite('Browser app', function () {
+  suite('Admin app', function () {
+    var digest;
+
+    suiteSetup(function (done) {
+      request({
+        url: settings.adminPrefix + '/index.html'
+      }, function (error, response, body) {
+        if (error) { return done(error); }
+
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        digest = hash.digest('hex');
+
+        done();
+      });
+    });
+
     test('base without slash', function (done) {
       request({
         url: BASEURL
@@ -65,6 +110,10 @@ suite('Static', function () {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        hash.digest('hex').should.equal(digest);
 
         done();
       });
@@ -78,6 +127,10 @@ suite('Static', function () {
         response.statusCode.should.equal(200);
         response.should.be.html;
 
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        hash.digest('hex').should.equal(digest);
+
         done();
       });
     });
@@ -89,6 +142,10 @@ suite('Static', function () {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        hash.digest('hex').should.equal(digest);
 
         done();
       });
