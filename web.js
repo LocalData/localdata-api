@@ -14,6 +14,7 @@ var responses = require('./responses');
 var collectors = require('./collectors');
 var surveys = require('./surveys');
 var scans = require('./scans');
+var parcels = require('./parcels');
 
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
@@ -88,6 +89,7 @@ function setupRoutes(db, settings) {
   collectors.setup(app, db, idgen, COLLECTORS);
   surveys.setup(app, db, idgen, SURVEYS);
   scans.setup(app, db, idgen, SCANIMAGES, settings);
+  parcels.setup(app, settings);
 }
 
 // Ensure certain database structure.
@@ -166,6 +168,9 @@ function run(settings, cb) {
   console.log('Mongo port: ' + settings.mongo_port);
   console.log('Mongo db: ' + settings.mongo_db);
   console.log('Mongo user: ' + settings.mongo_user);
+  console.log('Postgresql host: ' + settings.psqlHost);
+  console.log('Postgresql db: ' + settings.psqlName);
+  console.log('Postgresql user: ' + settings.psqlUser);
   // Set up database
   if (!db) {
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
@@ -197,6 +202,7 @@ function run(settings, cb) {
 function stop() {
   app.close();
   db.close();
+  console.log('Stopped server');
 }
 
 module.exports = {
