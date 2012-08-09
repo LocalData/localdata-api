@@ -22,8 +22,8 @@ function setup(app, db, idgen, collectionName) {
   }
   
   // Get all surveys
-  // GET http://localhost:3000/surveys
-  app.get('/surveys', function(req, response) {
+  // GET http://localhost:3000/api/surveys
+  app.get('/api/surveys', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
             
@@ -39,8 +39,8 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Get a survey
-  // GET http://localhost:3000/surveys/{SURVEY ID}
-  app.get('/surveys/:sid', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}
+  app.get('/api/surveys/:sid', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
       if (handleError(err)) { return; }
@@ -64,8 +64,8 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Add a survey
-  // POST http://localhost:3000/surveys
-  app.post('/surveys', function(req, response) {
+  // POST http://localhost:3000/api/surveys
+  app.post('/api/surveys', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     var surveys = req.body.surveys;
     var total = surveys.length;
@@ -90,10 +90,10 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Delete a survey
-  // DELETE http://localhost:5000/surveys/{SURVEY ID}
+  // DELETE http://localhost:5000/api/surveys/{SURVEY ID}
   // TODO: We should probably clean up the objects from other collections that
   // pertain only to this survey.
-  app.del('/surveys/:sid', function(req, response) {
+  app.del('/api/surveys/:sid', function(req, response) {
     var sid = req.params.sid;
     getCollection(function(err, collection) {
       collection.remove({id: sid}, {safe: true}, function(error, count) {

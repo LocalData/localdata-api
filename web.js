@@ -183,7 +183,7 @@ function run(settings, cb) {
       db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
         if (err) {
           console.log(err.message);
-          return;
+          return cb(err);
         }
         ensureStructure(db, function (error) {
           if (error) { throw error; }
