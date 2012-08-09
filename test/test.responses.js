@@ -10,7 +10,7 @@ var should = require('should');
 
 var settings = require('../settings-test.js');
 
-var BASEURL = 'http://localhost:' + settings.port;
+var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Responses', function () {
   var data_one = {

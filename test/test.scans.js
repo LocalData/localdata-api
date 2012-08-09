@@ -11,7 +11,7 @@ var crypto = require('crypto');
 
 var settings = require('../settings-test.js');
 
-var BASEURL = 'http://localhost:' + settings.port;
+var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 var scannedFile = 'test/data/scan.jpeg';
 
