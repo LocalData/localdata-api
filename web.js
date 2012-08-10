@@ -1,6 +1,7 @@
 /*jslint node: true */
 'use strict';
 
+var http = require('http');
 var express = require('express');
 var mongo = require('mongodb');
 var uuid = require('node-uuid');
@@ -23,6 +24,7 @@ var COLLECTORS = 'collectorCollection';
 var SURVEYS = 'surveyCollection';
 var SCANIMAGES = 'scanCollection';
 
+var server;
 var app = express(express.logger());
 var db;
 
@@ -30,8 +32,23 @@ var db;
 // accept text/plain treat it as JSON.
 // TODO: if we need to accept text/plain in the future, then we need to adjust
 // this
-function textParser(req, options, callback) {
+function textParser(req, res, next) {
+  if (req._body) { return next(); }
+  req.body = req.body || {};
+
+  // For GET/HEAD, there's no body to parse.
+  if ('GET' === req.method || 'HEAD' === req.method) { return next(); }
+
+  // Check for text/plain content type
+  var type = req.headers['content-type'];
+  if (type === undefined || 'text/plain' !== type.split(';')[0]) { return next(); }
+
+  // Flag as parsed
+  req._body = true;
+
   console.log('Got text/plain');
+
+  // Parse as JSON
   var buf = '';
   req.setEncoding('utf8');
   req.on('data', function(chunk){
@@ -44,40 +61,39 @@ function textParser(req, options, callback) {
       } else {
         req.body = JSON.parse(buf);
       }
-      callback();
+      next();
     } catch (err) {
-      callback(err);
+      err.status = 400;
+      next(err);
     }
   });
 }
 
-express.bodyParser.parse['text/plain'] = textParser;
+app.set('jsonp callback', true);
+app.use(express.methodOverride());
 
-app.configure(function() {
-  app.set('jsonp callback', true);
-  app.use(express.methodOverride());
+app.use(textParser);
 
-  // Default to text/plain if no content-type was provided.
-  app.use(function(req, res, next) {
-    if (req.body) { return next(); }
-    if ('GET' === req.method || 'HEAD' === req.method) { return next(); }
+// Default to text/plain if no content-type was provided.
+app.use(function(req, res, next) {
+  if (req.body) { return next(); }
+  if ('GET' === req.method || 'HEAD' === req.method) { return next(); }
 
-    if (!req.headers['content-type']) {
-      req.body = {};
-      textParser(req, null, next);
-    } else {
-      next();
-    }
-  });
-
-  app.use(express.bodyParser());
-
-  // Add common headers
-  app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Mime-Type, X-Requested-With, X-File-Name, Content-Type");
+  if (!req.headers['content-type']) {
+    req.body = {};
+    textParser(req, res, next);
+  } else {
     next();
-  });
+  }
+});
+
+app.use(express.bodyParser());
+
+// Add common headers
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Mime-Type, X-Requested-With, X-File-Name, Content-Type");
+  next();
 });
 
 // ID generator
@@ -179,30 +195,32 @@ function ensureStructure(db, callback) {
 }
 
 function startServer(port, cb) {  
-  app.listen(port, function(err) {
+  server = http.createServer(app);
+  server.listen(port, function (err) {
     console.log('Listening on ' + port);
     if (cb !== undefined) { cb(err); }
   });
 }
 
 function run(settings, cb) {
-  // Kick things off
-  console.log('Using the following settings:');
-  console.log('Port: ' + settings.port);
-  console.log('Mongo host: ' + settings.mongo_host);
-  console.log('Mongo port: ' + settings.mongo_port);
-  console.log('Mongo db: ' + settings.mongo_db);
-  console.log('Mongo user: ' + settings.mongo_user);
-  console.log('Postgresql host: ' + settings.psqlHost);
-  console.log('Postgresql db: ' + settings.psqlName);
-  console.log('Postgresql user: ' + settings.psqlUser);
-  // Set up database
   if (!db) {
+    console.log('Using the following settings:');
+    console.log('Port: ' + settings.port);
+    console.log('Mongo host: ' + settings.mongo_host);
+    console.log('Mongo port: ' + settings.mongo_port);
+    console.log('Mongo db: ' + settings.mongo_db);
+    console.log('Mongo user: ' + settings.mongo_user);
+    console.log('Postgresql host: ' + settings.psqlHost);
+    console.log('Postgresql db: ' + settings.psqlName);
+    console.log('Postgresql user: ' + settings.psqlUser);
+    // Set up database
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
                                                           {}), {});
+    setupRoutes(db, settings);
   }
-  setupRoutes(db, settings);
+
+  // Kick things off
   db.open(function() {
     if (settings.mongo_user !== undefined) {
       db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
@@ -225,7 +243,7 @@ function run(settings, cb) {
 }
 
 function stop() {
-  app.close();
+  server.close();
   db.close();
   console.log('Stopped server');
 }
