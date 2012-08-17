@@ -152,9 +152,9 @@ suite('Forms', function () {
           
           // Test paper and mobile forms separately
           if(body.forms[i].type === "paper"){             
-            should.deepEqual(body.forms[i].parcels, data_all.forms[0].parcels);
-            should.deepEqual(body.forms[i].global, data_all.forms[0].global);
-            body.forms[i].type.should.equal(data_paper.forms[0].type);
+            should.deepEqual(body.forms[i].parcels, data_all.forms[i].parcels);
+            should.deepEqual(body.forms[i].global, data_all.forms[i].global);
+            body.forms[i].type.should.equal(data_paper.forms[i].type);
           }else {
             // Mobile form tests
             should.deepEqual(body.forms[i].questions, data_all.forms[i].questions);
