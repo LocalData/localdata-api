@@ -36,7 +36,7 @@ suite('Forms', function () {
 
 
   suite('GET', function () {
-    var id; // Not sure how to best check for 
+    var id; 
     
     setup(function (done) {
       request.post({url: BASEURL + '/surveys/' + surveyId + '/forms', json: data_paper},
