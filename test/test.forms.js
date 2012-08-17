@@ -14,6 +14,7 @@ var BASEURL = 'http://localhost:' + settings.port;
 
 suite('Forms', function () {
   var data_paper = { forms: [] };
+  var data_mobile = { forms: [] };
   var surveyId = '123';
 
   suiteSetup(function (done) {
@@ -23,6 +24,12 @@ suite('Forms', function () {
 
       server.run(settings, done);
     });
+    
+    fs.readFile('test/data/form_mobile.json', function (err, raw) {
+      if (err) { return done(err); }
+      data_mobile.forms.push(JSON.parse(raw));
+      server.run(settings, done);
+    });    
   });
 
   suiteTeardown(function () {
@@ -126,20 +133,33 @@ suite('Forms', function () {
     test('Add form to survey', function (done) {
       request.post({url: BASEURL + '/surveys/' + surveyId + '/forms', json: data_paper},
                    function (error, response, body) {
+                     
+        // Basic sanity checks
         should.not.exist(error);
         response.statusCode.should.equal(201);
         response.should.be.json;
 
+        // These apply to all form requests
         body.should.have.property('forms');
-        body.forms.should.have.lengthOf(data_paper.forms.length);
+        body.forms.should.have.lengthOf(data_paper.forms.length + data_mobile.forms.length);
+        
         var i;
         for (i = 0; i < body.forms.length; i += 1) {
           body.forms[i].should.have.property('survey').equal(surveyId);
           body.forms[i].should.have.property('id');
           body.forms[i].should.have.property('created');
-          should.deepEqual(body.forms[i].parcels, data_paper.forms[i].parcels);
-          should.deepEqual(body.forms[i].global, data_paper.forms[i].global);
-          body.forms[i].type.should.equal(data_paper.forms[i].type);
+          body.forms[i].should.have.property('type');
+          
+          // Test paper and mobile forms separately
+          if(body.forms[i].type === "paper"){ 
+            should.deepEqual(body.forms[i].parcels, data_paper.forms[0].parcels);
+            should.deepEqual(body.forms[i].global, data_paper.forms[0].global);
+            body.forms[i].type.should.equal(data_paper.forms[0].type);
+          }else {
+            // Mobile form tests
+            should.deepEqual(body.forms[i].questions, data_mobile.forms[0].questions);
+            body.forms[i].type.should.equal(data_mobile.forms[0].type);
+          }
         }
 
         done();

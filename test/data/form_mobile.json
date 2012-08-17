@@ -41,7 +41,7 @@
               ]
             }
         ]
-      }, // End site      
+      },       
       { 
         "name": "occupancy",
         "text": "Is it occupied?",
@@ -86,7 +86,7 @@
             "text": "Demolish"
           }
         ]
-      }, // end condition
+      }, 
       
       {
         "name": "fire",
@@ -139,6 +139,6 @@
             "text": "Vacant, open, and dangerous"
           }
         ]
-      } // end vod
+      } 
   ]
 };
