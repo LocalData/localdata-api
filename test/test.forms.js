@@ -20,11 +20,11 @@ suite('Forms', function () {
   suiteSetup(function (done) {
     fs.readFile('test/data/form_paper.json', function (err, raw) {
       if (err) { return done(err); }
-      data_all.forms.push(JSON.parse(raw))
-      data_paper.forms.push(JSON.parse(raw))
+      data_all.forms.push(JSON.parse(raw));
+      data_paper.forms.push(JSON.parse(raw));
       fs.readFile('test/data/form_mobile.json', function (err, raw) {
         if (err) { return done(err); }
-        data_all.forms.push(JSON.parse(raw))
+        data_all.forms.push(JSON.parse(raw));
         server.run(settings, done);
       });    
     });
