@@ -9,7 +9,7 @@ var request = require('request');
 
 var settings = require('../settings-test.js');
 
-var BASEURL = 'http://localhost:' + settings.port;
+var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
   var data_one = {

@@ -250,9 +250,9 @@ function setup(app, db, idgen, collectionName) {
   }
   
   // Get all responses for a survey.
-  // GET http://localhost:3000/surveys/{SURVEY ID}/responses
-  // GET http://localhost:3000/surveys/1/responses
-  app.get('/surveys/:sid/responses', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/responses
+  // GET http://localhost:3000/api/surveys/1/responses
+  app.get('/api/surveys/:sid/responses', function(req, response) {
     var surveyid = req.params.sid;
     getCollection(function(err, collection) {
       collection.find({'survey': surveyid}, function(err, cursor) {
@@ -270,9 +270,9 @@ function setup(app, db, idgen, collectionName) {
   
   // Get all responses for a specific parcel.
   // TODO: At some point, parcel should become a generic geographic object ID.
-  // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
-  // GET http://localhost:3000/surveys/1/parcels/3728048/responses
-  app.get('/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
+  // GET http://localhost:3000/api/surveys/1/parcels/3728048/responses
+  app.get('/api/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
     var surveyid = req.params.sid;
     var parcel_id = req.params.parcel_id;
     getCollection(function(err, collection) {
@@ -290,9 +290,9 @@ function setup(app, db, idgen, collectionName) {
   });
   
   // Get a response for a survey.
-  // GET http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
-  // GET http://localhost:3000/surveys/1/responses/2ec140e0-827f-11e1-83d8-bf682a6ee038
-  app.get('/surveys/:sid/responses/:rid', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/responses/{RESPONSE ID}
+  // GET http://localhost:3000/api/surveys/1/responses/2ec140e0-827f-11e1-83d8-bf682a6ee038
+  app.get('/api/surveys/:sid/responses/:rid', function(req, response) {
     var surveyid = req.params.sid;
     var responseid = req.params.rid;
     getCollection(function(err, collection) {
@@ -316,8 +316,8 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Delete a response from a survey
-  // DELETE http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
-  app.del('/surveys/:sid/responses/:rid', function(req, response) {
+  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/responses/{RESPONSE ID}
+  app.del('/api/surveys/:sid/responses/:rid', function(req, response) {
     var survey = req.params.sid;
     var id = req.params.rid;
     console.log('Removing response ' + id + ' from the database.');
@@ -337,12 +337,12 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Add responses for a survey.
-  // POST http://localhost:3000/surveys/{SURVEY ID}/reponses
-  // POST http://localhost:3000/surveys/1/reponses
+  // POST http://localhost:3000/api/surveys/{SURVEY ID}/reponses
+  // POST http://localhost:3000/api/surveys/1/reponses
   // Expects data in the format: 
   // responses: [
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
-  app.post('/surveys/:sid/responses', function(req, response) {
+  app.post('/api/surveys/:sid/responses', function(req, response) {
     var resps = req.body.responses;
     var total = resps.length;
     
@@ -387,9 +387,9 @@ function setup(app, db, idgen, collectionName) {
 
   // Delete all responses for a survey.
   // This is maintainence functionality. Regular clients should not delete forms.
-  // DELETE http://localhost:3000/surveys/{SURVEY ID}/reponses
-  // DELETE http://localhost:3000/surveys/1/reponses
-  app.del('/surveys/:sid/responses', function(req, response) {
+  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/reponses
+  // DELETE http://localhost:3000/api/surveys/1/reponses
+  app.del('/api/surveys/:sid/responses', function(req, response) {
     var survey = req.params.sid;
     console.log('!!! Deleting responses for survey ' + survey + ' from the database.');
     getCollection(function(err, collection) {
@@ -406,9 +406,9 @@ function setup(app, db, idgen, collectionName) {
   
   
   // Get all responses in a bounding box
-  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
-  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/1,2,3,4
-  app.get('/surveys/:sid/responses/in/:bounds', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/1,2,3,4
+  app.get('/api/surveys/:sid/responses/in/:bounds', function(req, response) {
     var surveyid = req.params.sid;
     var bounds = req.params.bounds;
     var coords = bounds.split(",");
@@ -584,22 +584,22 @@ function setup(app, db, idgen, collectionName) {
   };
 
   // Return response data as CSV
-  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
-  app.get('/surveys/:sid/csv', function(req, response) {
+  // GET http://localhost:5000/api/surveys/{SURVEY ID}/csv
+  app.get('/api/surveys/:sid/csv', function(req, response) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [], CSVWriter);
   });
   
   // Return CSV for WSU use
-  // GET http://localhost:5000/surveys/{SURVEY ID}/csv-recent-peruse
-  app.get('/surveys/:sid/csv-recent-peruse', function(req, response) {
+  // GET http://localhost:5000/api/surveys/{SURVEY ID}/csv-recent-peruse
+  app.get('/api/surveys/:sid/csv-recent-peruse', function(req, response) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [filterToMostRecent, filterToOneRowPerUse], CSVWriter);
   });
   
   // Return response data as KML
-  // GET http://localhost:5000/surveys/{SURVEY ID}/kml
-  app.get('/surveys/:sid/kml', function(req, response) {
+  // GET http://localhost:5000/api/surveys/{SURVEY ID}/kml
+  app.get('/api/surveys/:sid/kml', function(req, response) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [], KMLWriter);
   });  

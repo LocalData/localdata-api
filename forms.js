@@ -56,8 +56,8 @@ function setup(app, db, idgen, FORMS) {
     return db.collection(FORMS, cb);
   }
 
-// GET http://localhost:3000/surveys/1/forms/2ec140e0-827f-11e1-83d8-bf682a6ee038
-app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
+// GET http://localhost:3000/api/surveys/1/forms/2ec140e0-827f-11e1-83d8-bf682a6ee038
+app.get('/api/surveys/:surveyid/forms/:formid', function(req, response) {
   var surveyid = req.params.surveyid;
   var formid = req.params.formid;
   console.log('Getting form ' + formid + ' of survey ' + surveyid);
@@ -85,8 +85,8 @@ app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
 });
 
 // Get all the forms for a survey.
-// GET http://localhost:3000/surveys/{SURVEY ID}/forms
-app.get('/surveys/:sid/forms', function(req, response) {
+// GET http://localhost:3000/api/surveys/{SURVEY ID}/forms
+app.get('/api/surveys/:sid/forms', function(req, response) {
   console.log('Returning all forms for survey ' + req.params.sid);
   db.collection(FORMS, function(err, collection) {
     collection.find({'survey': req.params.sid}, function(err, cursor) {
@@ -110,9 +110,9 @@ app.get('/surveys/:sid/forms', function(req, response) {
 /*
  * Add forms to a survey.
  * This is done before a survey begins, as a setup task.
- * POST http://localhost:3000/surveys/{SURVEY ID}/forms
+ * POST http://localhost:3000/api/surveys/{SURVEY ID}/forms
  */
-app.post('/surveys/:sid/forms', function(req, response) {
+app.post('/api/surveys/:sid/forms', function(req, response) {
   var forms = req.body.forms;
   var total = forms.length;
   console.log('Adding ' + total + ' forms to the database.');
@@ -139,9 +139,9 @@ app.post('/surveys/:sid/forms', function(req, response) {
 /*
  * Delete all forms from a survey.
  * This is maintainence functionality. Regular clients should not delete forms.
- * POST http://localhost:3000/surveys/{SURVEY ID}/forms
+ * POST http://localhost:3000/api/surveys/{SURVEY ID}/forms
  */
-app.del('/surveys/:sid/forms', function(req, response) {
+app.del('/api/surveys/:sid/forms', function(req, response) {
   var survey = req.params.sid;
   console.log('!!! Deleting forms for survey ' + survey + ' from the database.');
   db.collection(FORMS, function(err, collection) {
@@ -157,8 +157,8 @@ app.del('/surveys/:sid/forms', function(req, response) {
 });
 
 // Delete a single form from a survey
-// DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
-app.del('/surveys/:sid/forms/:id', function(req, response) {
+// DELETE http://localhost:3000/api/surveys/{SURVEY_ID}/forms/{FORM_ID}
+app.del('/api/surveys/:sid/forms/:id', function(req, response) {
   var survey = req.params.sid;
   var id = req.params.id;
 
@@ -179,8 +179,8 @@ app.del('/surveys/:sid/forms/:id', function(req, response) {
 });
 
 // Get all forms that reference the specified parcel ID
-// GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
-app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
+// GET http://localhost:3000/api/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
+app.get('/api/surveys/:sid/parcels/:pid/forms', function(req, response) {
   var handleError = util.makeErrorHandler(response);
   var sid = String(req.params.sid);
   var pid = String(req.params.pid);
