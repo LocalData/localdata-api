@@ -136,6 +136,7 @@ suite('Forms', function () {
         for (i = 0; i < body.forms.length; i += 1) {
           body.forms[i].should.have.property('survey').equal(surveyId);
           body.forms[i].should.have.property('id');
+          body.forms[i].should.have.property('created');
           should.deepEqual(body.forms[i].parcels, data_paper.forms[i].parcels);
           should.deepEqual(body.forms[i].global, data_paper.forms[i].global);
           body.forms[i].type.should.equal(data_paper.forms[i].type);
