@@ -10,7 +10,7 @@ var fs = require('fs');
 
 var settings = require('../settings-test.js');
 
-var BASEURL = 'http://localhost:' + settings.port;
+var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Forms', function () {
   var data_paper = { forms: [] };

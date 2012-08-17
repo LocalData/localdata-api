@@ -10,7 +10,7 @@
       survey: '1',
       filename: 'img001.tif',
       mimetype: 'image/tiff'
-      url: 'http://localhost:3000/uploaded_files/e4043210-84db-11e1-b34b-dd2b6e24c3e7',
+      url: 'http://localhost:3000/api/uploaded_files/e4043210-84db-11e1-b34b-dd2b6e24c3e7',
       status: 'pending'
     }
  * status can be 'pending', 'working', or 'complete'
@@ -64,9 +64,9 @@ function setup(app, db, idgen, collectionName, settings) {
   // Add scanned form for a survey.
   // This can be tested using the upload page:
   // http://localhost:3000/static/upload.html
-  // POST http://localhost:3000/surveys/{SURVEY ID}/scans
-  // POST http://localhost:3000/surveys/1/scans
-  app.post('/surveys/:sid/scans', function(req, response) {
+  // POST http://localhost:3000/api/surveys/{SURVEY ID}/scans
+  // POST http://localhost:3000/api/surveys/1/scans
+  app.post('/api/surveys/:sid/scans', function(req, response) {
     console.log('Client is uploading a file');
     var filename = req.headers['x-file-name'];
     var id = idgen();
@@ -135,9 +135,9 @@ function setup(app, db, idgen, collectionName, settings) {
   });
 
   // Get data for a scanned form
-  // GET http://localhost:3000/surveys/{SURVEY ID}/scans/{SCAN ID}
-  // GET http://localhost:3000/surveys/1/scans/234
-  app.get('/surveys/:sid/scans/:id', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/scans/{SCAN ID}
+  // GET http://localhost:3000/api/surveys/1/scans/234
+  app.get('/api/surveys/:sid/scans/:id', function(req, response) {
     console.log('Getting data for a scanned image');
     var handleError = util.makeErrorHandler(response);
     var id = req.params.id;
@@ -166,12 +166,12 @@ function setup(app, db, idgen, collectionName, settings) {
   });
 
   // Get a scanned image
-  // GET http://localhost:3000/uploaded_files/{SCAN ID}
-  // GET http://localhost:3000/uploaded_files/234
+  // GET http://localhost:3000/api/uploaded_files/{SCAN ID}
+  // GET http://localhost:3000/api/uploaded_files/234
   // TODO: add an extension to the stored filename, so that we don't have to
   // hit the server to determine MIME type
   // TODO: make the S3 object publicly accessible and just redirect to its URL
-  app.get('/' + UPLOAD_DIR + '/:id', function(req, response) {
+  app.get('/api/' + UPLOAD_DIR + '/:id', function(req, response) {
     console.log('Sending image file to client');
     var handleError = util.makeErrorHandler(response);
     var id = req.params.id;
@@ -208,11 +208,11 @@ function setup(app, db, idgen, collectionName, settings) {
 
   // Get all the scanned form data for a survey
   // Optionally filter according to the status
-  // GET http://localhost:3000/surveys/{SURVEY ID}/scans
-  // GET http://localhost:3000/surveys/1/scans
-  // GET http://localhost:3000/surveys/1/scans?status=pending
-  // GET http://localhost:3000/surveys/1/scans?status=complete
-  app.get('/surveys/:sid/scans', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/scans
+  // GET http://localhost:3000/api/surveys/1/scans
+  // GET http://localhost:3000/api/surveys/1/scans?status=pending
+  // GET http://localhost:3000/api/surveys/1/scans?status=complete
+  app.get('/api/surveys/:sid/scans', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     var sid = req.params.sid;
     var status = req.query.status;
@@ -234,8 +234,8 @@ function setup(app, db, idgen, collectionName, settings) {
   });
 
   // Update scanned form data
-  // PUT http://localhost:3000/surveys/{SURVEY_ID}/scans/{SCAN_ID}
-  app.put('/surveys/:sid/scans/:id', function(req, response) {
+  // PUT http://localhost:3000/api/surveys/{SURVEY_ID}/scans/{SCAN_ID}
+  app.put('/api/surveys/:sid/scans/:id', function(req, response) {
     var id = req.params.id;
     var survey = req.params.sid;
     var status = req.body.scan.status;
@@ -263,9 +263,9 @@ function setup(app, db, idgen, collectionName, settings) {
   });
 
   // Delete a single scanned form entry from a survey
-  // DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
+  // DELETE http://localhost:3000/api/surveys/{SURVEY_ID}/forms/{FORM_ID}
   // TODO: remove the corresponding S3 object
-  app.del('/surveys/:sid/scans/:id', function(req, response) {
+  app.del('/api/surveys/:sid/scans/:id', function(req, response) {
     var survey = req.params.sid;
     var id = req.params.id;
 

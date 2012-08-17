@@ -24,5 +24,9 @@ settings.psqlName = process.env.PSQL_NAME;
 settings.psqlUser = process.env.PSQL_USER;
 settings.psqlPass = process.env.PSQL_PASS;
 
+// Static apps
+settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
+settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
+
 // Web server
 settings.port = 3030;

@@ -11,6 +11,8 @@
 
 var pg = require('pg');
 
+var client = null;
+
 function bboxToPolygon(bbox) {
   var polygon = 'POLYGON((' +
                 bbox[0] + ' ' + bbox[1] + ', ' +
@@ -29,22 +31,21 @@ function setup(app, settings) {
   var connectionString =
     'tcp://' + settings.psqlUser + ':' + settings.psqlPass +
     '@' + settings.psqlHost + '/' + settings.psqlName;
-  var client = new pg.Client(connectionString);
-  client.connect();
 
-  app.on('close', function () {
-    client.end();
-  });
+  if (client === null) {
+    client = new pg.Client(connectionString);
+    client.connect();
+  }
 
   // Get parcels
   // Filter to include only parcels inside a bounding box or only parcels that
   // intersect a point.
   // We do not allow filtering by both, and we require one of the filters.
-  // GET http://localhost:3000/parcels?bbox=-{SW_LON},{SW_LAT},{NE_LON},{NE_LAT}
-  // GET http://localhost:3000/parcels?bbox=-83.0805,42.336,-83.08,42.34
-  // GET http://localhost:3000/parcels?lon={LONGITUDE}&lat={LATITUDE}
-  // GET http://localhost:3000/parcels?lon=-83.08076&lat=42.338
-  app.get('/parcels', function(req, response) {
+  // GET http://localhost:3000/api/parcels?bbox=-{SW_LON},{SW_LAT},{NE_LON},{NE_LAT}
+  // GET http://localhost:3000/api/parcels?bbox=-83.0805,42.336,-83.08,42.34
+  // GET http://localhost:3000/api/parcels?lon={LONGITUDE}&lat={LATITUDE}
+  // GET http://localhost:3000/api/parcels?lon=-83.08076&lat=42.338
+  app.get('/api/parcels', function(req, response) {
     var bbox = req.query.bbox;
     var lon = req.query.lon;
     var lat = req.query.lat;

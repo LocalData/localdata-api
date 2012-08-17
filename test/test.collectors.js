@@ -10,7 +10,7 @@ var fs = require('fs');
 
 var settings = require('../settings-test.js');
 
-var BASEURL = 'http://localhost:' + settings.port;
+var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 // TODO: We haven't actually spec'd out the collectors API, so this just tests
 // the basic functionality of the HTTP methods.
