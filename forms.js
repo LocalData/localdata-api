@@ -127,7 +127,7 @@ app.post('/api/surveys/:sid/forms', function(req, response) {
       // Set some standard metadata
       var id = idgen();
       form.id = id;
-      resp.created = new Date();
+      form.created = new Date();
       form.survey = survey;
       
       // Add form to database.
