@@ -1,0 +1,144 @@
+{ 
+  "type": "mobile",
+  "questions": [
+      { "name" : "site",
+        "text" : "What's on the site?",
+        "answers" : [
+            { 
+              "value" : "single-building",
+              "text" : "One building"
+            },
+            { 
+              "value" : "multiple-buildings",
+              "text" : "Multiple Buildings"
+            },
+            { 
+              "value" : "parking",
+              "text" : "A parking lot"
+            },
+            { 
+              "value" : "A park",
+              "text" : "An empty lot",
+              "questions": [
+                {
+                  "name": "lot",
+                  "text": "What kind of lot is it?",
+                  "answers": [
+                    {
+                      "value": "unimproved",
+                      "text": "Unimproved (no paving or structures)"
+                    },
+                    {
+                      "value": "improved",
+                      "text": "Improved (paving or structures)"
+                    },
+                    {
+                      "value": "sidelot",
+                      "text": "A fenced side lot"
+                    }
+                  ]
+                }
+              ]
+            }
+        ]
+      },       
+      { 
+        "name": "occupancy",
+        "text": "Is it occupied?",
+        "answers": [
+          {
+            "value": "occupied",
+            "text": "Occupied"
+          },
+          {
+            "value": "probably-occupied",
+            "text": "Probably occupied"
+          },
+          {
+            "value": "probably-vacant",
+            "text": "Probably vacant"
+          },
+          {
+            "value": "vacant-abandoned",
+            "text": "Vacant, abandoned"
+          }
+        ]
+      },      
+      
+      {
+        "name": "condition",
+        "text": "What condition is it in?",
+        "answers": [
+          {
+            "value": "good",
+            "text": "Good"
+          },
+          {
+            "value": "fair",
+            "text": "Fair"
+          },
+          {
+            "value": "poor",
+            "text": "Poor"
+          },
+          {
+            "value": "demolish",
+            "text": "Demolish"
+          }
+        ]
+      }, 
+      
+      {
+        "name": "fire",
+        "text": "Fire Damage",
+        "answers": [
+          {
+            "value": "no fire damage",
+            "text": "No fire damage"
+          },
+          {
+            "value": "some fire damage",
+            "text": "Some fire damage"
+          },
+          {
+            "value": "heavy fire damage",
+            "text": "Heavy fire damage (burnt out wall or roof)"
+          }
+        ]
+      },
+      
+      {
+        "name": "boarded",
+        "text": "",
+        "answers": [
+          {
+            "value": "boarded up",
+            "text": "Is the property fully boarded up?"
+          }
+        ]
+      },
+      
+      {
+        "name": "lawn",
+        "text": "",
+        "answers": [
+          {
+            "value": "unkept lawn",
+            "text": "Does the lawn need substantial mowing or clearing?"
+          }
+        ]
+      },
+      
+
+      {
+        "name": "vod",
+        "text": "",
+        "answers": [
+          {
+            "value": "vod",
+            "text": "Vacant, open, and dangerous"
+          }
+        ]
+      } 
+  ]
+}

@@ -115,15 +115,21 @@ app.get('/api/surveys/:sid/forms', function(req, response) {
 app.post('/api/surveys/:sid/forms', function(req, response) {
   var forms = req.body.forms;
   var total = forms.length;
-  console.log('Adding ' + total + ' forms to the database.');
   var count = 0;
+  console.log('Adding ' + total + ' forms to the database.');
+  
   db.collection(FORMS, function(err, collection) {
     var survey = req.params.sid;
+    
     // Iterate over each form we received.
     forms.forEach(function(form) {
+      
+      // Set some standard metadata
       var id = idgen();
       form.id = id;
+      form.created = new Date();
       form.survey = survey;
+      
       // Add form to database.
       collection.insert(form, function() {
         // Check if we've added all of them.
