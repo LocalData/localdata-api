@@ -174,8 +174,14 @@ suite('Responses', function () {
         parsed.should.have.property('responses');
         parsed.responses.length.should.be.above(1);
         var i;
+        var prevTime = Number.MAX_VALUE;
+        var created;
         for (i = 0; i < parsed.responses.length; i += 1) {
           parsed.responses[i].survey.should.equal(surveyId);
+
+          created = Date.parse(parsed.responses[i].created);
+          created.should.be.below(prevTime);
+          prevTime = created;
         }
         done();
       });
@@ -193,6 +199,17 @@ suite('Responses', function () {
         parsed.responses.length.should.be.above(0);
         parsed.responses[0].parcel_id.should.equal(data_two.responses[1].parcel_id);
         parsed.responses[0].survey.should.equal(surveyId);
+
+        var i;
+        var prevTime = Number.MAX_VALUE;
+        var created;
+        for (i = 0; i < parsed.responses.length; i += 1) {
+          parsed.responses[i].survey.should.equal(surveyId);
+
+          created = Date.parse(parsed.responses[i].created);
+          created.should.be.below(prevTime);
+          prevTime = created;
+        }
 
         done();
       });
@@ -231,6 +248,8 @@ suite('Responses', function () {
         parsed.should.have.property('responses');
         parsed.responses.length.should.be.above(0);
         var i;
+        var prevTime = Number.MAX_VALUE;
+        var created;
         for (i = 0; i < parsed.responses.length; i += 1) {
           parsed.responses[i].survey.should.equal(surveyId);
           parsed.responses[i].geo_info.centroid.should.have.lengthOf(2);
@@ -238,6 +257,10 @@ suite('Responses', function () {
           parsed.responses[i].geo_info.centroid[0].should.be.below(bbox[2]);
           parsed.responses[i].geo_info.centroid[1].should.be.above(bbox[1]);
           parsed.responses[i].geo_info.centroid[1].should.be.below(bbox[3]);
+
+          created = Date.parse(parsed.responses[i].created);
+          created.should.be.below(prevTime);
+          prevTime = created;
         }
         done();
       });

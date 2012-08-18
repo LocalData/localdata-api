@@ -60,11 +60,16 @@ suite('Forms', function () {
         parsed.forms.length.should.be.above(0);
         var i;
         var index = -1;
+        var prevTime = Number.MAX_VALUE;
+        var created;
         for (i = 0; i < parsed.forms.length; i += 1) {
           parsed.forms[i].survey.should.equal(surveyId);
           if (parsed.forms[i].id === id) {
             index = i;
           }
+          created = Date.parse(parsed.forms[i].created);
+          created.should.be.below(prevTime);
+          prevTime = created;
         }
         // Make sure the form we added is in this set.
         index.should.be.above(-1);
@@ -106,6 +111,8 @@ suite('Forms', function () {
         var index = -1;
         var j;
         var parcelIndex;
+        var prevTime = Number.MAX_VALUE;
+        var created;
         for (i = 0; i < parsed.forms.length; i += 1) {
           parsed.forms[i].survey.should.equal(surveyId);
           if (parsed.forms[i].id === id) {
@@ -120,6 +127,10 @@ suite('Forms', function () {
             }
           }
           parcelIndex.should.be.above(-1);
+
+          created = Date.parse(parsed.forms[i].created);
+          created.should.be.below(prevTime);
+          prevTime = created;
         }
         // Make sure the form we just added is in this set.
         index.should.be.above(-1);
