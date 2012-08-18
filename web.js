@@ -205,10 +205,32 @@ function ensureStructure(db, callback) {
 
   function ensureResponses(done) {
     db.collection(RESPONSES, function (error, collection) {
-      if (error) { throw error; }
+      if (error) { return done(error); }
       // Ensure we have a geo index on the centroid field.
       collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
-        done(error);
+        if (error) { return done(error); }
+        // Index the creation date, which we use to sort
+        collection.ensureIndex('created', function (error, index) {
+          if (error) { return done(error); }
+          // Index the parcel ID
+          collection.ensureIndex('parcel_id', function (error, index) {
+            done(error);
+          });
+        });
+      });
+    });
+  }
+
+  function ensureForms(done) {
+    db.collection(FORMS, function (error, collection) {
+      if (error) { return done(error); }
+      // Index the creation date, which we use to sort
+      collection.ensureIndex('created', function (error, index) {
+        if (error) { return done(error); }
+        // Index the parcel IDs, used by paper forms
+        collection.ensureIndex('parcels.parcel_id', function (error, index) {
+          done(error);
+        });
       });
     });
   }
@@ -260,7 +282,7 @@ function ensureStructure(db, callback) {
     });
   }
 
-  chain([ensureSlugs, ensureSurveys, ensureResponses])();
+  chain([ensureSlugs, ensureSurveys, ensureForms, ensureResponses])();
 }
 
 function startServer(port, cb) {  

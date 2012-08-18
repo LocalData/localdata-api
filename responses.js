@@ -250,12 +250,15 @@ function setup(app, db, idgen, collectionName) {
   }
   
   // Get all responses for a survey.
+  // Sort by creation date, newest first.
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/responses
   // GET http://localhost:3000/api/surveys/1/responses
   app.get('/api/surveys/:sid/responses', function(req, response) {
     var surveyid = req.params.sid;
     getCollection(function(err, collection) {
-      collection.find({'survey': surveyid}, function(err, cursor) {
+      collection.find({'survey': surveyid},
+                      {'sort': [['created', 'desc']]},
+                      function(err, cursor) {
         if (err != null) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
@@ -269,6 +272,7 @@ function setup(app, db, idgen, collectionName) {
   });
   
   // Get all responses for a specific parcel.
+  // Sort by creation date, newest first.
   // TODO: At some point, parcel should become a generic geographic object ID.
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
   // GET http://localhost:3000/api/surveys/1/parcels/3728048/responses
@@ -276,7 +280,9 @@ function setup(app, db, idgen, collectionName) {
     var surveyid = req.params.sid;
     var parcel_id = req.params.parcel_id;
     getCollection(function(err, collection) {
-      collection.find({'survey': surveyid, 'parcel_id': parcel_id}, function(err, cursor) {
+      collection.find({'survey': surveyid, 'parcel_id': parcel_id},
+                      {'sort': [['created', 'desc']]},
+                      function(err, cursor) {
         if (err != null) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
@@ -406,6 +412,7 @@ function setup(app, db, idgen, collectionName) {
   
   
   // Get all responses in a bounding box
+  // Sort by creation date, newest first.
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/1,2,3,4
   app.get('/api/surveys/:sid/responses/in/:bounds', function(req, response) {
@@ -427,7 +434,9 @@ function setup(app, db, idgen, collectionName) {
     console.log(query['geo_info.centroid']['$within']["$box"]);
     
     getCollection(function(err, collection) {
-      collection.find(query, function(err, cursor) {
+      collection.find(query,
+                      {'sort': [['created', 'desc']]},
+                      function(err, cursor) {
         if (handleError(err, response)) return;
 
         cursor.toArray(function(err, items) {
