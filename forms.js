@@ -85,11 +85,14 @@ app.get('/api/surveys/:surveyid/forms/:formid', function(req, response) {
 });
 
 // Get all the forms for a survey.
+// Sort by creation date, newest first.
 // GET http://localhost:3000/api/surveys/{SURVEY ID}/forms
 app.get('/api/surveys/:sid/forms', function(req, response) {
   console.log('Returning all forms for survey ' + req.params.sid);
   db.collection(FORMS, function(err, collection) {
-    collection.find({'survey': req.params.sid}, function(err, cursor) {
+    collection.find({'survey': req.params.sid},
+                    {'sort': [['created', 'desc']]},
+                    function(err, cursor) {
       if (err) {
         console.log('Error finding forms for survey ' + req.params.sid + ': ' + err);
         response.send();
@@ -206,6 +209,7 @@ app.del('/api/surveys/:sid/forms/:id', function(req, response) {
 });
 
 // Get all forms that reference the specified parcel ID
+// Sort by creation date, newest first.
 // GET http://localhost:3000/api/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
 app.get('/api/surveys/:sid/parcels/:pid/forms', function(req, response) {
   var handleError = util.makeErrorHandler(response);
@@ -214,7 +218,9 @@ app.get('/api/surveys/:sid/parcels/:pid/forms', function(req, response) {
   console.log('Getting forms for survey ' + sid + ' that reference parcel ' + pid);
   getCollection(function(err, collection) {
     if (handleError(err)) { return; }
-    collection.find({survey: sid, 'parcels.parcel_id': pid}, function(err, cursor) {
+    collection.find({survey: sid, 'parcels.parcel_id': pid},
+                    {'sort': [['created', 'desc']]},
+                    function(err, cursor) {
       if (handleError(err)) { return; }
       cursor.toArray(function(err, items) {
         if (handleError(err)) { return; }
