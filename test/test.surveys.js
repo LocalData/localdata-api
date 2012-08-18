@@ -6,6 +6,7 @@ var server = require('../web.js');
 var assert = require('assert');
 var util = require('util');
 var request = require('request');
+var should = require('should');
 
 var settings = require('../settings-test.js');
 
@@ -74,6 +75,8 @@ suite('Surveys', function () {
           assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
+          body.surveys[i].should.have.property('slug');
+          body.surveys[i].slug.should.be.a('string');
         }
 
         done();
@@ -104,6 +107,8 @@ suite('Surveys', function () {
         var i;
         for (i = 0; i < parsed.surveys.length; i += 1) {
           assert.notEqual(parsed.surveys[i].id, null, 'Returned surveys should have IDs.');
+          parsed.surveys[i].should.have.property('slug');
+          parsed.surveys[i].slug.should.be.a('string');
         }
 
         done();
@@ -122,6 +127,9 @@ suite('Surveys', function () {
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
         assert.equal(data_one.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
         assert.deepEqual(data_one.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
+
+        parsed.survey.should.have.property('slug');
+        parsed.survey.slug.should.be.a('string');
 
         done();
       });
