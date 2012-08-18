@@ -18,6 +18,7 @@ function checkSlug(collection, name, index, done) {
   }
 
   // See if we've already used this slug.
+  // If we have, try another slug.
   collection.find({ slug: slug }, function (err, cursor) {
     if (err) { return done(err); }
     cursor.count(function (err, count) {
