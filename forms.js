@@ -142,6 +142,27 @@ app.post('/api/surveys/:sid/forms', function(req, response) {
   });
 });
 
+// Modify a form
+// Replaces the form data
+// PUT http://localhost:3000/api/surveys/{SURVEY ID}/forms/{FORM ID}
+app.put('/api/surveys/:sid/forms/:id', function (req, response) {
+  db.collection(FORMS, function (err, collection) {
+    var survey = req.params.sid;
+    var id = req.params.id;
+    var form = req.body.form;
+    form.id = id;
+    form.survey = survey;
+    form.created = new Date();
+    collection.findAndModify({survey: survey, id: id}, {'_id': 1}, form, {'new': true}, function (err, item) {
+      if (err) {
+        response.send(500);
+        return;
+      }
+      response.send({ form: item });
+    });
+  });
+});
+
 /*
  * Delete all forms from a survey.
  * This is maintainence functionality. Regular clients should not delete forms.
