@@ -11,6 +11,7 @@
     , "knox" : "https://github.com/slaskis/knox/tarball/master"
     , "pg" : "0.6.x"
     , "connect-s3" : "git://github.com/prashtx/connect-s3.git"
+    , "slug" : "0.2.x"
   }
   , "devDependencies": {
       "mocha" : "https://github.com/visionmedia/mocha/tarball/master"

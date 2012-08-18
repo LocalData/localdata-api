@@ -8,7 +8,28 @@
  */
 
 var util = require('./util');
+var makeSlug = require('slug');
 
+
+function checkSlug(collection, name, index, done) {
+  var slug = makeSlug(name);
+  if (index > 0) {
+    slug = slug + '-' + index;
+  }
+
+  // See if we've already used this slug.
+  collection.find({ slug: slug }, function (err, cursor) {
+    if (err) { return done(err); }
+    cursor.count(function (err, count) {
+      if (err) { return done(err); }
+      if (count > 0) {
+        checkSlug(collection, name, index + 1, done);
+      } else {
+        done(null, slug);
+      }
+    });
+  });
+}
 
 /*
  * app: express server
@@ -63,6 +84,34 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+  // Get the survey ID associated with a slug
+  // GET http://localhost:3000/api/slugs/{SLUG}
+  app.get('/api/slugs/:slug', function (req, response) {
+    var handleError = util.makeErrorHandler(response);
+    getCollection(function (err, collection) {
+      if (handleError(err)) { return; }
+      collection.find({slug: req.params.slug}, function (err, cursor) {
+        if (handleError(err)) { return; }
+        cursor.toArray(function (err, items) {
+          if (handleError(err)) { return; }
+          if (items.length === 0) {
+            response.send(404);
+            return;
+          }
+
+          if (items.length > 1) {
+            console.log('!!! WARNING: There should only be one item with a given slug');
+            console.log('!!! Found ' + items.length);
+            console.log('!!! Items: ' + JSON.stringify(items));
+          }
+          response.send({
+            survey: items[0].id
+          });
+        });
+      });
+    });
+  });
+
   // Add a survey
   // POST http://localhost:3000/api/surveys
   app.post('/api/surveys', function(req, response) {
@@ -70,20 +119,27 @@ function setup(app, db, idgen, collectionName) {
     var surveys = req.body.surveys;
     var total = surveys.length;
     var count = 0;
+
     getCollection(function(err, collection) {
+
       // Iterate over each survey
       surveys.forEach(function(survey) {
         var id = idgen();
         survey.id = id;
-        // Add to database.
-        collection.insert(survey, function(error) {
-          if (handleError(error)) { return; }
 
-          // Check if we've added all of them.
-          count += 1;
-          if (count === total) {
-            response.send({surveys: surveys}, 201);
-          }
+        checkSlug(collection, survey.name, 0, function (err, slug) {
+          if (handleError(err)) { return; }
+          survey.slug = slug;
+          // Add to database.
+          collection.insert(survey, function(error) {
+            if (handleError(error)) { return; }
+
+            // Check if we've added all of them.
+            count += 1;
+            if (count === total) {
+              response.send({surveys: surveys}, 201);
+            }
+          });
         });
       });
     });
@@ -114,5 +170,6 @@ function setup(app, db, idgen, collectionName) {
 }
 
 module.exports = {
-  setup: setup
+  setup: setup,
+  checkSlug: checkSlug
 };
