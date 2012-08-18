@@ -208,4 +208,57 @@ suite('Forms', function () {
       });
     });
   });
+
+  suite('PUT', function () {
+    var id;
+    var form;
+    setup(function (done) {
+      request.post({url: BASEURL + '/surveys/' + surveyId + '/forms', json: data_paper},
+                   function (error, response, body) {
+        if (error) { return done(error); }
+        id = body.forms[0].id;
+        fs.readFile('test/data/form_mobile.json', function (err, raw) {
+          if (err) { return done(err); }
+          form = JSON.parse(raw);
+          done();
+        });    
+      });
+    });
+
+    test('Modify a mobile form', function (done) {
+      var date = new Date();
+      form.questions[0].name = 'New Question Name';
+      request.put({
+        url: BASEURL + '/surveys/' + surveyId + '/forms/' + id,
+        json: { form: form }
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        body.should.have.property('form');
+        body.form.should.have.property('survey');
+        body.form.survey.should.equal(surveyId);
+        body.form.should.have.property('id');
+        body.form.id.should.equal(id);
+
+        body.form.should.have.property('type');
+        body.form.type.should.equal(form.type);
+        body.form.should.have.property('questions');
+        body.form.questions.should.have.lengthOf(form.questions.length);
+        body.form.questions[0].name.should.equal(form.questions[0].name);
+
+        body.form.should.have.property('created');
+        var created = new Date(body.form.created);
+        created.getUTCFullYear().should.equal(date.getUTCFullYear());
+        created.getUTCMonth().should.equal(date.getUTCMonth());
+        created.getUTCDate().should.equal(date.getUTCDate());
+        created.getUTCHours().should.equal(date.getUTCHours());
+
+        done();
+      });
+    });
+
+  });
+
 });

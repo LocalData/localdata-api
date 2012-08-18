@@ -186,12 +186,81 @@ function setupRoutes(db, settings) {
 
 // Ensure certain database structure.
 function ensureStructure(db, callback) {
-  db.collection(RESPONSES, function (error, collection) {
-    if (error) { throw error; }
-    collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
-      callback(error);
+  // Map f(callback) to f(error, callback)
+  function upgrade(g) {
+    return function (err, done) {
+      if (err) { callback(err); }
+      g(done);
+    };
+  }
+
+  // Chain async function calls
+  function chain (arr) {
+    return arr.reduce(function (memo, f, index) {
+      return function (err) {
+        upgrade(f)(err, memo);
+      };
+    }, function (e) { callback(e); });
+  }
+
+  function ensureResponses(done) {
+    db.collection(RESPONSES, function (error, collection) {
+      if (error) { throw error; }
+      // Ensure we have a geo index on the centroid field.
+      collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
+        done(error);
+      });
     });
-  });
+  }
+
+  function ensureSurveys(done) {
+    db.collection(SURVEYS, function (error, collection) {
+      if (error) { throw error; }
+      // Index the slug field.
+      collection.ensureIndex('slug', function (error, index) {
+        if (error) { return done(error); }
+        // Index the survey ID.
+        collection.ensureIndex('id', function (error, index) {
+          done(error);
+        });
+      });
+    });
+  }
+
+  function ensureSlugs(done) {
+    db.collection(SURVEYS, function (error, collection) {
+      // Look for surveys with no slug
+      collection.find({}, function(err, cursor) {
+        cursor.toArray(function (err, arr) {
+          if (err) { return done(err); }
+          var count = 0;
+          arr.forEach(function (item) {
+            if (item.slug === undefined) {
+              // Add a slug
+              surveys.checkSlug(collection, item.name, 0, function (err, slug) {
+                if (err) { return done(err); }
+                // Update entry
+                collection.update({_id: item._id}, {'$set': {slug: slug}}, function (error) {
+                  if (err) { return done(err); }
+                  count += 1;
+                  if (count === arr.length) {
+                    done();
+                  }
+                });
+              });
+            } else {
+              count += 1;
+              if (count === arr.length) {
+                done();
+              }
+            }
+          });
+        });
+      });
+    });
+  }
+
+  chain([ensureSlugs, ensureSurveys, ensureResponses])();
 }
 
 function startServer(port, cb) {  
