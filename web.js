@@ -187,65 +187,66 @@ function setupRoutes(db, settings) {
 // Ensure certain database structure.
 function ensureStructure(db, callback) {
   // Map f(callback) to f(error, callback)
+  // If we encounter an error, bail early with the callback.
   function upgrade(g) {
     return function (err, done) {
-      if (err) { callback(err); }
+      if (err) { done(err); }
       g(done);
     };
   }
 
   // Chain async function calls
-  function chain (arr) {
-    return arr.reduce(function (memo, f, index) {
+  function chain(arr, done) {
+    return arr.reduceRight(function (memo, f, index) {
       return function (err) {
         upgrade(f)(err, memo);
       };
-    }, function (e) { callback(e); });
+    }, function (e) { done(e); });
   }
 
   function ensureResponses(done) {
     db.collection(RESPONSES, function (error, collection) {
       if (error) { return done(error); }
-      // Ensure we have a geo index on the centroid field.
-      collection.ensureIndex({'geo_info.centroid': '2d'}, function (error) {
-        if (error) { return done(error); }
+      chain([function indexCentroid(done) {
+        // Ensure we have a geo index on the centroid field.
+        collection.ensureIndex({'geo_info.centroid': '2d'}, done);
+      },
+      function indexCreated(done) {
         // Index the creation date, which we use to sort
-        collection.ensureIndex('created', function (error, index) {
-          if (error) { return done(error); }
-          // Index the parcel ID
-          collection.ensureIndex('parcel_id', function (error, index) {
-            done(error);
-          });
-        });
-      });
+        collection.ensureIndex('created', done);
+      },
+      function indexParcelId(done) {
+        // Index the parcel ID
+        collection.ensureIndex('parcel_id', done);
+      }], done)();
     });
   }
 
   function ensureForms(done) {
     db.collection(FORMS, function (error, collection) {
       if (error) { return done(error); }
-      // Index the creation date, which we use to sort
-      collection.ensureIndex('created', function (error, index) {
-        if (error) { return done(error); }
+      chain([function indexCreated(done) {
+        // Index the creation date, which we use to sort
+        collection.ensureIndex('created', done);
+      },
+      function indexParcelId(done) {
         // Index the parcel IDs, used by paper forms
-        collection.ensureIndex('parcels.parcel_id', function (error, index) {
-          done(error);
-        });
-      });
+        collection.ensureIndex('parcels.parcel_id', done);
+      }], done)();
     });
   }
 
   function ensureSurveys(done) {
     db.collection(SURVEYS, function (error, collection) {
-      if (error) { throw error; }
-      // Index the slug field.
-      collection.ensureIndex('slug', function (error, index) {
-        if (error) { return done(error); }
+      if (error) { done(error); }
+      chain([function indexSlug(done) {
+        // Index the slug field.
+        collection.ensureIndex('slug', done);
+      },
+      function indexId(done) {
         // Index the survey ID.
-        collection.ensureIndex('id', function (error, index) {
-          done(error);
-        });
-      });
+        collection.ensureIndex('id', done);
+      }], done)();
     });
   }
 
@@ -282,7 +283,7 @@ function ensureStructure(db, callback) {
     });
   }
 
-  chain([ensureSlugs, ensureSurveys, ensureForms, ensureResponses])();
+  chain([ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
 }
 
 function startServer(port, cb) {  
