@@ -1,9 +1,9 @@
 var assert = require('assert');
-var listToCSVString = require('./../responses.js').KMLWriter;
-var filterToMostRecent = require('./../responses.js').listToKMLString;
+var KMLWriter = require('./../responses.js').KMLWriter;
+var listToKMLString = require('./../responses.js').listToKMLString;
   
   
-suite('In csvExport,', function(){
+suite('In kmlExport,', function(){
   var row = ['a', 2, '3'];
   var headers = ['first', 'second', 'third'];
   var headerCount = {
@@ -88,13 +88,5 @@ suite('In csvExport,', function(){
       }
     }
   ];
-  
-  test('commasep should turn a simple list into a csv string', function(){
-    var csv = listToCSVString(row, headers, headerCount);
-    var expected = 'a,2,3';
-    assert.equal(csv,expected);
-  });
-  
-  
   
 });
