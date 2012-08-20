@@ -77,7 +77,12 @@ function listToKMLString(row, headers, maxEltsInCell) {
   for (i = 0; i < row.length; i += 1) {
       elt += "<Data name=\"" + headers[i] + "\">";
       elt += "<displayName>" + headers[i] + "</displayName>";  
-      elt += "<value>" + row[i] + "</value>";              
+      
+      if(row[i] != undefined) {
+        elt += "<value>" + row[i] + "</value>";              
+      }else {
+        elt += "<value>" + "</value>";              
+      }
       elt += "</Data>";
   }
   elt += "</ExtendedData></Placemark>\n";
@@ -480,9 +485,11 @@ function setup(app, db, idgen, collectionName) {
     response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
     response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
     response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
-        
-    // Turn each row into a CSV line
-    for (i = 0; i < rows.length; i++) {
+      
+    console.log(rows);
+    // Turn each row into a KML line
+    for (var i = 0; i < rows.length; i++) {
+      console.log("Writing list");
       response.write(listToKMLString(rows[i], headers, maxEltsInCell));
       response.write('\n');
     }
