@@ -23,7 +23,9 @@ suite('In csvExport,', function(){
   var fakeResults = [
     // These two have the same parcel ID, but the first is more recent
     {
-      "geo_info": {},
+      "geo_info": {
+        "centroid": [1,2]
+      },
       "parcel_id": "1234",
       "created":"2011-05-24T23:16:57.266Z",
       "responses": {
@@ -31,10 +33,12 @@ suite('In csvExport,', function(){
         "use":"restaurant-or-bar",
         "restaurant-use":"restaurant"
       },
-      'older': true,
+      'older': true
     },
     {
-      "geo_info": {},
+      "geo_info": {
+        "centroid": [1,2]
+      },
       "parcel_id": "1234",
       "created":"2012-05-24T23:16:57.266Z",
       "responses": {
@@ -42,7 +46,7 @@ suite('In csvExport,', function(){
         "use":"service",
         "service-use":"bank+drivethrough"
       },
-      'older': false,
+      'older': false
     },
     
     // In some cases, this one should be split into two rows because there are multiple uses.
