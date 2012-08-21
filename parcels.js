@@ -23,11 +23,15 @@ function bboxToPolygon(bbox) {
   return polygon;
 }
 
-function clean(str) { 
-  if(str != null) {
-    return str.trim();
+
+/* 
+ * Make values returned by the database neater.
+ */ 
+function clean(val) { 
+  if(val !== null) {
+    return val.trim();
   }
-  return null;
+  return "";
 }
 
 
