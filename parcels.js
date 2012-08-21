@@ -23,6 +23,13 @@ function bboxToPolygon(bbox) {
   return polygon;
 }
 
+function clean(str) { 
+  if(str != null) {
+    return str.trim();
+  }
+  return null;
+}
+
 
 /*
  * app: express server
@@ -55,7 +62,7 @@ function setup(app, settings) {
     var output;
     var error;
     var i;
-
+    
     // Require a filter
     if (bbox === undefined &&
         (lon === undefined || lat === undefined)) {
@@ -115,18 +122,21 @@ function setup(app, settings) {
         name: 'parcelPointQuery'
       });
     }
-
+    
     output = [];
     query
     .on('row', function (row, result) {
       try {
+        
         output.push({
-          parcelId: row.parcelnumb.trim(),
-          address: row.proaddress.trim(),
+          parcelId: clean(row.parcelnumb),
+          address: clean(row.proaddress),
           polygon: JSON.parse(row.polygon),
           centroid: JSON.parse(row.centroid)
         });
+
       } catch (e) {
+        console.log(row);
         error = e;
       }
     })
@@ -136,6 +146,7 @@ function setup(app, settings) {
     })
     .on('end', function (result) {
       if (error) {
+        console.log(error);
         response.send(500);
       } else {
         response.send(output);
