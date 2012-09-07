@@ -441,7 +441,6 @@ function setup(app, db, idgen, collectionName) {
     var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
     var query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
     console.log("Bounds query ====================");
-    console.log(query['geo_info.centroid']['$within']["$box"]);
     
     getCollection(function(err, collection) {
       collection.find(query,
