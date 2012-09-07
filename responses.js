@@ -565,6 +565,7 @@ function setup(app, db, idgen, collectionName) {
             ];
 
             // Then, add the survey results
+            var resp;
             var responses = items[i].responses;
             for (resp in responses) {
 
