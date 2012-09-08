@@ -35,6 +35,8 @@ var handleError = util.handleError;
 var isArray = util.isArray;
 
 
+/* Export helpers ........................................................................*/
+
 /*
  * Turn a list of parcel attributes into a comma-separated string.
  * NOTE: Will break if used with strings with commas (doesn't escape!)
@@ -44,8 +46,16 @@ function listToCSVString(row, headers, maxEltsInCell) {
   var i;
   for (i = 0; i < row.length; i += 1) {
     if (maxEltsInCell[headers[i]] === 1) {
+
+      // Check if we need to escape the value
+      row[i] = String(row[i]);
+      if(row[i].indexOf(",") !== -1){
+        row[i] = '"' + row[i] + '"';
+      }
+
       // No multiple-choice for this column
       arr.push(row[i]);
+
     } else {
       // There might be multiple items in this cell.
       var len;
@@ -71,7 +81,10 @@ function listToKMLString(row, headers, maxEltsInCell) {
   var elt = "\n<Placemark>";
   elt += "<name></name>";
   elt += "<description></description>";
+
+  // The coordinates come escaped, so we need to unescape them: 
   elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>"; 
+
   elt += "<ExtendedData>";
   for (i = 0; i < row.length; i += 1) {
       elt += "<Data name=\"" + headers[i] + "\">";
@@ -91,6 +104,61 @@ function listToKMLString(row, headers, maxEltsInCell) {
 
 
 /*
+ * Take a list of rows and export them as KML
+ */
+function KMLWriter(response, rows, headers, maxEltsInCell){
+  var i;
+
+  response.writeHead(200, {
+    'Content-Type': 'application/vnd.google-earth.kml+xml',
+    'Content-disposition': 'attachment; filename=Survey Export.kml'
+  });
+  
+  response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+  response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
+  response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
+    
+  console.log(rows);
+  // Turn each row into a KML line
+  for (i = 0; i < rows.length; i++) {
+    console.log("Writing list");
+    response.write(listToKMLString(rows[i], headers, maxEltsInCell));
+    response.write('\n');
+  }
+  
+  response.write("\n</Folder></Document></kml>");
+  
+  response.end();
+}
+
+
+/*
+ * Take a list of rows and export them as CSV
+ * Rows: a list of rows of survey data, eg: 
+ * [ ["good", "bad", "4"], ["fine", "excellent", "5"]]
+ * Headers: a list of survey headers as strings
+ */
+function CSVWriter(response, rows, headers, maxEltsInCell) {
+  // CSV output
+  response.writeHead(200, {
+    'Content-Type': 'text/csv',
+    'Content-disposition': 'attachment; filename=Survey Export.csv'
+
+  });
+  // Turn each row into a CSV line
+  response.write(listToCSVString(headers, headers, maxEltsInCell));
+  response.write('\n');
+  var i;
+  for (i = 0; i < rows.length; i += 1) {
+    response.write(listToCSVString(rows[i], headers, maxEltsInCell));
+    response.write('\n');
+  }
+  response.end();
+}
+
+
+/*
  * Don't limit the results in any way
  */
 function filterAllResults(items) {
@@ -98,12 +166,7 @@ function filterAllResults(items) {
 }
 
 
-
-/* Helper for the following fn */
-String.prototype.endsWith = function(suffix) {
-    return this.indexOf(suffix, this.length - suffix.length) !== -1;
-};
-
+/* Deep clone of an object */
 function clone(obj) {
     if (null === obj || undefined === obj || "object" !== typeof obj) {
       return obj;
@@ -117,89 +180,6 @@ function clone(obj) {
     }
     return copy;
 }
-
-/* 
- * Ugly function to separate uses (aka use1, use2, use3) into separate results
- * Really shouldn't need this after the WSU test.
- */
-function filterToOneRowPerUse(items) {
-  var i, key;
-  var results = [];
-  var matchEndsWithDashNumber = /-\d+$/;
-  // Go through every result
-  var idx;
-  for (idx = 0; idx < items.length; idx += 1) {
-    
-    var newResult;
-    var result = items[idx];
-    var useCount = parseInt(result.responses['use-count'], 10);
-    
-    // Correct for a bug in WSU survey that stored condition as condition-1
-    // TODO: REMOVE LATER!
-    // if (result.responses.hasOwnProperty('condition-1')) {
-    //   result.responses['condition'] = result.responses['condition-1'];
-    // }
-    
-    // If there are multiple uses, loop through all of them.
-    if (useCount > 1) {
-      var toInclude = {};
-      
-      // Loop through all the uses
-      for (i=2; i <= useCount; i += 1) {
-        var toFind = "-" + i.toString();      
-        toInclude = {};
-
-        // If the the key ends in toFind, let's include it.
-        for (key in result.responses) {
-          if (result.responses.hasOwnProperty(key)) {
-            
-            var m = key.match(matchEndsWithDashNumber);
-            if (m !== null) {
-              if (key.endsWith(toFind)) {
-                // Strip off the -#
-                var endIdx = m.index;
-                var newKey = key.substring(0,endIdx);
-                toInclude[newKey] = result.responses[key];
-              }
-            }else {
-              // Find keys that don't end in -#. 
-              // Make sure we don't already have something like this:
-              if(!toInclude.hasOwnProperty(key)) {
-                toInclude[key] = result.responses[key];        
-              }
-            }
-            
-          }
-        }
-
-        newResult = clone(result);
-        newResult.responses = toInclude;
-              
-        results.push(newResult);            
-      } // End loop through uses
-      
-      
-      // catch that first set of uses
-      toInclude = {};
-      for (key in result.responses) {
-        if (result.responses.hasOwnProperty(key)) {
-          if (key.match(/-\d+$/) === null) {
-            // Ok, now check if we already have something like this:
-            toInclude[key] = result.responses[key];        
-          }
-        }
-      }
-      newResult = clone(result);
-      newResult.responses = toInclude;
-      results.push(newResult);                  
-    }else {
-      results.push(result);
-    }
-  }
-  
-  return results;
-}
-
 
 
 /* 
@@ -459,53 +439,7 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
-  
-  
-  // Take a list of rows and export them as CSV
-  function CSVWriter(response, rows, headers, maxEltsInCell) {
-    // CSV output
-    response.writeHead(200, {
-      'Content-Type': 'text/csv'
-    });
-    // Turn each row into a CSV line
-    response.write(listToCSVString(headers, headers, maxEltsInCell));
-    response.write('\n');
-    var i;
-    for (i = 0; i < rows.length; i += 1) {
-      response.write(listToCSVString(rows[i], headers, maxEltsInCell));
-      response.write('\n');
-    }
-    response.end();
-  }
-  
 
-  // Take a list of rows and export them as KML
-  function KMLWriter(response, rows, headers, maxEltsInCell){
-    var i;
-
-    // KML output
-    response.writeHead(200, {
-      'Content-Type': 'application/vnd.google-earth.kml+xml'
-    });
-    
-    response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
-    response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
-    response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
-      
-    console.log(rows);
-    // Turn each row into a KML line
-    for (i = 0; i < rows.length; i += 1) {
-      console.log("Writing list");
-      response.write(listToKMLString(rows[i], headers, maxEltsInCell));
-      response.write('\n');
-    }
-    
-    response.write("\n</Folder></Document></kml>");
-    
-    response.end();
-  }
-  
 
   /**
   * Export a given survey. Includes options to filter and format the results.
@@ -561,7 +495,7 @@ function setup(app, db, idgen, collectionName) {
               items[i].source.collector,
               items[i].created,
               items[i].source.type,
-              '"' + items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0] + '"'
+              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0] 
             ];
 
             // Then, add the survey results
@@ -615,14 +549,7 @@ function setup(app, db, idgen, collectionName) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [], CSVWriter);
   });
-  
-  // Return CSV for WSU use
-  // GET http://localhost:5000/api/surveys/{SURVEY ID}/csv-recent-peruse
-  app.get('/api/surveys/:sid/csv-recent-peruse', function(req, response) {
-    var sid = req.params.sid;
-    exportSurveyAs(response, sid, [filterToMostRecent, filterToOneRowPerUse], CSVWriter);
-  });
-  
+    
   // Return response data as KML
   // GET http://localhost:5000/api/surveys/{SURVEY ID}/kml
   app.get('/api/surveys/:sid/kml', function(req, response) {
@@ -637,5 +564,6 @@ module.exports = {
   listToCSVString: listToCSVString,
   filterAllResults: filterAllResults,
   filterToMostRecent: filterToMostRecent,
-  filterToOneRowPerUse: filterToOneRowPerUse
+  CSVWriter: CSVWriter,
+  KMLWriter: KMLWriter
 };
