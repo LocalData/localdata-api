@@ -28,8 +28,7 @@
  * ]
  *   
  */
- 
- 
+
 var util = require('./util');
 
 var handleError = util.handleError;
@@ -61,7 +60,7 @@ function listToCSVString(row, headers, maxEltsInCell) {
     }
   }
   return arr.join(',');
-};
+}
 
 
 /* 
@@ -78,7 +77,7 @@ function listToKMLString(row, headers, maxEltsInCell) {
       elt += "<Data name=\"" + headers[i] + "\">";
       elt += "<displayName>" + headers[i] + "</displayName>";  
       
-      if(row[i] != undefined) {
+      if(row[i] !== undefined) {
         elt += "<value>" + row[i] + "</value>";              
       }else {
         elt += "<value>" + "</value>";              
@@ -86,7 +85,7 @@ function listToKMLString(row, headers, maxEltsInCell) {
       elt += "</Data>";
   }
   elt += "</ExtendedData></Placemark>\n";
-  
+
   return elt;
 }
 
@@ -96,7 +95,7 @@ function listToKMLString(row, headers, maxEltsInCell) {
  */
 function filterAllResults(items) {
   return items;
-};
+}
 
 
 
@@ -124,6 +123,7 @@ function clone(obj) {
  * Really shouldn't need this after the WSU test.
  */
 function filterToOneRowPerUse(items) {
+  var i, key;
   var results = [];
   var matchEndsWithDashNumber = /-\d+$/;
   // Go through every result
@@ -136,61 +136,61 @@ function filterToOneRowPerUse(items) {
     
     // Correct for a bug in WSU survey that stored condition as condition-1
     // TODO: REMOVE LATER!
-    if (result.responses.hasOwnProperty('condition-1')) {
-      result.responses['condition'] = result['responses']['condition-1'];
-    }
+    // if (result.responses.hasOwnProperty('condition-1')) {
+    //   result.responses['condition'] = result.responses['condition-1'];
+    // }
     
     // If there are multiple uses, loop through all of them.
     if (useCount > 1) {
       var toInclude = {};
       
       // Loop through all the uses
-      for (var i=2; i <= useCount; i++) {
+      for (i=2; i <= useCount; i += 1) {
         var toFind = "-" + i.toString();      
         toInclude = {};
 
         // If the the key ends in toFind, let's include it.
-        for (var key in result['responses']) {
-          if (result['responses'].hasOwnProperty(key)) {
+        for (key in result.responses) {
+          if (result.responses.hasOwnProperty(key)) {
             
             var m = key.match(matchEndsWithDashNumber);
-            if (m != null) {
+            if (m !== null) {
               if (key.endsWith(toFind)) {
                 // Strip off the -#
-                var endIdx = m['index'];
+                var endIdx = m.index;
                 var newKey = key.substring(0,endIdx);
-                toInclude[newKey] = result['responses'][key];
-              };
+                toInclude[newKey] = result.responses[key];
+              }
             }else {
               // Find keys that don't end in -#. 
               // Make sure we don't already have something like this:
               if(!toInclude.hasOwnProperty(key)) {
-                toInclude[key] = result['responses'][key];        
+                toInclude[key] = result.responses[key];        
               }
             }
             
-          };
-        };
+          }
+        }
 
         newResult = clone(result);
-        newResult['responses'] = toInclude;
+        newResult.responses = toInclude;
               
         results.push(newResult);            
-      }; // End loop through uses
+      } // End loop through uses
       
       
       // catch that first set of uses
       toInclude = {};
-      for (key in result['responses']) {
-        if (result['responses'].hasOwnProperty(key)) {
-          if (key.match(/-\d+$/) == null) {
+      for (key in result.responses) {
+        if (result.responses.hasOwnProperty(key)) {
+          if (key.match(/-\d+$/) === null) {
             // Ok, now check if we already have something like this:
-            toInclude[key] = result['responses'][key];        
-          };
-        };
-      };
+            toInclude[key] = result.responses[key];        
+          }
+        }
+      }
       newResult = clone(result);
-      newResult['responses'] = toInclude;
+      newResult.responses = toInclude;
       results.push(newResult);                  
     }else {
       results.push(result);
@@ -198,7 +198,7 @@ function filterToOneRowPerUse(items) {
   }
   
   return results;
-};
+}
 
 
 
@@ -207,10 +207,12 @@ function filterToOneRowPerUse(items) {
  */
 function filterToMostRecent(items) {
   // Keep track of the latest result for each object ID
+  var i;
+  var key;
   var latest = {};
 
   // Loop through all the items
-  for (var i=0; i < items.length; i++) {
+  for (i=0; i < items.length; i += 1) {
     var item = items[i];
     var parcelId = item.parcel_id;
     
@@ -220,7 +222,7 @@ function filterToMostRecent(items) {
     // console.log(latest);
     // console.log("----");
     
-    if (latest[parcelId] == undefined){
+    if (latest[parcelId] === undefined){
       // If there isn't a most recent result yet, just add it
       latest[parcelId] = item;
     } else {
@@ -229,17 +231,17 @@ function filterToMostRecent(items) {
       var newDate = new Date(item.created);
       if (oldDate.getTime() < newDate.getTime()) {
         latest[parcelId] = item;
-      };
-    };
-  };
+      }
+    }
+  }
   
   // Covert the keyed array to a plain ol' list
   var latest_list = [];
-  for (var key in latest) {
+  for (key in latest) {
     if (latest.hasOwnProperty(key)) {
       latest_list.push(latest[key]);
-    };
-  };
+    }
+  }
   return latest_list;
 }
 
@@ -264,7 +266,7 @@ function setup(app, db, idgen, collectionName) {
       collection.find({'survey': surveyid},
                       {'sort': [['created', 'desc']]},
                       function(err, cursor) {
-        if (err != null) {
+        if (err) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
           return;
@@ -288,7 +290,7 @@ function setup(app, db, idgen, collectionName) {
       collection.find({'survey': surveyid, 'parcel_id': parcel_id},
                       {'sort': [['created', 'desc']]},
                       function(err, cursor) {
-        if (err != null) {
+        if (err) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
           return;
@@ -308,7 +310,8 @@ function setup(app, db, idgen, collectionName) {
     var responseid = req.params.rid;
     getCollection(function(err, collection) {
       collection.find({'survey': surveyid, 'id': responseid}, function(err, cursor) {
-        if (handleError(err, response)) return;
+
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (items.length > 1) {
@@ -334,11 +337,11 @@ function setup(app, db, idgen, collectionName) {
     console.log('Removing response ' + id + ' from the database.');
     getCollection(function(err, collection) {
       collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
-        if (error != null) {
+        if (error) {
           console.log('Error removing response ' + id + ' for survey ' + survey + ' from the response collection: ' + err.message);
           response.send();
         } else {
-          if (count != 1) {
+          if (count !== 1) {
             console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
           }
           response.send({count: count});
@@ -387,7 +390,8 @@ function setup(app, db, idgen, collectionName) {
         collection.insert(resp, function() {
           console.log(resp);
           // Check if we've added all of them.
-          if (++count == total) {
+          count += 1;
+          if (count === total) {
             console.log('Created ' + total + 'items. Returning.');
             response.send({responses: resps}, 201);
           }
@@ -398,14 +402,14 @@ function setup(app, db, idgen, collectionName) {
 
   // Delete all responses for a survey.
   // This is maintainence functionality. Regular clients should not delete forms.
-  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/reponses
-  // DELETE http://localhost:3000/api/surveys/1/reponses
+  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/responses
+  // DELETE http://localhost:3000/api/surveys/1/responses
   app.del('/api/surveys/:sid/responses', function(req, response) {
     var survey = req.params.sid;
     console.log('!!! Deleting responses for survey ' + survey + ' from the database.');
     getCollection(function(err, collection) {
       collection.remove({survey: survey}, {safe: true}, function(error, count) {
-        if (error != null) {
+        if (error) {
           console.log('Error removing responses for survey ' + survey + ' from the response collection: ' + err.message);
           response.send();
         } else {
@@ -421,14 +425,16 @@ function setup(app, db, idgen, collectionName) {
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/1,2,3,4
   app.get('/api/surveys/:sid/responses/in/:bounds', function(req, response) {
+    var i, ln;
     var surveyid = req.params.sid;
     var bounds = req.params.bounds;
     var coords = bounds.split(",");
-    if (coords.length != 4) {
+    if (coords.length !== 4) {
       // There need to be four points.
       response.send(400);
     }
-    for (var i = -1, ln = coords.length; ++i < ln;) {
+
+    for (i = 0, ln = coords.length; i < ln; i += 1) { 
       coords[i] = parseFloat(coords[i]);
     }
     
@@ -436,13 +442,12 @@ function setup(app, db, idgen, collectionName) {
     var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
     var query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
     console.log("Bounds query ====================");
-    console.log(query['geo_info.centroid']['$within']["$box"]);
     
     getCollection(function(err, collection) {
       collection.find(query,
                       {'sort': [['created', 'desc']]},
                       function(err, cursor) {
-        if (handleError(err, response)) return;
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (!items || items.length === 0) {
@@ -476,6 +481,8 @@ function setup(app, db, idgen, collectionName) {
 
   // Take a list of rows and export them as KML
   function KMLWriter(response, rows, headers, maxEltsInCell){
+    var i;
+
     // KML output
     response.writeHead(200, {
       'Content-Type': 'application/vnd.google-earth.kml+xml'
@@ -488,7 +495,7 @@ function setup(app, db, idgen, collectionName) {
       
     console.log(rows);
     // Turn each row into a KML line
-    for (var i = 0; i < rows.length; i++) {
+    for (i = 0; i < rows.length; i += 1) {
       console.log("Writing list");
       response.write(listToKMLString(rows[i], headers, maxEltsInCell));
       response.write('\n');
@@ -515,9 +522,13 @@ function setup(app, db, idgen, collectionName) {
   function exportSurveyAs(response, surveyId, listOfFilteringFunctions, writer){
     getCollection(function(err, collection) {
       collection.find({'survey': surveyId}, function(err, cursor) {
-        
-        if (err != null) {
-          console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
+        var i;
+        var idx;
+        var j;
+        var resp;
+
+        if (err) {
+          console.log('Error retrieving responses for survey ' + surveyId + ': ' + err.message);
           response.send(500);
           return;
         }
@@ -525,9 +536,9 @@ function setup(app, db, idgen, collectionName) {
         cursor.toArray(function(err, items) {
 
           // Filter the items
-          for (var idx in listOfFilteringFunctions) {
-            items = listOfFilteringFunctions[idx](items);
-          };
+          for (i=0; i < listOfFilteringFunctions.length; i += 1) {
+            items = listOfFilteringFunctions[i](items);
+          }
 
           // Start with some basic headers
           var headers = ['parcel_id', 'collector', 'timestamp', 'source', 'centroid'];
@@ -535,19 +546,15 @@ function setup(app, db, idgen, collectionName) {
           // Record which header is at which index
           var headerIndices = {};
           var maxEltsInCell = {};
-          var i;
-          for (i = 0; i < headers.length; i++) {
+          for (i = 0; i < headers.length; i += 1) {
             headerIndices[headers[i]] = i;
             maxEltsInCell[headers[i]] = 1;
           }
 
           // Iterate over each response
           var rows = [];
-          var len = items.length;
-          for (i = 0; i < len; i++) {
-            var responses = items[i].responses;
+          for (i = 0; i < items.length; i += 1) {
 
-            // console.log(items[i]);
             // Add context entries (parcel ID, source type)
             var row = [
               items[i].parcel_id, 
@@ -557,8 +564,11 @@ function setup(app, db, idgen, collectionName) {
               '"' + items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0] + '"'
             ];
 
-            // Then, add data about the element
-            for (var resp in responses) {
+            // Then, add the survey results
+            var resp;
+            var responses = items[i].responses;
+            for (resp in responses) {
+
               if (responses.hasOwnProperty(resp)) {
                 // If we haven't encountered this column, track it.
                 if (!headerIndices.hasOwnProperty(resp)) {
@@ -567,7 +577,7 @@ function setup(app, db, idgen, collectionName) {
                   headers.push(resp);
                   // Add an empty entry to each existing row, since they didn't
                   // have this column.
-                  for (var j = 0; j < rows.length; j++) {
+                  for (j = 0; j < rows.length; j += 1) {
                     rows[j].push('');
                   }
                 }
@@ -597,7 +607,7 @@ function setup(app, db, idgen, collectionName) {
         }); // end cursor.toArray()
       }); // end find results for survey
     });
-  };
+  }
 
   // Return response data as CSV
   // GET http://localhost:5000/api/surveys/{SURVEY ID}/csv
