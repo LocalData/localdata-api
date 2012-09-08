@@ -2,8 +2,8 @@ var assert = require('assert');
 var listToCSVString = require('./../responses.js').listToCSVString;
 var filterToMostRecent = require('./../responses.js').filterToMostRecent;
 var filterAllResults = require('./../responses.js').filterAllResults;
-var filterToOneRowPerUse = require('./../responses.js').filterToOneRowPerUse;
-  
+var CSVWriter = require('./../responses.js').CSVWriter;
+
   
 suite('In csvExport,', function(){
   var row = ['a', 2, '3'];
@@ -95,14 +95,6 @@ suite('In csvExport,', function(){
       assert(false);
     };
   });
-  
-  test('the filterToOneRowPerUse should split results with use_counts > 1 into n rows', function() {
-    var filteredResults = filterToOneRowPerUse(fakeResults);
-    console.log(filteredResults);
-    if(filteredResults[3] == undefined){
-      assert(false);
-    };
-  });
-  
-  
+    
 });
+
