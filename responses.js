@@ -145,7 +145,7 @@ function filterToOneRowPerUse(items) {
       var toInclude = {};
       
       // Loop through all the uses
-      for (i=2; i <= useCount; i++) {
+      for (i=2; i <= useCount; i += 1) {
         var toFind = "-" + i.toString();      
         toInclude = {};
 
@@ -212,7 +212,7 @@ function filterToMostRecent(items) {
   var latest = {};
 
   // Loop through all the items
-  for (i=0; i < items.length; i++) {
+  for (i=0; i < items.length; i += 1) {
     var item = items[i];
     var parcelId = item.parcel_id;
     
@@ -311,7 +311,7 @@ function setup(app, db, idgen, collectionName) {
     getCollection(function(err, collection) {
       collection.find({'survey': surveyid, 'id': responseid}, function(err, cursor) {
 
-        if (handleError(err, response)) return;
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (items.length > 1) {
@@ -390,7 +390,8 @@ function setup(app, db, idgen, collectionName) {
         collection.insert(resp, function() {
           console.log(resp);
           // Check if we've added all of them.
-          if (++count === total) {
+          count += 1;
+          if (count === total) {
             console.log('Created ' + total + 'items. Returning.');
             response.send({responses: resps}, 201);
           }
@@ -433,7 +434,7 @@ function setup(app, db, idgen, collectionName) {
       response.send(400);
     }
 
-    for (i = 0, ln = coords.length; i < ln; i++) { 
+    for (i = 0, ln = coords.length; i < ln; i += 1) { 
       coords[i] = parseFloat(coords[i]);
     }
     
@@ -446,7 +447,7 @@ function setup(app, db, idgen, collectionName) {
       collection.find(query,
                       {'sort': [['created', 'desc']]},
                       function(err, cursor) {
-        if (handleError(err, response)) return;
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (!items || items.length === 0) {
@@ -494,7 +495,7 @@ function setup(app, db, idgen, collectionName) {
       
     console.log(rows);
     // Turn each row into a KML line
-    for (i = 0; i < rows.length; i++) {
+    for (i = 0; i < rows.length; i += 1) {
       console.log("Writing list");
       response.write(listToKMLString(rows[i], headers, maxEltsInCell));
       response.write('\n');
@@ -535,7 +536,7 @@ function setup(app, db, idgen, collectionName) {
         cursor.toArray(function(err, items) {
 
           // Filter the items
-          for (i=0; i < listOfFilteringFunctions.length; i++) {
+          for (i=0; i < listOfFilteringFunctions.length; i += 1) {
             items = listOfFilteringFunctions[i](items);
           }
 
@@ -545,14 +546,14 @@ function setup(app, db, idgen, collectionName) {
           // Record which header is at which index
           var headerIndices = {};
           var maxEltsInCell = {};
-          for (i = 0; i < headers.length; i++) {
+          for (i = 0; i < headers.length; i += 1) {
             headerIndices[headers[i]] = i;
             maxEltsInCell[headers[i]] = 1;
           }
 
           // Iterate over each response
           var rows = [];
-          for (i = 0; i < items.length; i++) {
+          for (i = 0; i < items.length; i += 1) {
 
             // Add context entries (parcel ID, source type)
             var row = [
@@ -576,7 +577,7 @@ function setup(app, db, idgen, collectionName) {
                   headers.push(resp);
                   // Add an empty entry to each existing row, since they didn't
                   // have this column.
-                  for (j = 0; j < rows.length; j++) {
+                  for (j = 0; j < rows.length; j += 1) {
                     rows[j].push('');
                   }
                 }
