@@ -549,14 +549,7 @@ function setup(app, db, idgen, collectionName) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [], CSVWriter);
   });
-  
-  // Return CSV for WSU use
-  // GET http://localhost:5000/api/surveys/{SURVEY ID}/csv-recent-peruse
-  // app.get('/api/surveys/:sid/csv-recent-peruse', function(req, response) {
-  //   var sid = req.params.sid;
-  //   exportSurveyAs(response, sid, [filterToMostRecent], CSVWriter);
-  // });
-  
+    
   // Return response data as KML
   // GET http://localhost:5000/api/surveys/{SURVEY ID}/kml
   app.get('/api/surveys/:sid/kml', function(req, response) {
