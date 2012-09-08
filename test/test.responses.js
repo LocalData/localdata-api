@@ -276,6 +276,7 @@ suite('Responses', function () {
         response.headers['content-type'].should.equal('text/csv');
 
         response.headers.should.have.property('content-disposition');
+        response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.csv');
 
         done();
       });
@@ -291,6 +292,7 @@ suite('Responses', function () {
         response.headers['content-type'].should.equal('application/vnd.google-earth.kml+xml');
 
         response.headers.should.have.property('content-disposition');
+        response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.kml');
 
         done();
       });
