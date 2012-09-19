@@ -21,7 +21,7 @@ function shouldBeParcel(item) {
   item.should.have.property('parcelId');
   item.should.have.property('polygon');
   item.polygon.should.have.property('type');
-  item.polygon.type.should.equal('Polygon');
+  item.polygon.type.should.equal('MultiPolygon');
   item.polygon.should.have.property('coordinates');
   item.polygon.coordinates.should.be.an.instanceOf(Array);
   item.should.have.property('address');
