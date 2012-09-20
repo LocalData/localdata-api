@@ -31,7 +31,7 @@ function clean(val) {
   if(val !== null) {
     return val.trim();
   }
-  return "";
+  return '';
 }
 
 
@@ -104,7 +104,7 @@ function setup(app, settings) {
       }
 
       query = client.query({
-        text: 'SELECT parcelnumb, propaddres, proaddress, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid FROM qgis WHERE ST_Intersects(wkb_geometry, ST_SetSRID($1, 4326))',
+        text: 'SELECT object_id, name1, name2, source, created, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid FROM objects WHERE ST_Intersects(wkb_geometry, ST_SetSRID($1, 4326))',
         values: [bboxToPolygon(coords)],
         name: 'parcelBBoxQuery'
       });
@@ -121,7 +121,7 @@ function setup(app, settings) {
       }
 
       query = client.query({
-        text: 'SELECT parcelnumb, propaddres, proaddress, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid FROM qgis WHERE ST_Contains(wkb_geometry, ST_SetSRID($1, 4326))',
+        text: 'SELECT object_id, name1, name2, source, created, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid FROM objects WHERE ST_Contains(wkb_geometry, ST_SetSRID($1, 4326))',
         values: ['POINT(' + lon + ' ' + lat + ')'],
         name: 'parcelPointQuery'
       });
@@ -133,8 +133,8 @@ function setup(app, settings) {
       try {
         
         output.push({
-          parcelId: clean(row.parcelnumb),
-          address: clean(row.proaddress),
+          parcelId: clean(row.object_id),
+          address: clean(row.name1) + ' ' + clean(row.name2),
           polygon: JSON.parse(row.polygon),
           centroid: JSON.parse(row.centroid)
         });
