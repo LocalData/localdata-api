@@ -28,8 +28,7 @@ function bboxToPolygon(bbox) {
  * Make values returned by the database neater.
  */ 
 function clean(val) { 
-  if(val
-   !== null) {
+  if(val !== null) {
     return val.trim();
   }
   return "";
