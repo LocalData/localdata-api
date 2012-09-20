@@ -31,7 +31,7 @@ function clean(val) {
   if(val !== null) {
     return val.trim();
   }
-  return "";
+  return '';
 }
 
 
@@ -134,7 +134,7 @@ function setup(app, settings) {
         
         output.push({
           parcelId: clean(row.object_id),
-          address: clean(row.name1) + " " + clean(row.name2),
+          address: clean(row.name1) + ' ' + clean(row.name2),
           polygon: JSON.parse(row.polygon),
           centroid: JSON.parse(row.centroid)
         });
