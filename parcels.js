@@ -104,7 +104,7 @@ function setup(app, settings) {
       }
 
       query = client.query({
-        text: 'SELECT object_id, name1, name2, source, created, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid FROM objects WHERE ST_Intersects(wkb_geometry, ST_SetSRID($1, 4326))',
+        text: 'SELECT object_id, name1, name2, source, created, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid, GeometryType(wkb_geometry) as type FROM objects WHERE ST_Intersects(wkb_geometry, ST_SetSRID($1, 4326))',
         values: [bboxToPolygon(coords)],
         name: 'parcelBBoxQuery'
       });
@@ -121,7 +121,7 @@ function setup(app, settings) {
       }
 
       query = client.query({
-        text: 'SELECT object_id, name1, name2, source, created, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid FROM objects WHERE ST_Contains(wkb_geometry, ST_SetSRID($1, 4326))',
+        text: 'SELECT object_id, name1, name2, source, created, ST_AsGeoJSON(wkb_geometry) AS polygon, ST_AsGeoJSON(ST_Centroid(wkb_geometry)) AS centroid, GeometryType(wkb_geometry) as type FROM objects WHERE ST_Contains(wkb_geometry, ST_SetSRID($1, 4326))',
         values: ['POINT(' + lon + ' ' + lat + ')'],
         name: 'parcelPointQuery'
       });
@@ -136,7 +136,8 @@ function setup(app, settings) {
           parcelId: clean(row.object_id),
           address: clean(row.name1) + ' ' + clean(row.name2),
           polygon: JSON.parse(row.polygon),
-          centroid: JSON.parse(row.centroid)
+          centroid: JSON.parse(row.centroid),
+          type: clean(row.type)
         });
 
       } catch (e) {
