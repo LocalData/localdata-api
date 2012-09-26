@@ -9,6 +9,10 @@ if [ "prod" = "$1" ]; then
   heroku config:add MONGO_DB="dbName"
   heroku config:add S3_KEY="S3KEYblah"
   heroku config:add S3_SECRET="S3SECRETblah"
+  heroku config:add PSQL_HOST='my.postgresql-host.com'
+  heroku config:add PSQL_NAME='parceldb'
+  heroku config:add PSQL_USER='dbuser'
+  heroku config:add PSQL_PASS='dbpass'
 elif [ "dev" = "$1" ]; then
   heroku config:add NODE_ENV="development"
   heroku config:add MONGO_HOST="localhost"
@@ -18,6 +22,10 @@ elif [ "dev" = "$1" ]; then
   heroku config:add MONGO_DB="dbNameDev"
   heroku config:add S3_KEY="S3KEYblah"
   heroku config:add S3_SECRET="S3SECRETblah"
+  heroku config:add PSQL_HOST='my.postgresql-host.com'
+  heroku config:add PSQL_NAME='parceldb'
+  heroku config:add PSQL_USER='dbuser'
+  heroku config:add PSQL_PASS='dbpass'
 else
   echo "Usage: ./herokuconfig.sh prod/dev"
 fi

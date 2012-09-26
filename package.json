@@ -8,6 +8,13 @@
     , "mongodb" : ">= 0.9.9-7"
     , "request" : "2.9.x"
     , "node-uuid" : "1.3.3"
-    , "knox" : "https://github.com/prashtx/knox/tarball/master"
+    , "knox" : "https://github.com/slaskis/knox/tarball/master"
+    , "pg" : "0.6.x"
+    , "connect-s3" : "git://github.com/prashtx/connect-s3.git"
+    , "slug" : "0.2.x"
+  }
+  , "devDependencies": {
+      "mocha" : "https://github.com/visionmedia/mocha/tarball/master"
+    , "should": "https://github.com/visionmedia/should.js/tarball/master"
   }
 }

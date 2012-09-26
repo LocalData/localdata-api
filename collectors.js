@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Collectors
@@ -5,10 +8,6 @@
  */
 
 var util = require('./util');
-
-module.exports = {
-  setup: setup
-};
 
 var handleError = util.handleError;
 
@@ -24,14 +23,14 @@ function setup(app, db, idgen, collectionName) {
   }
 
   // Get a collector
-  // GET http://localhost:3000/surveys/{SURVEY ID}/collectors/{COLLECTOR ID}
-  // GET http://localhost:3000/surveys/1/collectors/2ec140e0-827f-11e1-83d8-bf682a6ee038
-  app.get('/surveys/:sid/collectors/:cid', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/collectors/{COLLECTOR ID}
+  // GET http://localhost:3000/api/surveys/1/collectors/2ec140e0-827f-11e1-83d8-bf682a6ee038
+  app.get('/api/surveys/:sid/collectors/:cid', function(req, response) {
     var surveyid = req.params.sid;
     var cid = req.params.cid;
     getCollection(function(err, collection) {
       collection.find({'survey': surveyid, 'id': cid}, function(err, cursor) {
-        if (handleError(err, response)) return;
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (items.length > 1) {
@@ -50,9 +49,9 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Add collectors for a survey.
-  // POST http://localhost:3000/surveys/{SURVEY ID}/collectors
-  // POST http://localhost:3000/surveys/1/collectors
-  app.post('/surveys/:sid/collectors', function(req, response) {
+  // POST http://localhost:3000/api/surveys/{SURVEY ID}/collectors
+  // POST http://localhost:3000/api/surveys/1/collectors
+  app.post('/api/surveys/:sid/collectors', function(req, response) {
     var colls = req.body.collectors;
     var total = colls.length;
     console.log('Adding ' + total + ' collectors to the database.');
@@ -67,7 +66,8 @@ function setup(app, db, idgen, collectionName) {
         // Add collectors to database.
         collection.insert(coll, function() {
           // Check if we've added all of them.
-          if (++count == total) {
+          count += 1;
+          if (count === total) {
             response.send({collectors: colls}, 201);
           }
         });
@@ -76,19 +76,26 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Update a collector
-  // PUT http://localhost:3000/surveys/{SURVEY ID}/collectors/{COLLECTOR ID}
-  // PUT http://localhost:3000/surveys/1/collectors/2ec140e0-827f-11e1-83d8-bf682a6ee038
-  app.put('/surveys/:sid/collectors/:cid', function(req, response) {
+  // PUT http://localhost:3000/api/surveys/{SURVEY ID}/collectors/{COLLECTOR ID}
+  // PUT http://localhost:3000/api/surveys/1/collectors/2ec140e0-827f-11e1-83d8-bf682a6ee038
+  app.put('/api/surveys/:sid/collectors/:cid', function(req, response) {
     var coll = req.body.collector;
     console.log('Updating a collector');
     getCollection(function(err, collection) {
       var surveyid = req.params.sid;
       var cid = req.params.cid;
-      collection.findAndModify({'survey': surveyid, 'id': cid}, {_id: 1}, {$set: {forms: coll.forms}},
-                               {new: true}, function(err, object) {
-        if (handleError(err, response)) return;
+      collection.findAndModify({'survey': surveyid, 'id': cid},
+                               {'_id': 1},
+                               {$set: {forms: coll.forms}},
+                               {'new': true},
+                               function(err, object) {
+        if (handleError(err, response)) { return; }
         response.send({collector: object});
       });
     });
   });
 }
+
+module.exports = {
+  setup: setup
+};

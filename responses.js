@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Responses
@@ -25,16 +28,202 @@
  * ]
  *   
  */
- 
- 
-var util = require('./util');
 
-module.exports = {
-  setup: setup
-};
+var util = require('./util');
 
 var handleError = util.handleError;
 var isArray = util.isArray;
+
+
+/* Export helpers ........................................................................*/
+
+/*
+ * Turn a list of parcel attributes into a comma-separated string.
+ * NOTE: Will break if used with strings with commas (doesn't escape!)
+ */
+function listToCSVString(row, headers, maxEltsInCell) {
+  var arr = [];
+  var i;
+  for (i = 0; i < row.length; i += 1) {
+    if (maxEltsInCell[headers[i]] === 1) {
+
+      // Check if we need to escape the value
+      row[i] = String(row[i]);
+      if(row[i].indexOf(",") !== -1){
+        row[i] = '"' + row[i] + '"';
+      }
+
+      // No multiple-choice for this column
+      arr.push(row[i]);
+
+    } else {
+      // There might be multiple items in this cell.
+      var len;
+      if (!isArray(row[i])) {
+        // This row only has one answer in this column, so just push that.
+        arr.push(row[i]);
+        len = 1;
+      } else {
+        // If it's an array of responses, join them with a semicolon
+        arr.push(row[i].join(";"));          
+      }
+    }
+  }
+  return arr.join(',');
+}
+
+
+/* 
+ * Turn a list of parcel attributes into a KML string
+ */ 
+function listToKMLString(row, headers, maxEltsInCell) {
+  var i;
+  var elt = "\n<Placemark>";
+  elt += "<name></name>";
+  elt += "<description></description>";
+
+  // The coordinates come escaped, so we need to unescape them: 
+  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>"; 
+
+  elt += "<ExtendedData>";
+  for (i = 0; i < row.length; i += 1) {
+      elt += "<Data name=\"" + headers[i] + "\">";
+      elt += "<displayName>" + headers[i] + "</displayName>";  
+      
+      if(row[i] !== undefined) {
+        elt += "<value>" + row[i] + "</value>";              
+      }else {
+        elt += "<value>" + "</value>";              
+      }
+      elt += "</Data>";
+  }
+  elt += "</ExtendedData></Placemark>\n";
+
+  return elt;
+}
+
+
+/*
+ * Take a list of rows and export them as KML
+ */
+function KMLWriter(response, rows, headers, maxEltsInCell){
+  var i;
+
+  response.writeHead(200, {
+    'Content-Type': 'application/vnd.google-earth.kml+xml',
+    'Content-disposition': 'attachment; filename=Survey Export.kml'
+  });
+  
+  response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+  response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
+  response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
+    
+  console.log(rows);
+  // Turn each row into a KML line
+  for (i = 0; i < rows.length; i++) {
+    console.log("Writing list");
+    response.write(listToKMLString(rows[i], headers, maxEltsInCell));
+    response.write('\n');
+  }
+  
+  response.write("\n</Folder></Document></kml>");
+  
+  response.end();
+}
+
+
+/*
+ * Take a list of rows and export them as CSV
+ * Rows: a list of rows of survey data, eg: 
+ * [ ["good", "bad", "4"], ["fine", "excellent", "5"]]
+ * Headers: a list of survey headers as strings
+ */
+function CSVWriter(response, rows, headers, maxEltsInCell) {
+  // CSV output
+  response.writeHead(200, {
+    'Content-Type': 'text/csv',
+    'Content-disposition': 'attachment; filename=Survey Export.csv'
+
+  });
+  // Turn each row into a CSV line
+  response.write(listToCSVString(headers, headers, maxEltsInCell));
+  response.write('\n');
+  var i;
+  for (i = 0; i < rows.length; i += 1) {
+    response.write(listToCSVString(rows[i], headers, maxEltsInCell));
+    response.write('\n');
+  }
+  response.end();
+}
+
+
+/*
+ * Don't limit the results in any way
+ */
+function filterAllResults(items) {
+  return items;
+}
+
+
+/* Deep clone of an object */
+function clone(obj) {
+    if (null === obj || undefined === obj || "object" !== typeof obj) {
+      return obj;
+    }
+    var copy = obj.constructor();
+    var attr;
+    for (attr in obj) {
+      if (obj.hasOwnProperty(attr)) {
+        copy[attr] = obj[attr];
+      }
+    }
+    return copy;
+}
+
+
+/* 
+ * Return only the most recent result for each parcel
+ */
+function filterToMostRecent(items) {
+  // Keep track of the latest result for each object ID
+  var i;
+  var key;
+  var latest = {};
+
+  // Loop through all the items
+  for (i=0; i < items.length; i += 1) {
+    var item = items[i];
+    var parcelId = item.parcel_id;
+    
+    // console.log("testing========");
+    // console.log(item);
+    // console.log("--");
+    // console.log(latest);
+    // console.log("----");
+    
+    if (latest[parcelId] === undefined){
+      // If there isn't a most recent result yet, just add it
+      latest[parcelId] = item;
+    } else {
+      // We need to check if this result is newer than the latest one
+      var oldDate = new Date(latest[parcelId].created);
+      var newDate = new Date(item.created);
+      if (oldDate.getTime() < newDate.getTime()) {
+        latest[parcelId] = item;
+      }
+    }
+  }
+  
+  // Covert the keyed array to a plain ol' list
+  var latest_list = [];
+  for (key in latest) {
+    if (latest.hasOwnProperty(key)) {
+      latest_list.push(latest[key]);
+    }
+  }
+  return latest_list;
+}
 
 /*
  * app: express server
@@ -48,13 +237,16 @@ function setup(app, db, idgen, collectionName) {
   }
   
   // Get all responses for a survey.
-  // GET http://localhost:3000/surveys/{SURVEY ID}/responses
-  // GET http://localhost:3000/surveys/1/responses
-  app.get('/surveys/:sid/responses', function(req, response) {
+  // Sort by creation date, newest first.
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/responses
+  // GET http://localhost:3000/api/surveys/1/responses
+  app.get('/api/surveys/:sid/responses', function(req, response) {
     var surveyid = req.params.sid;
     getCollection(function(err, collection) {
-      collection.find({'survey': surveyid}, function(err, cursor) {
-        if (err != null) {
+      collection.find({'survey': surveyid},
+                      {'sort': [['created', 'desc']]},
+                      function(err, cursor) {
+        if (err) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
           return;
@@ -67,15 +259,18 @@ function setup(app, db, idgen, collectionName) {
   });
   
   // Get all responses for a specific parcel.
+  // Sort by creation date, newest first.
   // TODO: At some point, parcel should become a generic geographic object ID.
-  // GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
-  // GET http://localhost:3000/surveys/1/parcels/3728048/responses
-  app.get('/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/parcels/{PARCEL ID}/responses
+  // GET http://localhost:3000/api/surveys/1/parcels/3728048/responses
+  app.get('/api/surveys/:sid/parcels/:parcel_id/responses', function(req, response) {
     var surveyid = req.params.sid;
     var parcel_id = req.params.parcel_id;
     getCollection(function(err, collection) {
-      collection.find({'survey': surveyid, 'parcel_id': parcel_id}, function(err, cursor) {
-        if (err != null) {
+      collection.find({'survey': surveyid, 'parcel_id': parcel_id},
+                      {'sort': [['created', 'desc']]},
+                      function(err, cursor) {
+        if (err) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
           response.send();
           return;
@@ -88,14 +283,15 @@ function setup(app, db, idgen, collectionName) {
   });
   
   // Get a response for a survey.
-  // GET http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
-  // GET http://localhost:3000/surveys/1/responses/2ec140e0-827f-11e1-83d8-bf682a6ee038
-  app.get('/surveys/:sid/responses/:rid', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/responses/{RESPONSE ID}
+  // GET http://localhost:3000/api/surveys/1/responses/2ec140e0-827f-11e1-83d8-bf682a6ee038
+  app.get('/api/surveys/:sid/responses/:rid', function(req, response) {
     var surveyid = req.params.sid;
     var responseid = req.params.rid;
     getCollection(function(err, collection) {
       collection.find({'survey': surveyid, 'id': responseid}, function(err, cursor) {
-        if (handleError(err, response)) return;
+
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
           if (items.length > 1) {
@@ -114,18 +310,18 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Delete a response from a survey
-  // DELETE http://localhost:3000/surveys/{SURVEY ID}/responses/{RESPONSE ID}
-  app.del('/surveys/:sid/responses/:rid', function(req, response) {
+  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/responses/{RESPONSE ID}
+  app.del('/api/surveys/:sid/responses/:rid', function(req, response) {
     var survey = req.params.sid;
     var id = req.params.rid;
     console.log('Removing response ' + id + ' from the database.');
     getCollection(function(err, collection) {
       collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
-        if (error != null) {
+        if (error) {
           console.log('Error removing response ' + id + ' for survey ' + survey + ' from the response collection: ' + err.message);
           response.send();
         } else {
-          if (count != 1) {
+          if (count !== 1) {
             console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
           }
           response.send({count: count});
@@ -135,12 +331,12 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Add responses for a survey.
-  // POST http://localhost:3000/surveys/{SURVEY ID}/reponses
-  // POST http://localhost:3000/surveys/1/reponses
+  // POST http://localhost:3000/api/surveys/{SURVEY ID}/reponses
+  // POST http://localhost:3000/api/surveys/1/reponses
   // Expects data in the format: 
   // responses: [
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
-  app.post('/surveys/:sid/responses', function(req, response) {
+  app.post('/api/surveys/:sid/responses', function(req, response) {
     var resps = req.body.responses;
     var total = resps.length;
     
@@ -174,7 +370,8 @@ function setup(app, db, idgen, collectionName) {
         collection.insert(resp, function() {
           console.log(resp);
           // Check if we've added all of them.
-          if (++count == total) {
+          count += 1;
+          if (count === total) {
             console.log('Created ' + total + 'items. Returning.');
             response.send({responses: resps}, 201);
           }
@@ -185,14 +382,14 @@ function setup(app, db, idgen, collectionName) {
 
   // Delete all responses for a survey.
   // This is maintainence functionality. Regular clients should not delete forms.
-  // DELETE http://localhost:3000/surveys/{SURVEY ID}/reponses
-  // DELETE http://localhost:3000/surveys/1/reponses
-  app.del('/surveys/:sid/responses', function(req, response) {
+  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/responses
+  // DELETE http://localhost:3000/api/surveys/1/responses
+  app.del('/api/surveys/:sid/responses', function(req, response) {
     var survey = req.params.sid;
     console.log('!!! Deleting responses for survey ' + survey + ' from the database.');
     getCollection(function(err, collection) {
       collection.remove({survey: survey}, {safe: true}, function(error, count) {
-        if (error != null) {
+        if (error) {
           console.log('Error removing responses for survey ' + survey + ' from the response collection: ' + err.message);
           response.send();
         } else {
@@ -204,33 +401,35 @@ function setup(app, db, idgen, collectionName) {
   
   
   // Get all responses in a bounding box
-  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
-  // GET http://localhost:3000/surveys/{SURVEY ID}/reponses/in/1,2,3,4
-  app.get('/surveys/:sid/responses/in/:bounds', function(req, response) {
+  // Sort by creation date, newest first.
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/1,2,3,4
+  app.get('/api/surveys/:sid/responses/in/:bounds', function(req, response) {
+    var i, ln;
     var surveyid = req.params.sid;
     var bounds = req.params.bounds;
     var coords = bounds.split(",");
-    if (coords.length != 4) {
+    if (coords.length !== 4) {
       // There need to be four points.
       response.send(400);
     }
-    for (var i = -1, ln = coords.length; ++i < ln;) {
+
+    for (i = 0, ln = coords.length; i < ln; i += 1) { 
       coords[i] = parseFloat(coords[i]);
     }
     
     
     var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
-    query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
+    var query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
     console.log("Bounds query ====================");
-    console.log(query['geo_info.centroid']['$within']["$box"]);
     
     getCollection(function(err, collection) {
-      collection.find(query, function(err, cursor) {
-        if (handleError(err, response)) return;
+      collection.find(query,
+                      {'sort': [['created', 'desc']]},
+                      function(err, cursor) {
+        if (handleError(err, response)) { return; }
 
         cursor.toArray(function(err, items) {
-          console.log("Bounds results =========");
-          console.log(items);
           if (!items || items.length === 0) {
             response.send({});
             return;
@@ -241,104 +440,130 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
-  function commasep(row, headers, headerCount) {
-    var arr = [];
-    for (var i = 0; i < row.length; i++) {
-      if (headerCount[headers[i]] === 1) {
-        // No multiple-choice for this column
-        arr.push(row[i]);
-      } else {
-        var len;
-        if (!isArray(row[i])) {
-          arr.push(row[i]);
-          len = 1;
-        } else {
-          len = row[i].length;
-          for (var j = 0; j < len; j++) {
-            arr.push(row[i][j]);
-          }
-        }
-        // Padding for multiple-choice situations
-        for (var h = 0; h < headerCount[headers[i]] - len; h++) {
-          arr.push(null);
-        }
-      }
-    }
 
-    return arr.join(',');
-  }
-
-  // Return response data as CSV
-  // GET http://localhost:5000/surveys/{SURVEY ID}/csv
-  app.get('/surveys/:sid/csv', function(req, response) {
-    var sid = req.params.sid;
+  /**
+  * Export a given survey. Includes options to filter and format the results.
+  * 
+  * @method exportSurveyAs
+  * @param surveyID {String}
+  * @param response {Object}
+  * @param listOfFilteringFunctions {Array} Prepares the results for exporting 
+  *           Each function in the array iterates through objects in the 
+  *           survey and manipulates them, eg selects the most recent results
+  * @param writer {Function} Writes a given record to a string
+  */
+  // 
+  function exportSurveyAs(response, surveyId, listOfFilteringFunctions, writer){
     getCollection(function(err, collection) {
-      collection.find({'survey': sid}, function(err, cursor) {
-        if (err != null) {
-          console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
+      collection.find({'survey': surveyId}, function(err, cursor) {
+        var i;
+        var idx;
+        var j;
+        var resp;
+
+        if (err) {
+          console.log('Error retrieving responses for survey ' + surveyId + ': ' + err.message);
           response.send(500);
           return;
         }
+
         cursor.toArray(function(err, items) {
-          var headers = ['parcel_id', 'source'];
-          var headerIndices = {};
-          var headerCount = {};
-          var i;
-          for (i = 0; i < headers.length; i++) {
-            headerIndices[headers[i]] = i;
-            headerCount[headers[i]] = 1;
+
+          // Filter the items
+          for (i=0; i < listOfFilteringFunctions.length; i += 1) {
+            items = listOfFilteringFunctions[i](items);
           }
-          var rows = [];
-          var len = items.length;
+
+          // Start with some basic headers
+          var headers = ['parcel_id', 'collector', 'timestamp', 'source', 'centroid'];
+
+          // Record which header is at which index
+          var headerIndices = {};
+          var maxEltsInCell = {};
+          for (i = 0; i < headers.length; i += 1) {
+            headerIndices[headers[i]] = i;
+            maxEltsInCell[headers[i]] = 1;
+          }
+
           // Iterate over each response
-          for (i = 0; i < len; i++) {
-            var responses = items[i].responses;
+          var rows = [];
+          for (i = 0; i < items.length; i += 1) {
 
             // Add context entries (parcel ID, source type)
-            var row = [items[i].parcel_id, items[i].source.type];
+            var row = [
+              items[i].parcel_id, 
+              items[i].source.collector,
+              items[i].created,
+              items[i].source.type,
+              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0] 
+            ];
 
-            for (var resp in responses) {
+            // Then, add the survey results
+            var resp;
+            var responses = items[i].responses;
+            for (resp in responses) {
+
               if (responses.hasOwnProperty(resp)) {
                 // If we haven't encountered this column, track it.
                 if (!headerIndices.hasOwnProperty(resp)) {
                   headerIndices[resp] = headers.length;
-                  headerCount[resp] = 1;
+                  maxEltsInCell[resp] = 1;
                   headers.push(resp);
                   // Add an empty entry to each existing row, since they didn't
                   // have this column.
-                  for (var j = 0; j < rows.length; j++) {
+                  for (j = 0; j < rows.length; j += 1) {
                     rows[j].push('');
                   }
                 }
                 var entry = responses[resp];
+
                 // Check if we have multiple answers.
                 if (isArray(entry)) {
-                  if (entry.length > headerCount[resp]) {
-                    headerCount[resp] = entry.length;
+                  if (entry.length > maxEltsInCell[resp]) {
+                    maxEltsInCell[resp] = entry.length;
                   }
                 }
+
                 // Add the response to the CSV row.
                 row[headerIndices[resp]] = responses[resp];
               }
             }
+
             // Add the CSV row.
             rows.push(row);
-          }
+          } // End loop over every result
 
-          response.writeHead(200, {
-            'Content-Type': 'text/csv'
-          });
-          // Turn each row into a CSV line
-          response.write(commasep(headers, headers, headerCount));
-          response.write('\n');
-          for (i = 0; i < len; i++) {
-            response.write(commasep(rows[i], headers, headerCount));
-            response.write('\n');
-          }
-          response.end();
-        });
-      });
+
+          // Write the response
+          writer(response, rows, headers, maxEltsInCell);
+          
+
+        }); // end cursor.toArray()
+      }); // end find results for survey
     });
+  }
+
+  // Return response data as CSV
+  // GET http://localhost:5000/api/surveys/{SURVEY ID}/csv
+  app.get('/api/surveys/:sid/csv', function(req, response) {
+    var sid = req.params.sid;
+    exportSurveyAs(response, sid, [], CSVWriter);
   });
+    
+  // Return response data as KML
+  // GET http://localhost:5000/api/surveys/{SURVEY ID}/kml
+  app.get('/api/surveys/:sid/kml', function(req, response) {
+    var sid = req.params.sid;
+    exportSurveyAs(response, sid, [], KMLWriter);
+  });  
 
 } // setup()
+
+module.exports = {
+  setup: setup,
+  listToCSVString: listToCSVString,
+  filterAllResults: filterAllResults,
+  filterToMostRecent: filterToMostRecent,
+  CSVWriter: CSVWriter,
+  KMLWriter: KMLWriter
+};

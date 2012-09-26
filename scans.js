@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Scans
@@ -7,7 +10,7 @@
       survey: '1',
       filename: 'img001.tif',
       mimetype: 'image/tiff'
-      url: 'http://localhost:3000/uploaded_files/e4043210-84db-11e1-b34b-dd2b6e24c3e7',
+      url: 'http://localhost:3000/api/uploaded_files/e4043210-84db-11e1-b34b-dd2b6e24c3e7',
       status: 'pending'
     }
  * status can be 'pending', 'working', or 'complete'
@@ -17,14 +20,10 @@
 var knox = require('knox');
 var util = require('./util');
 
-module.exports = {
-  setup: setup
-};
-
 var handleError = util.handleError;
 
-var UPLOAD_DIR = 'uploaded_files';
-var S3_BUCKET = 'cfadetroit_survey';
+var UPLOAD_DIR;
+var S3_BUCKET;
 var STATUS_PENDING = 'pending';
 var STATUS_WORKING = 'working';
 var STATUS_COMPLETE = 'complete';
@@ -46,11 +45,13 @@ function makeS3Location(id) {
  * idgen: unique ID generator
  * collectionName: name of scans collection
  */
-function setup(app, db, idgen, collectionName) {
+function setup(app, db, idgen, collectionName, settings) {
+  UPLOAD_DIR = settings.s3_dir;
+  S3_BUCKET = settings.s3_bucket;
   var s3client =  knox.createClient({
-    key: process.env.S3_KEY,
-    secret: process.env.S3_SECRET,
-    bucket: S3_BUCKET,
+    key: settings.s3_key,
+    secret: settings.s3_secret,
+    bucket: settings.s3_bucket,
     secure: false
   });
 
@@ -63,9 +64,9 @@ function setup(app, db, idgen, collectionName) {
   // Add scanned form for a survey.
   // This can be tested using the upload page:
   // http://localhost:3000/static/upload.html
-  // POST http://localhost:3000/surveys/{SURVEY ID}/scans
-  // POST http://localhost:3000/surveys/1/scans
-  app.post('/surveys/:sid/scans', function(req, response) {
+  // POST http://localhost:3000/api/surveys/{SURVEY ID}/scans
+  // POST http://localhost:3000/api/surveys/1/scans
+  app.post('/api/surveys/:sid/scans', function(req, response) {
     console.log('Client is uploading a file');
     var filename = req.headers['x-file-name'];
     var id = idgen();
@@ -108,11 +109,11 @@ function setup(app, db, idgen, collectionName) {
           .on('close', function(error) { console.log(error.message); })
           .on('end', function() {
             // TODO: return the DB doc instead?
-            body = JSON.stringify({success: 'true', name: [UPLOAD_DIR, filename].join('/')});
+            var responseData = {success: 'true', name: [UPLOAD_DIR, filename].join('/'), id: id};
 
             // Add image info to the database.
             collection.insert(data, function() {
-              response.send(body, 201);
+              response.send(responseData, 201);
               console.log('Added file info:');
               console.log(JSON.stringify(data, null, '  '));
 
@@ -123,7 +124,8 @@ function setup(app, db, idgen, collectionName) {
         });
 
         // Write to the S3 request.
-        for (var i=0; i<buffers.length; i++) {
+        var i;
+        for (i = 0; i < buffers.length; i += 1) {
           console.log('Writing chunk ' + i + ' of ' + buffers.length + ' to S3.');
           s3request.write(buffers[i]);
         }
@@ -133,9 +135,9 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Get data for a scanned form
-  // GET http://localhost:3000/surveys/{SURVEY ID}/scans/{SCAN ID}
-  // GET http://localhost:3000/surveys/1/scans/234
-  app.get('/surveys/:sid/scans/:id', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/scans/{SCAN ID}
+  // GET http://localhost:3000/api/surveys/1/scans/234
+  app.get('/api/surveys/:sid/scans/:id', function(req, response) {
     console.log('Getting data for a scanned image');
     var handleError = util.makeErrorHandler(response);
     var id = req.params.id;
@@ -143,13 +145,13 @@ function setup(app, db, idgen, collectionName) {
 
     // Get the image data from the database
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       collection.find({id: id, survey: sid}, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         cursor.nextObject(function(err, doc) {
-          if (handleError(err)) return;
+          if (handleError(err)) { return; }
 
-          if (doc == null) {
+          if (doc === null) {
             console.log('No item found with id ' + id);
             response.send(404);
             return;
@@ -164,23 +166,23 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Get a scanned image
-  // GET http://localhost:3000/uploaded_files/{SCAN ID}
-  // GET http://localhost:3000/uploaded_files/234
+  // GET http://localhost:3000/api/uploaded_files/{SCAN ID}
+  // GET http://localhost:3000/api/uploaded_files/234
   // TODO: add an extension to the stored filename, so that we don't have to
   // hit the server to determine MIME type
   // TODO: make the S3 object publicly accessible and just redirect to its URL
-  app.get('/' + UPLOAD_DIR + '/:id', function(req, response) {
+  app.get('/api/' + UPLOAD_DIR + '/:id', function(req, response) {
     console.log('Sending image file to client');
     var handleError = util.makeErrorHandler(response);
     var id = req.params.id;
 
     // Get the image data from the database
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
       collection.find({id: id}, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         cursor.nextObject(function(err, doc) {
-          if (handleError(err)) return;
+          if (handleError(err)) { return; }
 
           // Set the content-type
           response.header('Content-Type', doc.mimetype);
@@ -193,7 +195,7 @@ function setup(app, db, idgen, collectionName) {
             s3res.on('data', function(chunk) {
               // Send a chunk to the Survey API client
               response.write(chunk);
-            })
+            });
             s3res.on('end', function() {
               // End the response to the Survey API client
               response.end();
@@ -206,23 +208,23 @@ function setup(app, db, idgen, collectionName) {
 
   // Get all the scanned form data for a survey
   // Optionally filter according to the status
-  // GET http://localhost:3000/surveys/{SURVEY ID}/scans
-  // GET http://localhost:3000/surveys/1/scans
-  // GET http://localhost:3000/surveys/1/scans?status=pending
-  // GET http://localhost:3000/surveys/1/scans?status=complete
-  app.get('/surveys/:sid/scans', function(req, response) {
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/scans
+  // GET http://localhost:3000/api/surveys/1/scans
+  // GET http://localhost:3000/api/surveys/1/scans?status=pending
+  // GET http://localhost:3000/api/surveys/1/scans?status=complete
+  app.get('/api/surveys/:sid/scans', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     var sid = req.params.sid;
     var status = req.query.status;
 
     // Get the image data from the database
     getCollection(function(err, collection) {
-      if (handleError(err)) return;
+      if (handleError(err)) { return; }
 
       var filter = {survey: sid};
-      if (status) filter.status = status;
+      if (status) { filter.status = status; }
       collection.find(filter, function(err, cursor) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
 
         cursor.toArray(function(err, items) {
           response.send({scans: items});
@@ -232,8 +234,8 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Update scanned form data
-  // PUT http://localhost:3000/surveys/{SURVEY_ID}/scans/{SCAN_ID}
-  app.put('/surveys/:sid/scans/:id', function(req, response) {
+  // PUT http://localhost:3000/api/surveys/{SURVEY_ID}/scans/{SCAN_ID}
+  app.put('/api/surveys/:sid/scans/:id', function(req, response) {
     var id = req.params.id;
     var survey = req.params.sid;
     var status = req.body.scan.status;
@@ -261,9 +263,9 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // Delete a single scanned form entry from a survey
-  // DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
+  // DELETE http://localhost:3000/api/surveys/{SURVEY_ID}/forms/{FORM_ID}
   // TODO: remove the corresponding S3 object
-  app.del('/surveys/:sid/scans/:id', function(req, response) {
+  app.del('/api/surveys/:sid/scans/:id', function(req, response) {
     var survey = req.params.sid;
     var id = req.params.id;
 
@@ -330,3 +332,7 @@ function WorkChecker() {
     }
   };
 }
+
+module.exports = {
+  setup: setup
+};

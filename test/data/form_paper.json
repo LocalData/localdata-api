@@ -1,0 +1,964 @@
+{
+  "type": "paper",
+  "global": {
+    "map": {
+      "bbox": [
+        32,
+        157,
+        634,
+        511
+      ]
+    },
+    "counter": {
+      "bbox": [
+        113,
+        96
+      ],
+      "size": 35
+    }
+  },
+  "parcels": [
+    {
+      "parcel_id": "03001529.",
+      "context": {
+        "address": {
+          "bbox": [
+            40,
+            542
+          ],
+          "size": 36
+        },
+        "label": {
+          "bbox": [
+            40,
+            600
+          ],
+          "size": 144
+        }
+      },
+      "bubblesets": [
+        {
+          "bubbles": [
+            {
+              "answer": "1 building",
+              "radius": 9,
+              "center": [
+                324,
+                590
+              ]
+            },
+            {
+              "answer": "multiple buildings",
+              "radius": 9,
+              "center": [
+                324,
+                610
+              ]
+            },
+            {
+              "answer": "empty lot",
+              "radius": 9,
+              "center": [
+                324,
+                631
+              ]
+            },
+            {
+              "answer": "parking lot",
+              "radius": 9,
+              "center": [
+                324,
+                651
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "on site"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "good",
+              "radius": 9,
+              "center": [
+                324,
+                757
+              ]
+            },
+            {
+              "answer": "fair",
+              "radius": 9,
+              "center": [
+                324,
+                777
+              ]
+            },
+            {
+              "answer": "poor",
+              "radius": 9,
+              "center": [
+                324,
+                798
+              ]
+            },
+            {
+              "answer": "demolish",
+              "radius": 9,
+              "center": [
+                324,
+                818
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "condition"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "occupied",
+              "radius": 9,
+              "center": [
+                324,
+                923
+              ]
+            },
+            {
+              "answer": "possibly occupied",
+              "radius": 9,
+              "center": [
+                324,
+                944
+              ]
+            },
+            {
+              "answer": "vacant",
+              "radius": 9,
+              "center": [
+                324,
+                964
+              ]
+            },
+            {
+              "answer": "possibly vacant",
+              "radius": 9,
+              "center": [
+                324,
+                984
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "occupancy"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "retail",
+              "radius": 9,
+              "center": [
+                544,
+                590
+              ]
+            },
+            {
+              "answer": "service",
+              "radius": 9,
+              "center": [
+                544,
+                610
+              ]
+            },
+            {
+              "answer": "restaurant/bar",
+              "radius": 9,
+              "center": [
+                544,
+                631
+              ]
+            },
+            {
+              "answer": "office",
+              "radius": 9,
+              "center": [
+                544,
+                651
+              ]
+            },
+            {
+              "answer": "industrial",
+              "radius": 9,
+              "center": [
+                544,
+                672
+              ]
+            },
+            {
+              "answer": "religious",
+              "radius": 9,
+              "center": [
+                544,
+                692
+              ]
+            },
+            {
+              "answer": "residential",
+              "radius": 9,
+              "center": [
+                544,
+                713
+              ]
+            },
+            {
+              "answer": "unknown",
+              "radius": 9,
+              "center": [
+                544,
+                733
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "use"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "drive-thru",
+              "radius": 9,
+              "center": [
+                544,
+                840
+              ]
+            },
+            {
+              "answer": "no drive-thru",
+              "radius": 9,
+              "center": [
+                544,
+                860
+              ]
+            },
+            {
+              "answer": "bar/pub/brewery",
+              "radius": 9,
+              "center": [
+                544,
+                881
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "if restaurant"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "dry cleaner",
+              "radius": 9,
+              "center": [
+                801,
+                590
+              ]
+            },
+            {
+              "answer": "hardware store",
+              "radius": 9,
+              "center": [
+                801,
+                610
+              ]
+            },
+            {
+              "answer": "gas station",
+              "radius": 9,
+              "center": [
+                801,
+                631
+              ]
+            },
+            {
+              "answer": "grocery store",
+              "radius": 9,
+              "center": [
+                801,
+                651
+              ]
+            },
+            {
+              "answer": "health/personal care",
+              "radius": 9,
+              "center": [
+                801,
+                672
+              ]
+            },
+            {
+              "answer": "liquor",
+              "radius": 9,
+              "center": [
+                801,
+                692
+              ]
+            },
+            {
+              "answer": "auto sales/parts",
+              "radius": 9,
+              "center": [
+                801,
+                713
+              ]
+            },
+            {
+              "answer": "general retail",
+              "radius": 9,
+              "center": [
+                801,
+                733
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "if retail"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "yes",
+              "radius": 9,
+              "center": [
+                801,
+                840
+              ]
+            },
+            {
+              "answer": "no",
+              "radius": 9,
+              "center": [
+                801,
+                860
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "vacant/open/dangerous"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "auto-oriented",
+              "radius": 9,
+              "center": [
+                801,
+                965
+              ]
+            },
+            {
+              "answer": "pedestrian-oriented",
+              "radius": 9,
+              "center": [
+                801,
+                985
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "design"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "check cashing/payday loan",
+              "radius": 9,
+              "center": [
+                1051,
+                590
+              ]
+            },
+            {
+              "answer": "bank",
+              "radius": 9,
+              "center": [
+                1051,
+                631
+              ]
+            },
+            {
+              "answer": "bank w/ drive thru",
+              "radius": 9,
+              "center": [
+                1051,
+                651
+              ]
+            },
+            {
+              "answer": "hair/barber/nail",
+              "radius": 9,
+              "center": [
+                1051,
+                672
+              ]
+            },
+            {
+              "answer": "hotel/motel",
+              "radius": 9,
+              "center": [
+                1051,
+                692
+              ]
+            },
+            {
+              "answer": "auto repair",
+              "radius": 9,
+              "center": [
+                1051,
+                713
+              ]
+            },
+            {
+              "answer": "general entertainment",
+              "radius": 9,
+              "center": [
+                1051,
+                733
+              ]
+            },
+            {
+              "answer": "adult entertainment",
+              "radius": 9,
+              "center": [
+                1051,
+                754
+              ]
+            },
+            {
+              "answer": "general services",
+              "radius": 9,
+              "center": [
+                1051,
+                774
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "if service"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "yes",
+              "radius": 9,
+              "center": [
+                1051,
+                840
+              ]
+            },
+            {
+              "answer": "no",
+              "radius": 9,
+              "center": [
+                1051,
+                860
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "fire"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "yes",
+              "radius": 9,
+              "center": [
+                1051,
+                965
+              ]
+            },
+            {
+              "answer": "no",
+              "radius": 9,
+              "center": [
+                1051,
+                985
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "residential above"
+        }
+      ]
+    },
+    {
+      "parcel_id": "03001530.",
+      "context": {
+        "address": {
+          "bbox": [
+            40,
+            1083
+          ],
+          "size": 36
+        },
+        "label": {
+          "bbox": [
+            40,
+            1144
+          ],
+          "size": 144
+        }
+      },
+      "bubblesets": [
+        {
+          "bubbles": [
+            {
+              "answer": "1 building",
+              "radius": 9,
+              "center": [
+                324,
+                1132
+              ]
+            },
+            {
+              "answer": "multiple buildings",
+              "radius": 9,
+              "center": [
+                324,
+                1152
+              ]
+            },
+            {
+              "answer": "empty lot",
+              "radius": 9,
+              "center": [
+                324,
+                1173
+              ]
+            },
+            {
+              "answer": "parking lot",
+              "radius": 9,
+              "center": [
+                324,
+                1193
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "on site"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "good",
+              "radius": 9,
+              "center": [
+                324,
+                1299
+              ]
+            },
+            {
+              "answer": "fair",
+              "radius": 9,
+              "center": [
+                324,
+                1319
+              ]
+            },
+            {
+              "answer": "poor",
+              "radius": 9,
+              "center": [
+                324,
+                1340
+              ]
+            },
+            {
+              "answer": "demolish",
+              "radius": 9,
+              "center": [
+                324,
+                1360
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "condition"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "occupied",
+              "radius": 9,
+              "center": [
+                324,
+                1465
+              ]
+            },
+            {
+              "answer": "possibly occupied",
+              "radius": 9,
+              "center": [
+                324,
+                1486
+              ]
+            },
+            {
+              "answer": "vacant",
+              "radius": 9,
+              "center": [
+                324,
+                1506
+              ]
+            },
+            {
+              "answer": "possibly vacant",
+              "radius": 9,
+              "center": [
+                324,
+                1526
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "occupancy"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "retail",
+              "radius": 9,
+              "center": [
+                544,
+                1132
+              ]
+            },
+            {
+              "answer": "service",
+              "radius": 9,
+              "center": [
+                544,
+                1152
+              ]
+            },
+            {
+              "answer": "restaurant/bar",
+              "radius": 9,
+              "center": [
+                544,
+                1173
+              ]
+            },
+            {
+              "answer": "office",
+              "radius": 9,
+              "center": [
+                544,
+                1193
+              ]
+            },
+            {
+              "answer": "industrial",
+              "radius": 9,
+              "center": [
+                544,
+                1214
+              ]
+            },
+            {
+              "answer": "religious",
+              "radius": 9,
+              "center": [
+                544,
+                1234
+              ]
+            },
+            {
+              "answer": "residential",
+              "radius": 9,
+              "center": [
+                544,
+                1255
+              ]
+            },
+            {
+              "answer": "unknown",
+              "radius": 9,
+              "center": [
+                544,
+                1275
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "use"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "drive-thru",
+              "radius": 9,
+              "center": [
+                544,
+                1382
+              ]
+            },
+            {
+              "answer": "no drive-thru",
+              "radius": 9,
+              "center": [
+                544,
+                1402
+              ]
+            },
+            {
+              "answer": "bar/pub/brewery",
+              "radius": 9,
+              "center": [
+                544,
+                1423
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "if restaurant"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "dry cleaner",
+              "radius": 9,
+              "center": [
+                801,
+                1132
+              ]
+            },
+            {
+              "answer": "hardware store",
+              "radius": 9,
+              "center": [
+                801,
+                1152
+              ]
+            },
+            {
+              "answer": "gas station",
+              "radius": 9,
+              "center": [
+                801,
+                1173
+              ]
+            },
+            {
+              "answer": "grocery store",
+              "radius": 9,
+              "center": [
+                801,
+                1193
+              ]
+            },
+            {
+              "answer": "health/personal care",
+              "radius": 9,
+              "center": [
+                801,
+                1214
+              ]
+            },
+            {
+              "answer": "liquor",
+              "radius": 9,
+              "center": [
+                801,
+                1234
+              ]
+            },
+            {
+              "answer": "auto sales/parts",
+              "radius": 9,
+              "center": [
+                801,
+                1255
+              ]
+            },
+            {
+              "answer": "general retail",
+              "radius": 9,
+              "center": [
+                801,
+                1275
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "if retail"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "yes",
+              "radius": 9,
+              "center": [
+                801,
+                1382
+              ]
+            },
+            {
+              "answer": "no",
+              "radius": 9,
+              "center": [
+                801,
+                1402
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "vacant/open/dangerous"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "auto-oriented",
+              "radius": 9,
+              "center": [
+                801,
+                1507
+              ]
+            },
+            {
+              "answer": "pedestrian-oriented",
+              "radius": 9,
+              "center": [
+                801,
+                1527
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "design"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "check cashing/payday loan",
+              "radius": 9,
+              "center": [
+                1051,
+                1132
+              ]
+            },
+            {
+              "answer": "bank",
+              "radius": 9,
+              "center": [
+                1051,
+                1173
+              ]
+            },
+            {
+              "answer": "bank w/ drive thru",
+              "radius": 9,
+              "center": [
+                1051,
+                1193
+              ]
+            },
+            {
+              "answer": "hair/barber/nail",
+              "radius": 9,
+              "center": [
+                1051,
+                1214
+              ]
+            },
+            {
+              "answer": "hotel/motel",
+              "radius": 9,
+              "center": [
+                1051,
+                1234
+              ]
+            },
+            {
+              "answer": "auto repair",
+              "radius": 9,
+              "center": [
+                1051,
+                1255
+              ]
+            },
+            {
+              "answer": "general entertainment",
+              "radius": 9,
+              "center": [
+                1051,
+                1275
+              ]
+            },
+            {
+              "answer": "adult entertainment",
+              "radius": 9,
+              "center": [
+                1051,
+                1296
+              ]
+            },
+            {
+              "answer": "general services",
+              "radius": 9,
+              "center": [
+                1051,
+                1316
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "if service"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "yes",
+              "radius": 9,
+              "center": [
+                1051,
+                1382
+              ]
+            },
+            {
+              "answer": "no",
+              "radius": 9,
+              "center": [
+                1051,
+                1402
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "fire"
+        },
+        {
+          "bubbles": [
+            {
+              "answer": "yes",
+              "radius": 9,
+              "center": [
+                1051,
+                1507
+              ]
+            },
+            {
+              "answer": "no",
+              "radius": 9,
+              "center": [
+                1051,
+                1527
+              ]
+            }
+          ],
+          "type": 2,
+          "name": "residential above"
+        }
+      ]
+    }
+  ]
+}

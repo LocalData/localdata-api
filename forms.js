@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 /*
  * ==================================================
  * Forms
@@ -42,10 +45,6 @@
 
 var util = require('./util');
 
-module.exports = {
-  setup: setup
-};
-
 /*
  * app: express server
  * db: mongodb database
@@ -57,14 +56,14 @@ function setup(app, db, idgen, FORMS) {
     return db.collection(FORMS, cb);
   }
 
-// GET http://localhost:3000/surveys/1/forms/2ec140e0-827f-11e1-83d8-bf682a6ee038
-app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
+// GET http://localhost:3000/api/surveys/1/forms/2ec140e0-827f-11e1-83d8-bf682a6ee038
+app.get('/api/surveys/:surveyid/forms/:formid', function(req, response) {
   var surveyid = req.params.surveyid;
   var formid = req.params.formid;
   console.log('Getting form ' + formid + ' of survey ' + surveyid);
   db.collection(FORMS, function(err, collection) {
     collection.find({'survey': surveyid, 'id': formid}, function(err, cursor) {
-      if (err != null) {
+      if (err) {
         console.log('Error retrieving form ' + formid + ' of survey ' + surveyid + ': ' + err.message);
         response.send();
       } else {
@@ -86,19 +85,22 @@ app.get('/surveys/:surveyid/forms/:formid', function(req, response) {
 });
 
 // Get all the forms for a survey.
-// GET http://localhost:3000/surveys/{SURVEY ID}/forms
-app.get('/surveys/:sid/forms', function(req, response) {
+// Sort by creation date, newest first.
+// GET http://localhost:3000/api/surveys/{SURVEY ID}/forms
+app.get('/api/surveys/:sid/forms', function(req, response) {
   console.log('Returning all forms for survey ' + req.params.sid);
   db.collection(FORMS, function(err, collection) {
-    collection.find({'survey': req.params.sid}, function(err, cursor) {
-      if (err != null) {
+    collection.find({'survey': req.params.sid},
+                    {'sort': [['created', 'desc']]},
+                    function(err, cursor) {
+      if (err) {
         console.log('Error finding forms for survey ' + req.params.sid + ': ' + err);
         response.send();
         return;
       }
       var arr = [];
       cursor.each(function(err, doc) {
-        if (doc == null) {
+        if (doc === null) {
           response.send({forms: arr});
         } else {
           arr.push(doc);
@@ -111,24 +113,31 @@ app.get('/surveys/:sid/forms', function(req, response) {
 /*
  * Add forms to a survey.
  * This is done before a survey begins, as a setup task.
- * POST http://localhost:3000/surveys/{SURVEY ID}/forms
+ * POST http://localhost:3000/api/surveys/{SURVEY ID}/forms
  */
-app.post('/surveys/:sid/forms', function(req, response) {
+app.post('/api/surveys/:sid/forms', function(req, response) {
   var forms = req.body.forms;
   var total = forms.length;
-  console.log('Adding ' + total + ' forms to the database.');
   var count = 0;
+  console.log('Adding ' + total + ' forms to the database.');
+  
   db.collection(FORMS, function(err, collection) {
     var survey = req.params.sid;
+    
     // Iterate over each form we received.
     forms.forEach(function(form) {
+      
+      // Set some standard metadata
       var id = idgen();
       form.id = id;
+      form.created = new Date();
       form.survey = survey;
+      
       // Add form to database.
       collection.insert(form, function() {
         // Check if we've added all of them.
-        if (++count === total) {
+        count += 1;
+        if (count === total) {
           response.send({forms: forms}, 201);
         }
       });
@@ -136,17 +145,38 @@ app.post('/surveys/:sid/forms', function(req, response) {
   });
 });
 
+// Modify a form
+// Replaces the form data
+// PUT http://localhost:3000/api/surveys/{SURVEY ID}/forms/{FORM ID}
+app.put('/api/surveys/:sid/forms/:id', function (req, response) {
+  db.collection(FORMS, function (err, collection) {
+    var survey = req.params.sid;
+    var id = req.params.id;
+    var form = req.body.form;
+    form.id = id;
+    form.survey = survey;
+    form.created = new Date();
+    collection.findAndModify({survey: survey, id: id}, {'_id': 1}, form, {'new': true}, function (err, item) {
+      if (err) {
+        response.send(500);
+        return;
+      }
+      response.send({ form: item });
+    });
+  });
+});
+
 /*
  * Delete all forms from a survey.
  * This is maintainence functionality. Regular clients should not delete forms.
- * POST http://localhost:3000/surveys/{SURVEY ID}/forms
+ * POST http://localhost:3000/api/surveys/{SURVEY ID}/forms
  */
-app.del('/surveys/:sid/forms', function(req, response) {
+app.del('/api/surveys/:sid/forms', function(req, response) {
   var survey = req.params.sid;
   console.log('!!! Deleting forms for survey ' + survey + ' from the database.');
   db.collection(FORMS, function(err, collection) {
     collection.remove({survey: survey}, {safe: true}, function(error, count) {
-      if (error != null) {
+      if (error) {
         console.log('Error removing forms for survey ' + survey + ' from the form collection: ' + err.message);
         response.send();
       } else {
@@ -157,19 +187,19 @@ app.del('/surveys/:sid/forms', function(req, response) {
 });
 
 // Delete a single form from a survey
-// DELETE http://localhost:3000/surveys/{SURVEY_ID}/forms/{FORM_ID}
-app.del('/surveys/:sid/forms/:id', function(req, response) {
+// DELETE http://localhost:3000/api/surveys/{SURVEY_ID}/forms/{FORM_ID}
+app.del('/api/surveys/:sid/forms/:id', function(req, response) {
   var survey = req.params.sid;
   var id = req.params.id;
 
   console.log('Removing form ' + id + ' from the database.');
   getCollection(function(err, collection) {
     collection.remove({survey: survey, id: id}, {safe: true}, function(error, count) {
-      if (error != null) {
+      if (error) {
         console.log('Error removing form ' + id + ' for survey ' + survey + ' from the form collection: ' + err.message);
         response.send();
       } else {
-        if (count != 1) {
+        if (count !== 1) {
           console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
         }
         response.send({count: count});
@@ -179,18 +209,21 @@ app.del('/surveys/:sid/forms/:id', function(req, response) {
 });
 
 // Get all forms that reference the specified parcel ID
-// GET http://localhost:3000/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
-app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
+// Sort by creation date, newest first.
+// GET http://localhost:3000/api/surveys/{SURVEY ID}/parcels/{PARCEL ID}/forms
+app.get('/api/surveys/:sid/parcels/:pid/forms', function(req, response) {
   var handleError = util.makeErrorHandler(response);
   var sid = String(req.params.sid);
   var pid = String(req.params.pid);
   console.log('Getting forms for survey ' + sid + ' that reference parcel ' + pid);
   getCollection(function(err, collection) {
-    if (handleError(err)) return;
-    collection.find({survey: sid, 'parcels.parcel_id': pid}, function(err, cursor) {
-      if (handleError(err)) return;
+    if (handleError(err)) { return; }
+    collection.find({survey: sid, 'parcels.parcel_id': pid},
+                    {'sort': [['created', 'desc']]},
+                    function(err, cursor) {
+      if (handleError(err)) { return; }
       cursor.toArray(function(err, items) {
-        if (handleError(err)) return;
+        if (handleError(err)) { return; }
         response.send({forms: items});
       }); // toArray
     }); // find
@@ -198,3 +231,7 @@ app.get('/surveys/:sid/parcels/:pid/forms', function(req, response) {
 });
 
 }
+
+module.exports = {
+  setup: setup
+};

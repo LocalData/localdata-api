@@ -19,3 +19,7 @@ To test the API, use testclient.js:
     $ node testclient.js getform FORMID
 
 See the testclient.js code for more.
+
+We're also experimenting with using mocha for tests:
+
+    $ make test
