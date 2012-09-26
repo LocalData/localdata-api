@@ -8,9 +8,7 @@ var uuid = require('node-uuid');
 var fs = require('fs');
 var s3 = require('connect-s3');
 
-/*
- * Routes are split into separate modules.
- */
+// Routes are split into separate modules.
 var forms = require('./forms');
 var responses = require('./responses');
 var collectors = require('./collectors');
@@ -18,15 +16,21 @@ var surveys = require('./surveys');
 var scans = require('./scans');
 var parcels = require('./parcels');
 
+// Names of the MongoDB collections we use
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
 var COLLECTORS = 'collectorCollection';
 var SURVEYS = 'surveyCollection';
 var SCANIMAGES = 'scanCollection';
 
+// Basic app variables
 var server;
 var app = express(express.logger());
 var db;
+
+// ID generator
+var idgen = uuid.v1;
+
 
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
 // accept text/plain treat it as JSON.
@@ -96,10 +100,8 @@ app.use(function(req, res, next) {
   next();
 });
 
-// ID generator
-var idgen = uuid.v1;
 
-// Local static files
+// For sending local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
     if (err) {
@@ -121,19 +123,19 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-  // Mobile collection app
+  // Serve the mobile collection app
   app.use(s3({
     pathPrefix: '/mobile',
     remotePrefix: settings.mobilePrefix
   }));
 
-  // Ringleader's administration/dashboard app
+  // Serve the ringleader's administration/dashboard app
   app.use(s3({
     pathPrefix: '/',
     remotePrefix: settings.adminPrefix
   }));
 
-  // Internal operational management app
+  // Serve our internal operational management app
   // TODO: move this to S3
   var opsPrefix = '/ops';
   app.use(function (req, res, next) {
@@ -184,7 +186,7 @@ function setupRoutes(db, settings) {
   });
 }
 
-// Ensure certain database structure.
+// Ensure certain database structure
 function ensureStructure(db, callback) {
   // Map f(callback) to f(error, callback)
   // If we encounter an error, bail early with the callback.
@@ -203,6 +205,9 @@ function ensureStructure(db, callback) {
       };
     }, function (e) { done(e); });
   }
+
+  // Make sure our collections are in good working order.
+  // This primarily means making sure indexes are set up.
 
   function ensureResponses(done) {
     db.collection(RESPONSES, function (error, collection) {
@@ -282,7 +287,7 @@ function ensureStructure(db, callback) {
       });
     });
   }
-
+  
   chain([ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
 }
 
@@ -320,6 +325,8 @@ function run(settings, cb) {
           console.log(err.message);
           return cb(err);
         }
+
+        // Ensure good database structure when the app first loads.
         ensureStructure(db, function (error) {
           if (error) { throw error; }
           startServer(settings.port, cb);
