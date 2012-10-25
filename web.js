@@ -123,13 +123,13 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-  // Serve the mobile collection app
+  // Serve the mobile collection app from /mobile
   app.use(s3({
     pathPrefix: '/mobile',
     remotePrefix: settings.mobilePrefix
   }));
 
-  // Serve the ringleader's administration/dashboard app
+  // Serve the ringleader's administration/dashboard app from /
   app.use(s3({
     pathPrefix: '/',
     remotePrefix: settings.adminPrefix
@@ -257,16 +257,23 @@ function ensureStructure(db, callback) {
 
   function ensureSlugs(done) {
     db.collection(SURVEYS, function (error, collection) {
-      // Look for surveys with no slug
+
+      // First, find all surveys.
       collection.find({}, function(err, cursor) {
         cursor.toArray(function (err, arr) {
+
+          // Reject if there's an error
           if (err) { return done(err); }
           var count = 0;
+
+          // Look for surveys with no slug
           arr.forEach(function (item) {
+
+            // Add a slug if there isn't one
             if (item.slug === undefined) {
-              // Add a slug
               surveys.checkSlug(collection, item.name, 0, function (err, slug) {
                 if (err) { return done(err); }
+
                 // Update entry
                 collection.update({_id: item._id}, {'$set': {slug: slug}}, function (error) {
                   if (err) { return done(err); }
@@ -288,9 +295,12 @@ function ensureStructure(db, callback) {
     });
   }
   
+  // Chain everything together
   chain([ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
 }
 
+// We're done with our preflight stuff.
+// Now, we start listening for requests. 
 function startServer(port, cb) {  
   server = http.createServer(app);
   server.listen(port, function (err) {
@@ -300,6 +310,8 @@ function startServer(port, cb) {
 }
 
 function run(settings, cb) {
+
+  // If we need to create a database:
   if (!db) {
     console.log('Using the following settings:');
     console.log('Port: ' + settings.port);
@@ -317,7 +329,7 @@ function run(settings, cb) {
     setupRoutes(db, settings);
   }
 
-  // Kick things off
+  // Open the database connection
   db.open(function() {
     if (settings.mongo_user !== undefined) {
       db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
