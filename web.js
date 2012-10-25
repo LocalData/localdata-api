@@ -8,6 +8,11 @@ var uuid = require('node-uuid');
 var fs = require('fs');
 var s3 = require('connect-s3');
 
+// Login stuff
+var passport = require('passport');
+var util = require('util');
+var FacebookStrategy = require('passport-facebook').Strategy;
+
 // Routes are split into separate modules.
 var forms = require('./forms');
 var responses = require('./responses');
@@ -31,6 +36,16 @@ var db;
 // ID generator
 var idgen = uuid.v1;
 
+
+// Simple route middleware to ensure user is authenticated.
+//   Use this route middleware on any resource that needs to be protected.  If
+//   the request is authenticated (typically via a persistent login session),
+//   the request will proceed.  Otherwise, the user will be redirected to the
+//   login page.
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) { return next(); }
+  res.redirect('/login')
+}
 
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
 // accept text/plain treat it as JSON.
