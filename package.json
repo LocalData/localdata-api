@@ -12,6 +12,7 @@
     , "pg" : "0.6.x"
     , "connect-s3" : "git://github.com/prashtx/connect-s3.git"
     , "slug" : "0.2.x"
+    , "passport-facebook" : "0.1.4"
   }
   , "devDependencies": {
       "mocha" : "https://github.com/visionmedia/mocha/tarball/master"

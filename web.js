@@ -36,17 +36,6 @@ var db;
 // ID generator
 var idgen = uuid.v1;
 
-
-// Simple route middleware to ensure user is authenticated.
-//   Use this route middleware on any resource that needs to be protected.  If
-//   the request is authenticated (typically via a persistent login session),
-//   the request will proceed.  Otherwise, the user will be redirected to the
-//   login page.
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
-  res.redirect('/login')
-}
-
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
 // accept text/plain treat it as JSON.
 // TODO: if we need to accept text/plain in the future, then we need to adjust
@@ -138,17 +127,9 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-  // Serve the mobile collection app from /mobile
-  app.use(s3({
-    pathPrefix: '/mobile',
-    remotePrefix: settings.mobilePrefix
-  }));
-
-  // Serve the ringleader's administration/dashboard app from /
-  app.use(s3({
-    pathPrefix: '/',
-    remotePrefix: settings.adminPrefix
-  }));
+  app.get('/login', function(req, res){
+    res.render('login', { user: req.user });
+  });
 
   // Serve our internal operational management app
   // TODO: move this to S3
@@ -199,6 +180,19 @@ function setupRoutes(db, settings) {
       sendFile(res, path, type);
     }
   });
+
+  // Serve the mobile collection app from /mobile
+  app.use(s3({
+    pathPrefix: '/mobile',
+    remotePrefix: settings.mobilePrefix
+  }));
+
+  // Serve the ringleader's administration/dashboard app from /
+  app.use(s3({
+    pathPrefix: '/',
+    remotePrefix: settings.adminPrefix
+  }));
+
 }
 
 // Ensure certain database structure

@@ -11,6 +11,7 @@ var util = require('./util');
 var makeSlug = require('slug');
 
 
+// Make sure an item has a unique slug
 function checkSlug(collection, name, index, done) {
   var slug = makeSlug(name);
   if (index > 0) {
