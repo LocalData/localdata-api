@@ -104,6 +104,10 @@ var idgen = uuid.v1;
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
     if (err) {
+      if (err.code === 'ENOENT') {
+        response.send(404);
+        return;
+      }
       console.log(err.message);
       response.send(500);
       return;
@@ -122,18 +126,6 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-  // Mobile collection app
-  app.use(s3({
-    pathPrefix: '/mobile',
-    remotePrefix: settings.mobilePrefix
-  }));
-
-  // Ringleader's administration/dashboard app
-  app.use(s3({
-    pathPrefix: '/',
-    remotePrefix: settings.adminPrefix
-  }));
-
   // Internal operational management app
   // TODO: move this to S3
   var opsPrefix = '/ops';
@@ -148,10 +140,7 @@ function setupRoutes(db, settings) {
 
     path = url.substr(opsPrefix.length);
     if (path === '' || path === '/') {
-      res.redirect('/static/surveys.html');
-      res.statusCode = 302;
-      res.setHeader('Location', req.url + '/');
-      res.end();
+      res.redirect(opsPrefix + '/surveys.html');
     } else {
       var index = path.lastIndexOf('.');
       var format = '';
@@ -183,6 +172,18 @@ function setupRoutes(db, settings) {
       sendFile(res, path, type);
     }
   });
+
+  // Mobile collection app
+  app.use(s3({
+    pathPrefix: '/mobile',
+    remotePrefix: settings.mobilePrefix
+  }));
+
+  // Ringleader's administration/dashboard app
+  app.use(s3({
+    pathPrefix: '/',
+    remotePrefix: settings.adminPrefix
+  }));
 }
 
 // Ensure certain database structure.
