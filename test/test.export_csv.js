@@ -6,7 +6,7 @@ var CSVWriter = require('./../responses.js').CSVWriter;
 
   
 suite('In csvExport,', function(){
-  var row = ['a', 2, '3'];
+  var row = ['a', 2, undefined];
   var headers = ['first', 'second', 'third'];
   var headerCount = {
     'first': 1,
@@ -67,7 +67,7 @@ suite('In csvExport,', function(){
   
   test('commasep should turn a simple list into a csv string', function(){
     var csv = listToCSVString(row, headers, headerCount);
-    var expected = 'a,2,3';
+    var expected = 'a,2,';
     assert.equal(csv,expected);
   });
   
