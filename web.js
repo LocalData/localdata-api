@@ -88,6 +88,7 @@ app.use(function(req, res, next) {
 });
 
 app.use(express.bodyParser());
+app.use(express.compress());
 
 // Add common headers
 app.use(function(req, res, next) {
