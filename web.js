@@ -259,6 +259,12 @@ function ensureStructure(db, callback) {
         cursor.toArray(function (err, arr) {
           if (err) { return done(err); }
           var count = 0;
+
+          // There are no surveys yet, so there's nothing to do.
+          if (arr.length === 0) {
+            return done();
+          }
+
           arr.forEach(function (item) {
             if (item.slug === undefined) {
               // Add a slug
