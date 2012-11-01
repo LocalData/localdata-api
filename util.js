@@ -26,12 +26,6 @@ function isArray(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]';
 }
 
-module.exports = {
-  handleError: handleError,
-  makeErrorHandler: makeErrorHandler,
-  isArray: isArray
-}
-
 // Simple route middleware to ensure user is authenticated.
 //   Use this route middleware on any resource that needs to be protected.  If
 //   the request is authenticated (typically via a persistent login session),
@@ -41,5 +35,12 @@ function ensureAuthenticated(req, res, next) {
   console.log("Checking if authenticated");
   if (req.isAuthenticated()) { return next(); }
   res.redirect('/static/login.html');
+}
+
+module.exports = {
+  handleError: handleError,
+  makeErrorHandler: makeErrorHandler,
+  isArray: isArray,
+  ensureAuthenticated: ensureAuthenticated
 }
 
