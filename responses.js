@@ -47,6 +47,10 @@ function listToCSVString(row, headers, maxEltsInCell) {
   for (i = 0; i < row.length; i += 1) {
     if (maxEltsInCell[headers[i]] === 1) {
 
+      if (row[i] === undefined) {
+        row[i] = '';
+      };
+
       // Check if we need to escape the value
       row[i] = String(row[i]);
       if(row[i].indexOf(",") !== -1){
