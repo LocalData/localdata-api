@@ -8,9 +8,7 @@ var uuid = require('node-uuid');
 var fs = require('fs');
 var s3 = require('connect-s3');
 
-/*
- * Routes are split into separate modules.
- */
+// Routes are split into separate modules.
 var forms = require('./forms');
 var responses = require('./responses');
 var collectors = require('./collectors');
@@ -18,12 +16,14 @@ var surveys = require('./surveys');
 var scans = require('./scans');
 var parcels = require('./parcels');
 
+// Names of the MongoDB collections we use
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
 var COLLECTORS = 'collectorCollection';
 var SURVEYS = 'surveyCollection';
 var SCANIMAGES = 'scanCollection';
 
+// Basic app variables
 var server;
 var app = express(express.logger());
 var db;
@@ -48,7 +48,7 @@ function textParser(req, res, next) {
 
   console.log('Got text/plain');
 
-  // Parse as JSON
+  // Parse text/plain as if it was JSON
   var buf = '';
   req.setEncoding('utf8');
   req.on('data', function(chunk){
@@ -69,9 +69,16 @@ function textParser(req, res, next) {
   });
 }
 
+// Have Express wrap the response in a function for JSONP requests
+// https://github.com/visionmedia/express/issues/664
 app.set('jsonp callback', true);
+
+// Allows clients to simulate DELETE and PUT
+// (some clients don't support those verbs)
+// http://stackoverflow.com/questions/8378338/what-does-connect-js-methodoverride-do
 app.use(express.methodOverride());
 
+// Actually have Express parse text/plain as JSON
 app.use(textParser);
 
 // Default to text/plain if no content-type was provided.
@@ -86,8 +93,9 @@ app.use(function(req, res, next) {
     next();
   }
 });
-
 app.use(express.bodyParser());
+
+// Let's compress everything!
 app.use(express.compress());
 
 // Add common headers
@@ -97,10 +105,10 @@ app.use(function(req, res, next) {
   next();
 });
 
-// ID generator
+// Unique ID generator
 var idgen = uuid.v1;
 
-// Local static files
+// For sending local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
     if (err) {
@@ -179,7 +187,7 @@ function setupRoutes(db, settings) {
     remotePrefix: settings.mobilePrefix
   }));
 
-  // Ringleader's administration/dashboard app
+  // Dasboard app
   app.use(s3({
     pathPrefix: '/',
     remotePrefix: settings.adminPrefix
@@ -205,6 +213,9 @@ function ensureStructure(db, callback) {
       };
     }, function (e) { done(e); });
   }
+
+  // Make sure our collections are in good working order.
+  // This primarily means making sure indexes are set up.
 
   function ensureResponses(done) {
     db.collection(RESPONSES, function (error, collection) {
@@ -303,6 +314,8 @@ function startServer(port, cb) {
 }
 
 function run(settings, cb) {
+
+  // Set up the database object
   if (!db) {
     console.log('Using the following settings:');
     console.log('Port: ' + settings.port);
@@ -313,14 +326,14 @@ function run(settings, cb) {
     console.log('Postgresql host: ' + settings.psqlHost);
     console.log('Postgresql db: ' + settings.psqlName);
     console.log('Postgresql user: ' + settings.psqlUser);
-    // Set up database
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
                                                           {}), {});
     setupRoutes(db, settings);
   }
 
-  // Kick things off
+  // Connect to to the database and
+  // start the server
   db.open(function() {
     if (settings.mongo_user !== undefined) {
       db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
