@@ -34,7 +34,7 @@ function isArray(arr) {
 function ensureAuthenticated(req, res, next) {
   console.log("Checking if authenticated");
   if (req.isAuthenticated()) { return next(); }
-  res.redirect('/static/login.html');
+  res.redirect('/ops/login.html');
 }
 
 module.exports = {
@@ -44,3 +44,4 @@ module.exports = {
   ensureAuthenticated: ensureAuthenticated
 }
 
+ 
