@@ -135,7 +135,6 @@ function KMLWriter(response, rows, headers, maxEltsInCell){
   console.log(rows);
   // Turn each row into a KML line
   for (i = 0; i < rows.length; i++) {
-    console.log("Writing list");
     response.write(listToKMLString(rows[i], headers, maxEltsInCell));
     response.write('\n');
   }
