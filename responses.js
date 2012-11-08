@@ -47,15 +47,14 @@ function listToCSVString(row, headers, maxEltsInCell) {
   for (i = 0; i < row.length; i += 1) {
     if (maxEltsInCell[headers[i]] === 1) {
 
-
       // Check if the value is undefined
       if(row[i] === undefined) {
-        row[i] = "";
+        row[i] = '';
       }
 
       // Check if we need to escape the value
       row[i] = String(row[i]);
-      if(row[i].indexOf(",") !== -1){
+      if(row[i].indexOf(',') !== -1){
         row[i] = '"' + row[i] + '"';
       }
 
@@ -70,15 +69,22 @@ function listToCSVString(row, headers, maxEltsInCell) {
         // This row only has one answer in this column, so just push that.
         // Check first to see if it's an empty value
         if(row[i] !== undefined) {
+
+          // Check if we need to escape the value
+          row[i] = String(row[i]);
+          if(row[i].indexOf(',') !== -1){
+            row[i] = '"' + row[i] + '"';
+          }
+
           arr.push(row[i]);      
         }else {
-          arr.push("");          
+          arr.push('');          
         }
         
         len = 1;
       } else {
         // If it's an array of responses, join them with a semicolon
-        arr.push(row[i].join(";"));          
+        arr.push(row[i].join(';'));          
       }
     }
   }
