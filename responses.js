@@ -51,7 +51,6 @@ function listToCSVString(row, headers, maxEltsInCell) {
       // Check if the value is undefined
       if(row[i] === undefined) {
         row[i] = "";
-        console.log("Undefined!");
       }
 
       // Check if we need to escape the value
