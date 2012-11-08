@@ -20,6 +20,7 @@ function shouldBeParcel(item) {
   item.centroid.coordinates.should.have.lengthOf(2);
   item.should.have.property('parcelId');
   item.should.have.property('polygon');
+  item.should.have.property('type');
   item.polygon.should.have.property('type');
   item.polygon.type.should.equal('MultiPolygon');
   item.polygon.should.have.property('coordinates');
@@ -129,7 +130,7 @@ suite('Parcels', function () {
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
-        response.should.be.json
+        response.should.be.json;
 
         var parsed = JSON.parse(body);
         parsed.should.be.an.instanceOf(Array);
