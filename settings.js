@@ -3,6 +3,10 @@
 
 var settings = module.exports;
 
+// Are we in debug mode?
+settings.debug = process.env.DEBUG === 'true';
+settings.secret = process.env.SECRET || 'Zsqe>8kQjUmHDyTiY4veXaQXxZtEK2N^osY3Uw9FPZdnJbdZbp';
+
 // MongoDB
 settings.mongo_host = process.env.MONGO_HOST || 'localhost';
 settings.mongo_port = parseInt(process.env.MONGO_PORT, 10);

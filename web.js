@@ -9,12 +9,13 @@ var fs = require('fs');
 var s3 = require('connect-s3');
 var settings = require('./settings.js');
 
-// Login stuff
+// Login requirements
 var passport = require('passport');
 var util = require('util');
 var FacebookStrategy = require('passport-facebook').Strategy;
 
 // Routes are split into separate modules.
+var users = require('./users');
 var forms = require('./forms');
 var responses = require('./responses');
 var collectors = require('./collectors');
@@ -38,27 +39,29 @@ var db;
 var idgen = uuid.v1;
 
 
+console.log(settings.debug);
+
 // Use the FacebookStrategy within Passport.
 //   Strategies in Passport require a `verify` function, which accept
 //   credentials (in this case, an accessToken, refreshToken, and Facebook
 //   profile), and invoke a callback with a user object.
-passport.use(new FacebookStrategy({
-    clientID: settings.FACEBOOK_APP_ID,
-    clientSecret: settings.FACEBOOK_APP_SECRET,
-    callbackURL: "http://localhost:3000/auth/facebook/callback"
-  },
-  function(accessToken, refreshToken, profile, done) {
-    // asynchronous verification, for effect...
-    process.nextTick(function () {
-      
-      // To keep the example simple, the user's Facebook profile is returned to
-      // represent the logged-in user.  In a typical application, you would want
-      // to associate the Facebook account with a user record in your database,
-      // and return that user instead.
-      return done(null, profile);
-    });
-  }
-));
+// passport.use(new FacebookStrategy({
+//     clientID: settings.FACEBOOK_APP_ID,
+//     clientSecret: settings.FACEBOOK_APP_SECRET,
+//     callbackURL: "http://localhost:3000/auth/facebook/callback"
+//   },
+//   function(accessToken, refreshToken, profile, done) {
+//     // asynchronous verification, for effect...
+//     process.nextTick(function () {
+//       
+//       // To keep the example simple, the user's Facebook profile is returned to
+//       // represent the logged-in user.  In a typical application, you would want
+//       // to associate the Facebook account with a user record in your database,
+//       // and return that user instead.
+//       return done(null, profile);
+//     });
+//   }
+// ));
 
 
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
@@ -132,25 +135,28 @@ app.use(express.bodyParser());
 //   the user by ID when deserializing.  However, since this example does not
 //   have a database of user records, the complete Facebook profile is serialized
 //   and deserialized.
-passport.serializeUser(function(user, done) {
-  console.log("Serializing:", user);
-  done(null, user);
-});
 
-passport.deserializeUser(function(obj, done) {
-  console.log("Deserializing:", obj);
-  done(null, obj);
-});
+// TODO:
+// UNCOMMENT??
+// passport.serializeUser(function(user, done) {
+//   console.log("Serializing:", user);
+//   done(null, user);
+// });
+// 
+// passport.deserializeUser(function(obj, done) {
+//   console.log("Deserializing:", obj);
+//   done(null, obj);
+// });
+// 
+// app.use(express.cookieParser());
+// 
+// app.use(express.session({ secret: 'keyboard cat' }));
+// // Initialize Passport. Also use passport.session() middleware, to support
+// // persistent login sessions (recommended).
+// app.use(passport.initialize());
+// app.use(passport.session());
 
-app.use(express.cookieParser());
-
-app.use(express.session({ secret: 'keyboard cat' }));
-// Initialize Passport. Also use passport.session() middleware, to support
-// persistent login sessions (recommended).
-app.use(passport.initialize());
-app.use(passport.session());
-
-// .............................................................................
+// ^^^ End login stuff .........................................................
 
 
 // Add common headers
@@ -176,6 +182,11 @@ function sendFile(response, filename, type) {
 
 // Set up routes
 function setupRoutes(db, settings) {
+
+  // TODO
+  // User setup 
+  users.setup(app, db, idgen, '');
+
   forms.setup(app, db, idgen, FORMS);
   responses.setup(app, db, idgen, RESPONSES);
   collectors.setup(app, db, idgen, COLLECTORS);
@@ -186,41 +197,41 @@ function setupRoutes(db, settings) {
 
   // Login Routes
   // ...........................................................................
-  app.get('/login', function(req, res){
-    res.render('login', { user: req.user });
-  });
+  // app.get('/login', function(req, res){
+  //   res.render('login', { user: req.user });
+  // });
+// 
+// 
+  // // GET /auth/facebook
+  // //   Use passport.authenticate() as route middleware to authenticate the
+  // //   request.  The first step in Facebook authentication will involve
+  // //   redirecting the user to facebook.com.  After authorization, Facebook will
+  // //   redirect the user back to this application at /auth/facebook/callback
+  // app.get('/auth/facebook',
+  //   passport.authenticate('facebook'),
+  //   function(req, res) {
+  //     // The request will be redirected to Facebook for authentication, so this
+  //     // function will not be called.
+  //   });
+// 
+  // // GET /auth/facebook/callback
+  // //   Use passport.authenticate() as route middleware to authenticate the
+  // //   request.  If authentication fails, the user will be redirected back to the
+  // //   login page.  Otherwise, the primary route function function will be called,
+  // //   which, in this example, will redirect the user to the home page.
+  // app.get('/auth/facebook/callback', 
+  //   passport.authenticate('facebook', { failureRedirect: '/login' }),
+  //   function(req, res) {
+  //     res.redirect('/');
+  //   });
+// 
+  // app.get('/logout', function(req, res){
+  //   req.logout();
+  //   res.redirect('/');
+  // });
 
 
-  // GET /auth/facebook
-  //   Use passport.authenticate() as route middleware to authenticate the
-  //   request.  The first step in Facebook authentication will involve
-  //   redirecting the user to facebook.com.  After authorization, Facebook will
-  //   redirect the user back to this application at /auth/facebook/callback
-  app.get('/auth/facebook',
-    passport.authenticate('facebook'),
-    function(req, res) {
-      // The request will be redirected to Facebook for authentication, so this
-      // function will not be called.
-    });
-
-  // GET /auth/facebook/callback
-  //   Use passport.authenticate() as route middleware to authenticate the
-  //   request.  If authentication fails, the user will be redirected back to the
-  //   login page.  Otherwise, the primary route function function will be called,
-  //   which, in this example, will redirect the user to the home page.
-  app.get('/auth/facebook/callback', 
-    passport.authenticate('facebook', { failureRedirect: '/login' }),
-    function(req, res) {
-      res.redirect('/');
-    });
-
-  app.get('/logout', function(req, res){
-    req.logout();
-    res.redirect('/');
-  });
-
-
-  // ...........................................................................
+  // ^^^^ End login routes .....................................................
 
 
   // Serve our internal operational management app
@@ -230,11 +241,13 @@ function setupRoutes(db, settings) {
     var path;
     var url = req.url;
 
+    // If we aren't in /ops, don't do anything. 
     if (url.length < opsPrefix.length ||
        url.substr(0, opsPrefix.length) !== opsPrefix) {
       return next();
     }
 
+    // Get the path following /ops and serve the correct files
     path = url.substr(opsPrefix.length);
     if (path === '' || path === '/') {
       res.redirect('/static/surveys.html');
@@ -273,17 +286,24 @@ function setupRoutes(db, settings) {
     }
   });
 
-  // Serve the mobile collection app from /mobile
-  app.use(s3({
-    pathPrefix: '/mobile',
-    remotePrefix: settings.mobilePrefix
-  }));
+  // Serve the dashboard and mobile app from S3 when we're in production.
+  if (settings.debug === false) {
+    // Serve the mobile collection app from /mobile
+    app.use(s3({
+      pathPrefix: '/mobile',
+      remotePrefix: settings.mobilePrefix
+    }));
 
-  // Serve the ringleader's administration/dashboard app from /
-  app.use(s3({
-    pathPrefix: '/',
-    remotePrefix: settings.adminPrefix
-  }));
+    // Serve the ringleader's administration/dashboard app from /
+    app.use(s3({
+      pathPrefix: '/',
+      remotePrefix: settings.adminPrefix
+    }));
+  }else {
+    console.log("Using local static files");
+    app.use('/', express.static(__dirname + '/static/client'));
+    app.use('/mobile', express.static(__dirname + '/static/mobile'));
+  };
 
 }
 

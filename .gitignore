@@ -4,3 +4,4 @@ uploaded_files/*
 setenv*.sh
 herokuconfig*.sh
 nohup.out
+static/client
