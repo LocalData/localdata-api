@@ -8,6 +8,7 @@
  */
 
 var util = require('./util');
+var users = require('./users');
 var makeSlug = require('slug');
 
 
@@ -46,7 +47,7 @@ function setup(app, db, idgen, collectionName) {
   
   // Get all surveys
   // GET http://localhost:3000/api/surveys
-  app.get('/api/surveys', util.ensureAuthenticated, function(req, response) {
+  app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
             

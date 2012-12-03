@@ -36,9 +36,9 @@ function setup(app, db, idgen, collectionName) {
 	));
 
 
-  // Login stuff .................................................................
-
   // Passport session setup.
+  //   TODO: these currently are EMPTY FUNCTIONS
+  //   FUTURE: store this user info to the database
   //   To support persistent login sessions, Passport needs to be able to
   //   serialize users into and deserialize users out of the session.  Typically,
   //   this will be as simple as storing the user ID when serializing, and finding
@@ -68,9 +68,10 @@ function setup(app, db, idgen, collectionName) {
 
   // LOGIN ROUTES --------------------------------------------------------------
 
-  app.get('/login', function(req, res){
-    res.render('login', { user: req.user });
-  });
+  // Interface to log in is handled by the client now
+  // app.get('/auth', function(req, res){
+  //   res.render('auth', { user: req.user });
+  // });
 
   // GET /auth/facebook
   //   Use passport.authenticate() as route middleware to authenticate the
@@ -114,10 +115,21 @@ function setup(app, db, idgen, collectionName) {
   });
 
 
+}
 
+// Simple route middleware to ensure user is authenticated.
+//   Use this route middleware on any resource that needs to be protected.  If
+//   the request is authenticated (typically via a persistent login session),
+//   the request will proceed.  Otherwise, the user will be redirected to the
+//   login page.
+function ensureAuthenticated(req, res, next) {
+  console.log("Checking if authenticated");
+  if (req.isAuthenticated()) { return next(); }
+  res.send(401);
+}
 
-};
 
 module.exports = {
-  setup: setup
+  setup: setup,
+  ensureAuthenticated: ensureAuthenticated
 };
