@@ -10,10 +10,16 @@ var should = require('should');
 
 var settings = require('../settings-test.js');
 
+var users = require('../users.js');
+
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
-suite('Users', function () {
-  var myuser = {};
+suite('Users -', function () {
+  var Matt = {
+    firstName: "Matt",
+    lastName: "Hampel",
+    email: "matth@codeforamerica.org"
+  };
 
   suiteSetup(function (done) {
     server.run(settings, done);
@@ -23,28 +29,45 @@ suite('Users', function () {
     server.stop();
   });
 
-  suite('User', function () {
-    test('Create a user', function (done) {
-      // test for stuff
-      assert.equal(true, false); 
+  suite('creating and editing:', function () {
+    test('create a user', function (done) {
 
-      done();
+      users.getOrCreate(Matt, function(MattInDatabase){
+        MattInDatabase.should.have.property('_id');
+        assert.equal(MattInDatabase.firstName, Matt.firstName); 
+        assert.equal(MattInDatabase.lastName, Matt.lastName); 
+        assert.equal(MattInDatabase.email, Matt.email); 
+        done();
+      });
     });
 
-    test('Update a user', function (done) {
-      // test for stuff
-      assert.equal(true, false); 
+    test('users with the same email should not be created twice', function (done) {
 
-      done();
+      users.getOrCreate(Matt, function(MattInDatabase) {
+        users.getOrCreate(Matt, function(MattInDatabaseTwo){
+          assert.equal(String(MattInDatabase._id), String(MattInDatabaseTwo._id));
+          done();
+        });
+      });
     });
 
-    test('Create a user that already exists', function (done) {
-      // test for stuff
-      assert.equal(true, false); 
+    test('update a user name and email', function (done) {
 
-      done();
+      users.getOrCreate(Matt, function(MattInDatabase) {
+        var firstId = MattInDatabase._id;
+
+        MattInDatabase.firstName = "Prashant";
+        MattInDatabase.email = "prashant@codeforamerica.org";
+
+        users.getOrCreate(MattInDatabase, function(MattInDatabaseEdited){
+          assert.equal(String(firstId), String(MattInDatabaseEdited._id)); 
+          assert.equal(MattInDatabaseEdited.firstName, "Prashant"); 
+          assert.equal(MattInDatabaseEdited.email, "prashant@codeforamerica.org"); 
+          done();
+        });
+      });
+
     });
-
 
   });
 

@@ -24,6 +24,7 @@ var scans = require('./scans');
 var parcels = require('./parcels');
 
 // Names of the MongoDB collections we use
+var USERS = 'usersCollection';
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
 var COLLECTORS = 'collectorCollection';
@@ -129,8 +130,7 @@ function setupRoutes(db, settings) {
 
   // TODO
   // User setup 
-  users.setup(app, db, idgen, '');
-
+  users.setup(app, db, idgen, USERS);
   forms.setup(app, db, idgen, FORMS);
   responses.setup(app, db, idgen, RESPONSES);
   collectors.setup(app, db, idgen, COLLECTORS);
@@ -234,6 +234,17 @@ function ensureStructure(db, callback) {
   // Make sure our collections are in good working order.
   // This primarily means making sure indexes are set up.
 
+  function ensureUsers(done) {
+    db.collection(USERS, function(error, collection) {
+      if (error) { return done(error); }
+
+      chain([function indexCreated(done) {
+        // Ensure we have a geo index on the centroid field.
+          collection.ensureIndex({ "email": 1 }, { unique: true }, done);
+      }], done)();
+    });
+  }
+
   function ensureResponses(done) {
     db.collection(RESPONSES, function (error, collection) {
       if (error) { return done(error); }
@@ -321,7 +332,7 @@ function ensureStructure(db, callback) {
   }
   
   // Chain everything together
-  chain([ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
+  chain([ensureUsers, ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
 }
 
 // We're done with our preflight stuff.

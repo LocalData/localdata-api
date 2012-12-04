@@ -8,10 +8,58 @@ var settings = require('./settings.js');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 
-
-// User accounts ...............................................................
+module.exports = {};
 
 function setup(app, db, idgen, collectionName) {
+
+  // Database ..................................................................
+
+  function getCollection(cb) {
+    return db.collection(collectionName, cb);
+  }
+
+  function getOrCreate(user, callback) {
+
+    getCollection(function(err, collection) {
+
+      // If we're dealing with an existing document, we want to make sure we 
+      // find it. Necessary because we delete user._id later on.
+      var query;
+      if (user.hasOwnProperty("_id")) {
+        query = {_id: user._id};
+      }else {
+        if (user.hasOwnProperty("email")) {
+          query = {email: user.email};
+        }else {
+          query = user;
+        }
+      }
+
+      console.log("Query: ", query);
+
+      // Remove the id; it breaks findAndModify with upsert 
+      // ("Mod on _id not allowed")
+      delete user._id;
+
+      collection.findAndModify(
+        query,      // find
+        [['_id','asc']],          // sort by
+        {$set: user},             // update
+        {upsert: true, new:true}, // create if new, return new obj
+        function(err, object) {
+          if (err) {
+            console.warn(err.message);
+          } else {
+            console.log("Object found: ", object);  // undefined if no matching object exists.
+          }  
+          callback(object);
+        }
+      );
+
+    });
+  }
+
+  module.exports.getOrCreate = getOrCreate;
 
 	// Use the FacebookStrategy within Passport.
 	//   Strategies in Passport require a `verify` function, which accept
@@ -25,7 +73,7 @@ function setup(app, db, idgen, collectionName) {
 	  function(accessToken, refreshToken, profile, done) {
 	    // asynchronous verification, for effect...
 	    process.nextTick(function () {
-	      
+
 	      // To keep the example simple, the user's Facebook profile is returned to
 	      // represent the logged-in user.  In a typical application, you would want
 	      // to associate the Facebook account with a user record in your database,
@@ -46,32 +94,27 @@ function setup(app, db, idgen, collectionName) {
   //   have a database of user records, the complete Facebook profile is serialized
   //   and deserialized.
   passport.serializeUser(function(user, done) {
-    console.log("Serializing:", user);
+    // console.log("Serializing:", user);
     done(null, user);
   });
 
   passport.deserializeUser(function(obj, done) {
-    console.log("Deserializing:", obj);
+    // console.log("Deserializing:", obj);
     done(null, obj);
   });
 
+  // Some helpers we need to use
   app.use(express.cookieParser());
-
   app.use(express.session({ secret: settings.secret }));
+
   // Initialize Passport. Also use passport.session() middleware, to support
   // persistent login sessions (recommended).
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // ^^^ End login stuff .........................................................
 
 
-  // LOGIN ROUTES --------------------------------------------------------------
-
-  // Interface to log in is handled by the client now
-  // app.get('/auth', function(req, res){
-  //   res.render('auth', { user: req.user });
-  // });
+  // Login routes ..............................................................
 
   // GET /auth/facebook
   //   Use passport.authenticate() as route middleware to authenticate the
@@ -94,28 +137,36 @@ function setup(app, db, idgen, collectionName) {
   app.get('/auth/facebook/callback', 
     passport.authenticate('facebook', { failureRedirect: '/login' }),
     function(req, res) {
-      res.redirect('/');
+      res.redirect('/index.html');
     }
   );
 
+  // GET /logout
+  //  Does what you think it does. 
   app.get('/logout', function(req, res){
     req.logout();
     res.redirect('/');
   });
 
   // GET /user
-  //  Return details about the current user, if any.
+  //  Return details about the current user
+  //  Return a 401 if there isn't a current user
   app.get('/api/user', function(req, response){
     console.log(req.isAuthenticated());
     if(req.isAuthenticated()) {
       response.send(req.user);
     }else {
-      response.send({});
+      response.send(401);
     }
   });
 
 
 }
+
+
+
+
+// Utility / middleware ........................................................
 
 // Simple route middleware to ensure user is authenticated.
 //   Use this route middleware on any resource that needs to be protected.  If
@@ -128,8 +179,7 @@ function ensureAuthenticated(req, res, next) {
   res.send(401);
 }
 
-
 module.exports = {
   setup: setup,
-  ensureAuthenticated: ensureAuthenticated
+  ensureAuthenticated: ensureAuthenticated,
 };
