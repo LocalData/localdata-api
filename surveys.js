@@ -43,6 +43,8 @@ function checkSlug(collection, name, index, done) {
 function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
+
+    sinon.stub(users, 'ensureAuthenticated')
   }
   
   // Get all surveys
@@ -50,6 +52,8 @@ function setup(app, db, idgen, collectionName) {
   app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
+
+      var query = { users: { $in: [req.user._id] } };
             
       if (handleError(err)) { return; }
       collection.find({}, function(err, cursor) {
@@ -59,21 +63,23 @@ function setup(app, db, idgen, collectionName) {
           response.send({surveys: items});
         });
       });
+
     });
   });
 
   // Get a survey
   // GET http://localhost:3000/api/surveys/{SURVEY ID}
-  app.get('/api/surveys/:sid', function(req, response) {
+  app.get('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
       if (handleError(err)) { return; }
-      collection.find({id: req.params.sid}, function(err, cursor) {
+      collection.find({id: req.params.sid, users: { $in: [req.user._id]}}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
+
           if (items.length === 0) {
-            response.send();
+            response.send(404);
             return;
           }
           if (items.length > 1) {
@@ -89,7 +95,7 @@ function setup(app, db, idgen, collectionName) {
 
   // Get the survey ID associated with a slug
   // GET http://localhost:3000/api/slugs/{SLUG}
-  app.get('/api/slugs/:slug', function (req, response) {
+  app.get('/api/slugs/:slug', users.ensureAuthenticated, function (req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function (err, collection) {
       if (handleError(err)) { return; }
@@ -117,7 +123,7 @@ function setup(app, db, idgen, collectionName) {
 
   // Add a survey
   // POST http://localhost:3000/api/surveys
-  app.post('/api/surveys', function(req, response) {
+  app.post('/api/surveys', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
     var surveys = req.body.surveys;
     var total = surveys.length;
@@ -152,7 +158,7 @@ function setup(app, db, idgen, collectionName) {
   // DELETE http://localhost:5000/api/surveys/{SURVEY ID}
   // TODO: We should probably clean up the objects from other collections that
   // pertain only to this survey.
-  app.del('/api/surveys/:sid', function(req, response) {
+  app.del('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
     var sid = req.params.sid;
     getCollection(function(err, collection) {
       collection.remove({id: sid}, {safe: true}, function(error, count) {

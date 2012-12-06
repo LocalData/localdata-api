@@ -3,6 +3,7 @@
 
 var http = require('http');
 var express = require('express');
+var mongo = require('mongodb');
 var settings = require('./settings.js');
 
 var passport = require('passport');
@@ -26,7 +27,10 @@ function setup(app, db, idgen, collectionName) {
       // find it. Necessary because we delete user._id later on.
       var query;
       if (user.hasOwnProperty("_id")) {
-        query = {_id: user._id};
+        // First, cast to a string to make sure we've got a consistent datatype
+        id = String(user._id);
+        // Then build an objectId from the string
+        query = {_id: new mongo.BSONPure.ObjectID(id)};
       }else {
         if (user.hasOwnProperty("email")) {
           query = {email: user.email};
@@ -42,7 +46,7 @@ function setup(app, db, idgen, collectionName) {
       delete user._id;
 
       collection.findAndModify(
-        query,      // find
+        query,                    // find
         [['_id','asc']],          // sort by
         {$set: user},             // update
         {upsert: true, new:true}, // create if new, return new obj
@@ -71,7 +75,6 @@ function setup(app, db, idgen, collectionName) {
 	    callbackURL: "http://localhost:3000/auth/facebook/callback"
 	  },
 	  function(accessToken, refreshToken, profile, done) {
-	    // asynchronous verification, for effect...
 	    process.nextTick(function () {
 
 	      // To keep the example simple, the user's Facebook profile is returned to
@@ -85,22 +88,29 @@ function setup(app, db, idgen, collectionName) {
 
 
   // Passport session setup.
-  //   TODO: these currently are EMPTY FUNCTIONS
-  //   FUTURE: store this user info to the database
   //   To support persistent login sessions, Passport needs to be able to
   //   serialize users into and deserialize users out of the session.  Typically,
   //   this will be as simple as storing the user ID when serializing, and finding
   //   the user by ID when deserializing.  However, since this example does not
   //   have a database of user records, the complete Facebook profile is serialized
   //   and deserialized.
-  passport.serializeUser(function(user, done) {
-    // console.log("Serializing:", user);
-    done(null, user);
+  passport.serializeUser(function(userFromFacebook, done) {
+    // console.log("Serializing:", userFromFacebook._json);
+
+    getOrCreate(userFromFacebook._json, function(userFromDatabase){
+      console.log(userFromDatabase);
+      done(null, userFromDatabase);
+    });
   });
 
   passport.deserializeUser(function(obj, done) {
-    // console.log("Deserializing:", obj);
-    done(null, obj);
+    console.log("Deserializing:", obj);
+
+    getOrCreate(obj, function(user) {
+      console.log(user);
+      user._id = String(user._id);
+      done(null, user);
+    });
   });
 
   // Some helpers we need to use
@@ -122,7 +132,7 @@ function setup(app, db, idgen, collectionName) {
   //   redirecting the user to facebook.com.  After authorization, Facebook will
   //   redirect the user back to this application at /auth/facebook/callback
   app.get('/auth/facebook',
-    passport.authenticate('facebook'),
+    passport.authenticate('facebook', { scope: [ 'email' ] }),
     function(req, res) {
       // The request will be redirected to Facebook for authentication, so this
       // function will not be called.
@@ -160,10 +170,7 @@ function setup(app, db, idgen, collectionName) {
     }
   });
 
-
 }
-
-
 
 
 // Utility / middleware ........................................................
@@ -171,8 +178,8 @@ function setup(app, db, idgen, collectionName) {
 // Simple route middleware to ensure user is authenticated.
 //   Use this route middleware on any resource that needs to be protected.  If
 //   the request is authenticated (typically via a persistent login session),
-//   the request will proceed.  Otherwise, the user will be redirected to the
-//   login page.
+//   the request will proceed.  
+//   Otherwise, the user will be sent a 401.
 function ensureAuthenticated(req, res, next) {
   console.log("Checking if authenticated");
   if (req.isAuthenticated()) { return next(); }

@@ -29,9 +29,9 @@ suite('Users -', function () {
     server.stop();
   });
 
-  suite('creating and editing:', function () {
-    test('create a user', function (done) {
+  suite('finding, creating and editing:', function () {
 
+    test('create a user', function (done) {
       users.getOrCreate(Matt, function(MattInDatabase){
         MattInDatabase.should.have.property('_id');
         assert.equal(MattInDatabase.firstName, Matt.firstName); 
@@ -41,8 +41,7 @@ suite('Users -', function () {
       });
     });
 
-    test('users with the same email should not be created twice', function (done) {
-
+    test('users with the same email should found, not be created twice', function (done) {
       users.getOrCreate(Matt, function(MattInDatabase) {
         users.getOrCreate(Matt, function(MattInDatabaseTwo){
           assert.equal(String(MattInDatabase._id), String(MattInDatabaseTwo._id));
@@ -52,7 +51,6 @@ suite('Users -', function () {
     });
 
     test('update a user name and email', function (done) {
-
       users.getOrCreate(Matt, function(MattInDatabase) {
         var firstId = MattInDatabase._id;
 
@@ -85,16 +83,9 @@ suite('Users -', function () {
 
   });
 
-  suite('GET', function () {
+  suite('authentication:', function () {
 
     suiteSetup(function (done) {
-      done();
-    });
-
-    test('Get a user', function (done) {
-      // test for stuff
-      assert.equal(true, false); 
-
       done();
     });
 
@@ -111,15 +102,6 @@ suite('Users -', function () {
 
       done();
     });
-
-
-    test('Get a user that does not exist', function (done) {
-      // test for stuff
-      assert.equal(true, false); 
-
-      done();
-    });
-
 
   });
 });

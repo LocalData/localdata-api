@@ -31,6 +31,7 @@ suite('Surveys', function () {
   var data_two = {
     "surveys" : [ {
       "name": "Test survey 1",
+      "users": [1,2],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -42,6 +43,7 @@ suite('Surveys', function () {
       }
     }, {
       "name": "Test survey 2",
+      "users": [2],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -86,16 +88,18 @@ suite('Surveys', function () {
 
   suite('GET', function () {
     var id;
+    var surveyTwo;
 
     setup(function (done) {
       request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
         if (error) { done(error); }
         id = body.surveys[0].id;
+        surveyTwo = body.surveys[1];
         done();
       });
     });
 
-    test('Getting all surveys', function (done) {
+    test('Getting all surveys for this user', function (done) {
       request.get({url: BASEURL + '/surveys'}, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
@@ -131,6 +135,13 @@ suite('Surveys', function () {
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
 
+        done();
+      });
+    });
+
+    test('Getting a survey the user does not have access to', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
+        assert.equal(response.statusCode, 403, 'Status should be 403 forbidden. Status is ' + response.statusCode);
         done();
       });
     });
