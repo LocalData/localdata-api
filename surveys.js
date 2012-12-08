@@ -43,20 +43,19 @@ function checkSlug(collection, name, index, done) {
 function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
-
-    sinon.stub(users, 'ensureAuthenticated')
   }
   
   // Get all surveys
   // GET http://localhost:3000/api/surveys
   app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
+
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
 
       var query = { users: { $in: [req.user._id] } };
             
       if (handleError(err)) { return; }
-      collection.find({}, function(err, cursor) {
+      collection.find({users: { $in: [req.user._id]}}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }

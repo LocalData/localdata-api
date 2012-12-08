@@ -9,13 +9,25 @@ var request = require('request');
 var should = require('should');
 
 var settings = require('../settings-test.js');
+var users = require('../users.js');
+
+var passport = require('passport');
+
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
+
+  // Fake log in the user. 
+  users.ensureAuthenticated = function(req, res, next) {
+    req.user = { _id: "1" };
+    return next();
+  };
+
   var data_one = {
     "surveys" : [ {
       "name": "Just a survey",
+      "users": ["1"],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -31,7 +43,7 @@ suite('Surveys', function () {
   var data_two = {
     "surveys" : [ {
       "name": "Test survey 1",
-      "users": [1,2],
+      "users": ["1","2"],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -43,7 +55,7 @@ suite('Surveys', function () {
       }
     }, {
       "name": "Test survey 2",
-      "users": [2],
+      "users": ["2"],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -91,7 +103,7 @@ suite('Surveys', function () {
     var surveyTwo;
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
+      request.post({url: BASEURL + '/surveys', json: data_two}, function(error, response, body) {
         if (error) { done(error); }
         id = body.surveys[0].id;
         surveyTwo = body.surveys[1];
@@ -145,6 +157,7 @@ suite('Surveys', function () {
         done();
       });
     });
+
   });
 
   suite('DEL', function () {
