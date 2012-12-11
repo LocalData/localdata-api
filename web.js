@@ -40,8 +40,6 @@ var db;
 var idgen = uuid.v1;
 
 
-console.log(settings.debug);
-
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
 // accept text/plain treat it as JSON.
 // TODO: if we need to accept text/plain in the future, then we need to adjust
@@ -190,24 +188,17 @@ function setupRoutes(db, settings) {
     }
   });
 
-  // Serve the dashboard and mobile app from S3 when we're in production.
-  if (settings.debug === false) {
-    // Serve the mobile collection app from /mobile
-    app.use(s3({
-      pathPrefix: '/mobile',
-      remotePrefix: settings.mobilePrefix
-    }));
+  // Serve the mobile collection app from /mobile
+  app.use(s3({
+    pathPrefix: '/mobile',
+    remotePrefix: settings.mobilePrefix
+  }));
 
-    // Serve the ringleader's administration/dashboard app from /
-    app.use(s3({
-      pathPrefix: '/',
-      remotePrefix: settings.adminPrefix
-    }));
-  }else {
-    console.log("Using local static files");
-    app.use('/', express.static(__dirname + '/static/client'));
-    app.use('/mobile', express.static(__dirname + '/static/mobile'));
-  };
+  // Serve the ringleader's administration/dashboard app from /
+  app.use(s3({
+    pathPrefix: '/',
+    remotePrefix: settings.adminPrefix
+  }));
 
 }
 
