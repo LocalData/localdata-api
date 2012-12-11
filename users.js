@@ -27,7 +27,7 @@ function setup(app, db, idgen, collectionName) {
       // find it. Necessary because we delete user._id later on.
       var query;
       var id; 
-      
+
       if (user.hasOwnProperty("_id")) {
         // First, cast to a string to make sure we've got a consistent datatype
         id = String(user._id);

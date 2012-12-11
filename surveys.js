@@ -135,6 +135,14 @@ function setup(app, db, idgen, collectionName) {
         var id = idgen();
         survey.id = id;
 
+        // For security, delete anything sent in under the user key
+        delete survey.users;
+
+        // Then, we set the user assigned to the survey here
+        survey.users = [req.user._id];
+
+        // Now, we give the survey a slug. 
+        // We need check to see if the slug is unique. 
         checkSlug(collection, survey.name, 0, function (err, slug) {
           if (handleError(err)) { return; }
           survey.slug = slug;

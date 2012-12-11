@@ -27,7 +27,7 @@ suite('Surveys', function () {
   var data_one = {
     "surveys" : [ {
       "name": "Just a survey",
-      "users": ["1"],
+      "users": ["A", "B"],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -43,7 +43,6 @@ suite('Surveys', function () {
   var data_two = {
     "surveys" : [ {
       "name": "Test survey 1",
-      "users": ["1","2"],
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -89,6 +88,15 @@ suite('Surveys', function () {
           assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
+
+          body.surveys[i].should.have.property('users');
+          assert.equal("1", body.surveys[i].users[0], 'Wrong or no user stored');
+
+          // Security tests
+          assert.equal(1, body.surveys[i].users.length, 'There should be only one user assigned, even though the POST had two');
+          assert.notEqual("A", body.surveys[i].users[0], 'Wrong user stored');
+
+          // Slug tests
           body.surveys[i].should.have.property('slug');
           body.surveys[i].slug.should.be.a('string');
         }
