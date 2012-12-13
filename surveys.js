@@ -44,7 +44,7 @@ function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
-  
+
   // Get all surveys
   // GET http://localhost:3000/api/surveys
   app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
@@ -52,10 +52,8 @@ function setup(app, db, idgen, collectionName) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
 
-      var query = { users: { $in: [req.user._id] } };
-            
       if (handleError(err)) { return; }
-      collection.find({users: { $in: [req.user._id]}}, function(err, cursor) {
+      collection.find({}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
@@ -72,21 +70,42 @@ function setup(app, db, idgen, collectionName) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
       if (handleError(err)) { return; }
-      collection.find({id: req.params.sid, users: { $in: [req.user._id]}}, function(err, cursor) {
+      collection.find({id: req.params.sid}, function(err, cursor) {
+        // , users: { $in: [req.user._id]}
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
 
+          var survey = items[0];
+
+          // If there are no results, it's a 404
           if (items.length === 0) {
             response.send(404);
             return;
           }
+
+          // We should only get one result
           if (items.length > 1) {
             console.log('!!! WARNING: There should only be one item with a given ID');
             console.log('!!! Found ' + items.length);
             console.log('!!! Items: ' + JSON.stringify(items));
           }
-          response.send({survey: items[0]});
+
+          // Check if the first survey returned belongs to this user.
+          if (survey.hasOwnProperty("users")) {
+            if (survey.users.indexOf(req.user._id) != -1) {
+              console.log("User can access this survey");
+              response.send({survey: items[0]});
+              return;
+            }else {
+              response.send(403);
+              return;
+            };
+          };
+
+          response.send(404); 
+          return;
+
         });
       });
     });
@@ -123,10 +142,18 @@ function setup(app, db, idgen, collectionName) {
   // Add a survey
   // POST http://localhost:3000/api/surveys
   app.post('/api/surveys', users.ensureAuthenticated, function(req, response) {
+    console.log(response);
     var handleError = util.makeErrorHandler(response);
+
+    console.log("Creating survey");
+
     var surveys = req.body.surveys;
+    
+    console.log(surveys);
+
     var total = surveys.length;
     var count = 0;
+
 
     getCollection(function(err, collection) {
 
