@@ -103,7 +103,7 @@ function setup(app, db, idgen, collectionName) {
             };
           };
 
-          response.send(404); 
+          response.send(500); 
           return;
 
         });
