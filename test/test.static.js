@@ -188,5 +188,16 @@ suite('Static', function () {
         done();
       });
     });
+
+    test('404', function (done) {
+      request({
+        url: BASEURL + '/ops/doesnotexist.html'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(404);
+
+        done();
+      });
+    });
   });
 });

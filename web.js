@@ -60,7 +60,7 @@ function textParser(req, res, next) {
 
   console.log('Got text/plain');
 
-  // Parse as JSON
+  // Parse text/plain as if it was JSON
   var buf = '';
   req.setEncoding('utf8');
   req.on('data', function(chunk){
@@ -81,9 +81,16 @@ function textParser(req, res, next) {
   });
 }
 
+// Have Express wrap the response in a function for JSONP requests
+// https://github.com/visionmedia/express/issues/664
 app.set('jsonp callback', true);
+
+// Allows clients to simulate DELETE and PUT
+// (some clients don't support those verbs)
+// http://stackoverflow.com/questions/8378338/what-does-connect-js-methodoverride-do
 app.use(express.methodOverride());
 
+// Actually have Express parse text/plain as JSON
 app.use(textParser);
 
 
@@ -99,8 +106,10 @@ app.use(function(req, res, next) {
     next();
   }
 });
-
 app.use(express.bodyParser());
+
+// Let's compress everything!
+app.use(express.compress());
 
 // Add common headers
 app.use(function(req, res, next) {
@@ -109,11 +118,17 @@ app.use(function(req, res, next) {
   next();
 });
 
+// Unique ID generator
+var idgen = uuid.v1;
 
 // For sending local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
     if (err) {
+      if (err.code === 'ENOENT') {
+        response.send(404);
+        return;
+      }
       console.log(err.message);
       response.send(500);
       return;
@@ -152,10 +167,7 @@ function setupRoutes(db, settings) {
     // Get the path following /ops and serve the correct files
     path = url.substr(opsPrefix.length);
     if (path === '' || path === '/') {
-      res.redirect('/static/surveys.html');
-      res.statusCode = 302;
-      res.setHeader('Location', req.url + '/');
-      res.end();
+      res.redirect(opsPrefix + '/surveys.html');
     } else {
       var index = path.lastIndexOf('.');
       var format = '';
@@ -199,7 +211,6 @@ function setupRoutes(db, settings) {
     pathPrefix: '/',
     remotePrefix: settings.adminPrefix
   }));
-
 }
 
 // Ensure certain database structure
@@ -224,7 +235,6 @@ function ensureStructure(db, callback) {
 
   // Make sure our collections are in good working order.
   // This primarily means making sure indexes are set up.
-
   function ensureUsers(done) {
     db.collection(USERS, function(error, collection) {
       if (error) { return done(error); }
@@ -294,6 +304,11 @@ function ensureStructure(db, callback) {
           var count = 0;
 
           // Look for surveys with no slug
+          // There are no surveys yet, so there's nothing to do.
+          if (arr.length === 0) {
+            return done();
+          }
+
           arr.forEach(function (item) {
 
             // Add a slug if there isn't one
@@ -337,8 +352,7 @@ function startServer(port, cb) {
 }
 
 function run(settings, cb) {
-
-  // If we need to create a database:
+  // Set up the database object
   if (!db) {
     console.log('Using the following settings:');
     console.log('Port: ' + settings.port);
@@ -349,14 +363,14 @@ function run(settings, cb) {
     console.log('Postgresql host: ' + settings.psqlHost);
     console.log('Postgresql db: ' + settings.psqlName);
     console.log('Postgresql user: ' + settings.psqlUser);
-    // Set up database
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
                                                           {}), {});
     setupRoutes(db, settings);
   }
 
-  // Open the database connection
+  // Connect to to the database and
+  // start the server
   db.open(function() {
     if (settings.mongo_user !== undefined) {
       db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
