@@ -74,7 +74,7 @@ function setup(app, db, idgen, collectionName) {
 	passport.use(new FacebookStrategy({
 	    clientID: settings.FACEBOOK_APP_ID,
 	    clientSecret: settings.FACEBOOK_APP_SECRET,
-	    callbackURL: "http://localhost:3000/auth/facebook/callback"
+	    callbackURL: "/auth/facebook/callback" //http://localhost:3000
 	  },
 	  function(accessToken, refreshToken, profile, done) {
 	    process.nextTick(function () {
