@@ -41,6 +41,18 @@ suite('Users -', function () {
       });
     });
 
+    test('create a user with no email', function (done) {
+      assert.equal(true, false);
+      
+      users.getOrCreate(Matt, function(MattInDatabase){
+        MattInDatabase.should.have.property('_id');
+        assert.equal(MattInDatabase.firstName, Matt.firstName); 
+        assert.equal(MattInDatabase.lastName, Matt.lastName); 
+        assert.equal(MattInDatabase.email, Matt.email); 
+        done();
+      });
+    });
+
     test('users with the same email should found, not be created twice', function (done) {
       users.getOrCreate(Matt, function(MattInDatabase) {
         users.getOrCreate(Matt, function(MattInDatabaseTwo){

@@ -51,7 +51,7 @@ function setup(app, db, idgen, collectionName) {
         query,                    // find
         [['_id','asc']],          // sort by
         {$set: user},             // update
-        {upsert: true, new:true}, // create if new, return new obj
+        {upsert: true, new: true}, // create if new, return new obj
         function(err, object) {
           if (err) {
             console.warn(err.message);
@@ -74,16 +74,16 @@ function setup(app, db, idgen, collectionName) {
 	passport.use(new FacebookStrategy({
 	    clientID: settings.FACEBOOK_APP_ID,
 	    clientSecret: settings.FACEBOOK_APP_SECRET,
-	    callbackURL: "/auth/facebook/callback" // http://localhost:3000
+	    callbackURL: "/auth/facebook/callback123" // http://localhost:3000
 	  },
 	  function(accessToken, refreshToken, profile, done) {
 	    process.nextTick(function () {
 
-	      // To keep the example simple, the user's Facebook profile is returned to
-	      // represent the logged-in user.  In a typical application, you would want
-	      // to associate the Facebook account with a user record in your database,
-	      // and return that user instead.
-	      return done(null, profile);
+        getOrCreate(profile._json, function(user) {
+          user._id = String(user._id);
+          done(null, user);
+        });
+
 	    });
 	  }
 	));
@@ -105,12 +105,7 @@ function setup(app, db, idgen, collectionName) {
   });
 
   passport.deserializeUser(function(obj, done) {
-    console.log("Deserializing:");
-    console.log(obj);
-    getOrCreate(obj, function(user) {
-      user._id = String(user._id);
-      done(null, user);
-    });
+    return done(null, obj);
   });
 
   // Some helpers we need to use
@@ -123,20 +118,35 @@ function setup(app, db, idgen, collectionName) {
   app.use(passport.session());
 
 
-
   // Login routes ..............................................................
+
+
+  // Cheap way to save the URL parameter
+  app.get('/auth/return', function(req, res){
+    console.log("REDIRECT TO ..............................");
+    console.log(req.query.redirectTo);
+    req.session.redirectTo = req.query.redirectTo;
+    res.redirect("/auth/facebook");
+  });
+
+  // app.get('/abcd'), function(req, res) {
+  //   console.log("REDIRECT TO ..............................");
+  //   // console.log(req.query.redirectTo);
+  //   // 
+  //   // 
+  // };
 
   // GET /auth/facebook
   //   Use passport.authenticate() as route middleware to authenticate the
   //   request.  The first step in Facebook authentication will involve
   //   redirecting the user to facebook.com.  After authorization, Facebook will
   //   redirect the user back to this application at /auth/facebook/callback
-  app.get('/auth/facebook',
-    passport.authenticate('facebook', { scope: [ 'email' ] }),
-    function(req, res) {
-      // The request will be redirected to Facebook for authentication, so this
-      // function will not be called.
-    }
+  app.get('/auth/facebook', passport.authenticate(
+    'facebook', { 
+      callbackURL: '/auth/facebook/callback', 
+      scope: [ 'email' ] 
+    }), 
+    function(req, res) { }
   );
 
   // GET /auth/facebook/callback
@@ -145,10 +155,9 @@ function setup(app, db, idgen, collectionName) {
   //   login page.  Otherwise, the primary route function function will be called,
   //   which, in this example, will redirect the user to the home page.
   app.get('/auth/facebook/callback', 
-    passport.authenticate('facebook', { failureRedirect: '/login' }),
+    passport.authenticate('facebook', { callbackURL: '/auth/facebook/callback', failureRedirect: '/login' }),
     function(req, res) {
-      console.log("Redirecting to " + req.url);
-      res.redirect("index.html");
+      res.redirect("/#" + req.session.redirectTo);
     }
   );
 
@@ -184,10 +193,11 @@ function setup(app, db, idgen, collectionName) {
 function ensureAuthenticated(req, res, next) {
   console.log("Checking if authenticated");
   if (req.isAuthenticated()) { return next(); }
+
   res.send(401);
 }
 
 module.exports = {
   setup: setup,
-  ensureAuthenticated: ensureAuthenticated,
+  ensureAuthenticated: ensureAuthenticated
 };
