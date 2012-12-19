@@ -141,8 +141,8 @@ function sendFile(response, filename, type) {
 // Set up routes
 function setupRoutes(db, settings) {
 
-  // TODO
-  // User setup 
+
+  // App routes
   users.setup(app, db, idgen, USERS);
   forms.setup(app, db, idgen, FORMS);
   responses.setup(app, db, idgen, RESPONSES);
@@ -151,7 +151,10 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
+
   // Serve our internal operational management app
+  // Should be done BEFORE passport so for efficency 
+  //    (otherwise each request)
   // TODO: move this to S3
   var opsPrefix = '/ops';
   app.use(function (req, res, next) {
@@ -211,6 +214,7 @@ function setupRoutes(db, settings) {
     pathPrefix: '/',
     remotePrefix: settings.adminPrefix
   }));
+
 }
 
 // Ensure certain database structure
