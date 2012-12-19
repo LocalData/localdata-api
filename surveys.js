@@ -53,7 +53,7 @@ function setup(app, db, idgen, collectionName) {
     getCollection(function(err, collection) {
 
       if (handleError(err)) { return; }
-      collection.find({}, function(err, cursor) {
+      collection.find({users: { $in: [req.user._id]}}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
