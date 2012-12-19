@@ -74,7 +74,7 @@ function setup(app, db, idgen, collectionName) {
 	passport.use(new FacebookStrategy({
 	    clientID: settings.FACEBOOK_APP_ID,
 	    clientSecret: settings.FACEBOOK_APP_SECRET,
-	    callbackURL: "/auth/facebook/callback123" // http://localhost:3000
+	    callbackURL: "/auth/facebook/callback"
 	  },
 	  function(accessToken, refreshToken, profile, done) {
 	    process.nextTick(function () {
@@ -143,7 +143,6 @@ function setup(app, db, idgen, collectionName) {
   //   redirect the user back to this application at /auth/facebook/callback
   app.get('/auth/facebook', passport.authenticate(
     'facebook', { 
-      callbackURL: '/auth/facebook/callback', 
       scope: [ 'email' ] 
     }), 
     function(req, res) { }
@@ -155,7 +154,7 @@ function setup(app, db, idgen, collectionName) {
   //   login page.  Otherwise, the primary route function function will be called,
   //   which, in this example, will redirect the user to the home page.
   app.get('/auth/facebook/callback', 
-    passport.authenticate('facebook', { callbackURL: '/auth/facebook/callback', failureRedirect: '/login' }),
+    passport.authenticate('facebook', { failureRedirect: '/login' }),
     function(req, res) {
       res.redirect("/#" + req.session.redirectTo);
     }
