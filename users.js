@@ -79,6 +79,8 @@ function setup(app, db, idgen, collectionName) {
 	  function(accessToken, refreshToken, profile, done) {
 	    process.nextTick(function () {
 
+        console.log("Profile json", profile._json);
+
         getOrCreate(profile._json, function(user) {
           user._id = String(user._id);
           done(null, user);
@@ -97,7 +99,7 @@ function setup(app, db, idgen, collectionName) {
   //   have a database of user records, the complete Facebook profile is serialized
   //   and deserialized.
   passport.serializeUser(function(userFromFacebook, done) {
-    // console.log("Serializing:", userFromFacebook._json);
+    console.log("Serializing:", userFromFacebook._json);
 
     getOrCreate(userFromFacebook._json, function(userFromDatabase){
       done(null, userFromDatabase);
