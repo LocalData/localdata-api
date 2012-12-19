@@ -56,7 +56,7 @@ function setup(app, db, idgen, collectionName) {
           if (err) {
             console.warn(err.message);
           } else {
-            console.log("Object found: ", object);  // undefined if no matching object exists.
+            console.log("Object found:");  // undefined if no matching object exists.
           }  
           callback(object);
         }
@@ -74,7 +74,7 @@ function setup(app, db, idgen, collectionName) {
 	passport.use(new FacebookStrategy({
 	    clientID: settings.FACEBOOK_APP_ID,
 	    clientSecret: settings.FACEBOOK_APP_SECRET,
-	    callbackURL: "/auth/facebook/callback" //http://localhost:3000
+	    callbackURL: "/auth/facebook/callback" // http://localhost:3000
 	  },
 	  function(accessToken, refreshToken, profile, done) {
 	    process.nextTick(function () {
@@ -100,16 +100,14 @@ function setup(app, db, idgen, collectionName) {
     // console.log("Serializing:", userFromFacebook._json);
 
     getOrCreate(userFromFacebook._json, function(userFromDatabase){
-      console.log(userFromDatabase);
       done(null, userFromDatabase);
     });
   });
 
   passport.deserializeUser(function(obj, done) {
-    console.log("Deserializing:", obj);
-
+    console.log("Deserializing:");
+    console.log(obj);
     getOrCreate(obj, function(user) {
-      console.log(user);
       user._id = String(user._id);
       done(null, user);
     });
@@ -149,7 +147,8 @@ function setup(app, db, idgen, collectionName) {
   app.get('/auth/facebook/callback', 
     passport.authenticate('facebook', { failureRedirect: '/login' }),
     function(req, res) {
-      res.redirect('/index.html');
+      console.log("Redirecting to " + req.url);
+      res.redirect("index.html");
     }
   );
 
