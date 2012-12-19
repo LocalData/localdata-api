@@ -82,6 +82,7 @@ function setup(app, db, idgen, collectionName) {
         console.log("Profile json", profile._json);
 
         getOrCreate(profile._json, function(user) {
+          console.log("Got it", user);
           user._id = String(user._id);
           done(null, user);
         });
