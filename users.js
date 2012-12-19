@@ -99,6 +99,7 @@ function setup(app, db, idgen, collectionName) {
   //   have a database of user records, the complete Facebook profile is serialized
   //   and deserialized.
   passport.serializeUser(function(userFromFacebook, done) {
+    console.log(userFromFacebook);
     console.log("Serializing:", userFromFacebook._json);
 
     getOrCreate(userFromFacebook._json, function(userFromDatabase){
