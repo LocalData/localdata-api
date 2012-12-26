@@ -21,6 +21,8 @@ function setup(app, db, idgen, collectionName) {
 
   function getOrCreate(user, callback) {
 
+    console.log("Get or create", user);
+
     getCollection(function(err, collection) {
 
       // If we're dealing with an existing document, we want to make sure we 
@@ -83,7 +85,10 @@ function setup(app, db, idgen, collectionName) {
 
         getOrCreate(profile._json, function(user) {
           console.log("Got it", user);
-          user._id = String(user._id);
+          if (user._id !== undefined) {
+            user._id = String(user._id);
+          };
+          
           done(null, user);
         });
 
@@ -101,9 +106,9 @@ function setup(app, db, idgen, collectionName) {
   //   and deserialized.
   passport.serializeUser(function(userFromFacebook, done) {
     console.log(userFromFacebook);
-    console.log("Serializing:", userFromFacebook._json);
+    console.log("Serializing:", userFromFacebook);
 
-    getOrCreate(userFromFacebook._json, function(userFromDatabase){
+    getOrCreate(userFromFacebook, function(userFromDatabase){
       done(null, userFromDatabase);
     });
   });
