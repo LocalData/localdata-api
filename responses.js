@@ -243,6 +243,39 @@ function filterToMostRecent(items) {
   return latest_list;
 }
 
+
+/*
+ * Filter the results to remove any of the answers and personally identifying 
+ * information. 
+ */
+function filterToRemoveResults(items) {
+  var i;
+  var key;
+  var sanitized = {};
+
+  // Loop through all the items
+  for (i=0; i < items.length; i += 1) {
+    var item = items[i];
+    var parcelId = item.parcel_id;
+    
+    var sanitizedItem = {};
+    sanitizedItem.parcel_id = item.parcel_id;
+    sanitizedItem.geo_info = item.geo_info;
+    sanitizedItem.parcel_id = item.parcel_id;
+
+    // console.log("testing========");
+    // console.log(item);
+    // console.log("--");
+    // console.log(latest);
+    // console.log("----");
+
+    items[i] = sanitizedItem;
+  }
+
+  return items;
+}
+
+
 /*
  * app: express server
  * db: mongodb database
@@ -270,7 +303,17 @@ function setup(app, db, idgen, collectionName) {
           return;
         }
         cursor.toArray(function(err, items) {
-          response.send({responses: items});
+
+          // If the user is authenticated, send all the results.
+          if(req.isAuthenticated()) {
+            console.log("Sending items");
+            response.send({responses: items});
+          }else {
+            // If not, we trim the results and then send them back
+            console.log("Trying to filter");
+            var filteredItems = filterToRemoveResults(items);
+            response.send({responses: filteredItems});
+          }
         });
       });
     });
@@ -363,7 +406,7 @@ function setup(app, db, idgen, collectionName) {
     
     var count = 0;
     getCollection(function(err, collection) {
-      var surveyid = req.params.sid;
+      var surveyId = req.params.sid;
       
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
@@ -371,7 +414,7 @@ function setup(app, db, idgen, collectionName) {
         // Add metadata to the survey response
         var id = idgen();
         resp.id = id;
-        resp.survey = surveyid;
+        resp.survey = surveyId;
         resp.created = new Date();
         
         // check if there is a centroid. if yes, make sure the values are floats
@@ -582,6 +625,7 @@ module.exports = {
   listToCSVString: listToCSVString,
   filterAllResults: filterAllResults,
   filterToMostRecent: filterToMostRecent,
+  filterToRemoveResults: filterToRemoveResults,
   CSVWriter: CSVWriter,
   KMLWriter: KMLWriter
 };

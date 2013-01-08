@@ -151,7 +151,6 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-
   // Serve our internal operational management app
   // Should be done BEFORE passport so for efficency 
   //    (otherwise each request)
@@ -244,7 +243,7 @@ function ensureStructure(db, callback) {
       if (error) { return done(error); }
 
       chain([function indexCreated(done) {
-        // Ensure we have a geo index on the centroid field.
+        // Make sure email is unique
           collection.ensureIndex({ "email": 1 }, { unique: true }, done);
       }], done)();
     });

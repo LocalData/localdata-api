@@ -10,6 +10,7 @@ var should = require('should');
 
 var settings = require('../settings-test.js');
 var users = require('../users.js');
+var surveys = require('../surveys.js');
 
 var passport = require('passport');
 
@@ -67,12 +68,42 @@ suite('Surveys', function () {
     } ]
   };
 
+  var sampleSurvey = {
+    "name": "Sample survey",
+    "slug": "sample-survey",
+    "id": "1234",
+    "users": ["2"],
+    "paperinfo": {
+      "dpi": 150,
+      "regmarks": [
+        {"type": 0, "bbox": [20, 20, 70, 70]},
+        {"type": 0, "bbox": [20, 1580, 70, 1630]},
+        {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
+      ],
+      "barcode": {"bbox": [1055, 20, 1255, 220]}
+    }
+  };
+
   suiteSetup(function (done) {
     server.run(settings, done);
   });
 
   suiteTeardown(function () {
     server.stop();
+  });
+
+  suite("Utilities:", function() {
+    test('Trim a survey of sensitive data', function (done) {
+      var trimmedSurvey = surveys.trimSurvey(sampleSurvey);
+      
+      trimmedSurvey.should.have.property('name');
+      trimmedSurvey.should.have.property('slug');
+      trimmedSurvey.should.have.property('id');
+
+      trimmedSurvey.should.not.have.property('users');
+
+      done();
+    });
   });
 
   suite('POST', function () {

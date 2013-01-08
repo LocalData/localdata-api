@@ -8,94 +8,116 @@ var settings = require('./settings.js');
 
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
+var LocalStrategy = require('passport-local').Strategy;
 
 module.exports = {};
 
 function setup(app, db, idgen, collectionName) {
 
   // Database ..................................................................
-
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
 
-  function getOrCreate(user, callback) {
+  var User = {};
 
-    console.log("Get or create", user);
+  // Find a given user
+  // @param {Object} query An object with a "username" parameter.
+  //  username should be an email
+  // @param {Function} done 
+  User.findOne = function(query, done) {
+    console.log("Finding a user like ", query);
+    getCollection(function(error, collection) {
+      collection.findOne({email: query.username}, function(error, user){ 
+        console.log(error, user);
 
-    getCollection(function(err, collection) {
-
-      // If we're dealing with an existing document, we want to make sure we 
-      // find it. Necessary because we delete user._id later on.
-      var query;
-      var id; 
-
-      if (user.hasOwnProperty("_id")) {
-        // First, cast to a string to make sure we've got a consistent datatype
-        id = String(user._id);
-        // Then build an objectId from the string
-        query = {_id: new mongo.BSONPure.ObjectID(id)};
-      }else {
-        if (user.hasOwnProperty("email")) {
-          query = {email: user.email};
-        }else {
-          query = user;
+        if(user) {
+          console.log("Checking password");
+          user.validPassword = function(password) {
+            return user.password === password;
+          };
         }
-      }
 
-      console.log("Query: ", query);
-
-      // Remove the id; it breaks findAndModify with upsert 
-      // ("Mod on _id not allowed")
-      delete user._id;
-
-      collection.findAndModify(
-        query,                    // find
-        [['_id','asc']],          // sort by
-        {$set: user},             // update
-        {upsert: true, new: true}, // create if new, return new obj
-        function(err, object) {
-          if (err) {
-            console.warn(err.message);
-          } else {
-            console.log("Object found:");  // undefined if no matching object exists.
-          }  
-          callback(object);
-        }
-      );
+        // TODO: Better error handling (are we exposing internal errors?)
+        // TODO: security
+        done(error, user);
+      });
 
     });
-  }
+  };
 
-  module.exports.getOrCreate = getOrCreate;
+  // Create a given user
+  //
+  // @param {Object} query An object with a "username", "name", and "password" 
+  //  parameters. Username must be an email. 
+  // @param {Function} done 
+  User.create = function(query, done) {
+    console.log("Creating user ", query);
 
-	// Use the FacebookStrategy within Passport.
-	//   Strategies in Passport require a `verify` function, which accept
-	//   credentials (in this case, an accessToken, refreshToken, and Facebook
-	//   profile), and invoke a callback with a user object.
-	passport.use(new FacebookStrategy({
-	    clientID: settings.FACEBOOK_APP_ID,
-	    clientSecret: settings.FACEBOOK_APP_SECRET,
-	    callbackURL: "/auth/facebook/callback"
-	  },
-	  function(accessToken, refreshToken, profile, done) {
-	    process.nextTick(function () {
+    if(!query.password) {
+      console.log("No password");
+      done({code: 400, err: "Password required"}, null);
+      return;
+    }
 
-        console.log("Profile json", profile._json);
+    if(!query.email) {
+      console.log("No email");
+      done({code: 400, err: "Email required"}, null);
+      return;
+    }
 
-        getOrCreate(profile._json, function(user) {
-          console.log("Got it", user);
-          if (user._id !== undefined) {
-            user._id = String(user._id);
-          };
-          
-          done(null, user);
+    if(query.password && query.email) {
+      getCollection(function(error, collection) {
+        collection.insert(query, {safe: true}, function(error, documents) {
+          if(error) {
+            console.log(error.err, error.code);
+            done(error, null);
+          }else {
+            console.log("Response from database: ", documents);
+            console.log("First record: ", documents[0]);
+            done(error, documents[0]);
+          }
         });
+      });
+    }
+  };
 
-	    });
-	  }
-	));
+  // Update a given user
+  // WARNING: provides no securiy checks
+  // You must ensure that the caller has verified the user's identity. 
+  //
+  // @param {Object} query A user object, with id
+  // @param {Function} done
+  User.update = function(query, done) {
+    console.log("Updating user ", query);
 
+    if(query.password === undefined) {
+      done({code: 500, err: "Password required"}, null);
+      return;
+    }
+
+    if(query.email === undefined) {
+      done({code: 500, err: "Email required"}, null);
+      return;
+    }
+
+    if(query.password && query.email) {
+      getCollection(function(error, collection) {
+
+        collection.save(query, {safe: true}, function(error, user) {
+          if(error) {
+            console.log(error.err, error.code);
+          }
+
+          console.log("Response from database: ", user);
+          done(error, user);
+        });
+      });
+    }
+  };
+
+  // Export the user functions for easy testing
+  module.exports.User = User;
 
   // Passport session setup.
   //   To support persistent login sessions, Passport needs to be able to
@@ -104,18 +126,19 @@ function setup(app, db, idgen, collectionName) {
   //   the user by ID when deserializing.  However, since this example does not
   //   have a database of user records, the complete Facebook profile is serialized
   //   and deserialized.
-  passport.serializeUser(function(userFromFacebook, done) {
-    console.log(userFromFacebook);
-    console.log("Serializing:", userFromFacebook);
-
-    getOrCreate(userFromFacebook, function(userFromDatabase){
-      done(null, userFromDatabase);
-    });
-  });
-
-  passport.deserializeUser(function(obj, done) {
-    return done(null, obj);
-  });
+  // passport.serializeUser(function(userFromFacebook, done) {
+  //   // console.log(userFromFacebook);
+  //   // console.log("Serializing:", userFromFacebook);
+  //   console.log("Serializing");
+// 
+  //   getOrCreate(userFromFacebook, function(userFromDatabase){
+  //     done(null, userFromDatabase);
+  //   });
+  // });
+// 
+  // passport.deserializeUser(function(obj, done) {
+  //   return done(null, obj);
+  // });
 
   // Some helpers we need to use
   app.use(express.cookieParser());
@@ -127,47 +150,55 @@ function setup(app, db, idgen, collectionName) {
   app.use(passport.session());
 
 
-  // Login routes ..............................................................
+  // Passport session setup.
+  //   To support persistent login sessions, Passport needs to be able to
+  //   serialize users into and deserialize users out of the session.  Typically,
+  //   this will be as simple as storing the user ID when serializing, and finding
+  //   the user by ID when deserializing.  
+  passport.serializeUser(function(user, done) {
+    console.log("Serializing", user);
+    done(null, user);
+  });
 
+   passport.deserializeUser(function(user, done) {
+    console.log("Deserializing", user);
+    return done(null, user);
+   });
+
+  // Use the local authentication strategy in Passport. 
+  passport.use(new LocalStrategy({
+      usernameField: 'email',
+      passwordField: 'password'
+    },
+    function(username, password, done) {
+      console.log("Checking user");
+      
+      User.findOne({ username: username }, function(error, user) {
+        if (error) { return done(error); }
+        if(!user) {
+          console.log("Login: user not found");
+          return done(null, false, { message: "Sorry, we couldn't log you in with that name." });
+        }
+        if(!user.validPassword(password)) {
+          console.log("Login: password incorrect");
+          return done(null, false, { message: "Sorry, we couldn't log you in with that password." });
+        }
+
+        console.log("Good user: ", user);
+        return done(null, user);
+      });
+    }
+  ));
+
+  // Login routes ..............................................................
 
   // Cheap way to save the URL parameter
   app.get('/auth/return', function(req, res){
-    console.log("REDIRECT TO ..............................");
-    console.log(req.query.redirectTo);
+    // console.log("Redirect to ..............................");
+    // console.log(req.query.redirectTo);
     req.session.redirectTo = req.query.redirectTo;
-    res.redirect("/auth/facebook");
+    res.redirect("/login");
   });
-
-  // app.get('/abcd'), function(req, res) {
-  //   console.log("REDIRECT TO ..............................");
-  //   // console.log(req.query.redirectTo);
-  //   // 
-  //   // 
-  // };
-
-  // GET /auth/facebook
-  //   Use passport.authenticate() as route middleware to authenticate the
-  //   request.  The first step in Facebook authentication will involve
-  //   redirecting the user to facebook.com.  After authorization, Facebook will
-  //   redirect the user back to this application at /auth/facebook/callback
-  app.get('/auth/facebook', passport.authenticate(
-    'facebook', { 
-      scope: [ 'email' ] 
-    }), 
-    function(req, res) { }
-  );
-
-  // GET /auth/facebook/callback
-  //   Use passport.authenticate() as route middleware to authenticate the
-  //   request.  If authentication fails, the user will be redirected back to the
-  //   login page.  Otherwise, the primary route function function will be called,
-  //   which, in this example, will redirect the user to the home page.
-  app.get('/auth/facebook/callback', 
-    passport.authenticate('facebook', { failureRedirect: '/login' }),
-    function(req, res) {
-      res.redirect("/#" + req.session.redirectTo);
-    }
-  );
 
   // GET /logout
   //  Does what you think it does. 
@@ -176,7 +207,38 @@ function setup(app, db, idgen, collectionName) {
     res.redirect('/');
   });
 
-  // GET /user
+  // POST /api/user
+  //  Create a user
+  app.post('/api/user', function(req, response){
+    console.log("API: Create a user");
+
+    var user = {};
+    user.name = req.body.name;
+    user.email = req.body.email;
+    user.password = req.body.password;
+
+    User.create(user, function(error, results) {
+      console.log("User creation run", error, results);
+      if(error) {
+        console.log("Error saving user", error);
+        response.send(error.code, error.err);
+      }else {
+        console.log("Confirming save of user ", results);
+
+        req.logIn(results, function(err) {
+          if (err) {
+            console.log("Unexpected error");
+            console.log(error);
+            //TODO
+          }
+          response.send(results);
+        });
+      }
+    });
+
+  });
+
+  // GET /api/user
   //  Return details about the current user
   //  Return a 401 if there isn't a current user
   app.get('/api/user', function(req, response){
@@ -200,7 +262,10 @@ function setup(app, db, idgen, collectionName) {
 //   Otherwise, the user will be sent a 401.
 function ensureAuthenticated(req, res, next) {
   console.log("Checking if authenticated");
-  if (req.isAuthenticated()) { return next(); }
+  if (req.isAuthenticated()) {
+    console.log("User is authenticated");
+    return next();
+  }
 
   res.send(401);
 }

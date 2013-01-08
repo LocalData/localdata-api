@@ -9,6 +9,8 @@ var request = require('request');
 var should = require('should');
 
 var settings = require('../settings-test.js');
+var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
+
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
@@ -184,6 +186,21 @@ suite('Responses', function () {
           prevTime = created;
         }
         done();
+      });
+    });
+
+
+    test('Filtering of results', function (done) {
+      var results = data_two.responses;
+      var sanitizedResults = filterToRemoveResults(results);
+      results[0].should.not.have.property('responses');
+      done();
+    });
+
+
+    test('Get all responses for a survey when authenticated', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
+          assert(true === false);
       });
     });
 
