@@ -190,8 +190,11 @@ suite('Surveys', function () {
       });
     });
 
-    test('Getting a survey the user does not have access to', function (done) {
+    test('Getting a survey the user does not own', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
+        // TODO
+        // We expect that the user will get basic survey information (survey name)
+        // Response will still be 200 (??? -- is this the best?)
         assert.equal(response.statusCode, 403, 'Status should be 403 forbidden. Status is ' + response.statusCode);
         done();
       });

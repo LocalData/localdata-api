@@ -54,27 +54,36 @@ function setup(app, db, idgen, collectionName) {
   User.create = function(query, done) {
     console.log("Creating user ", query);
 
-    if(!query.password) {
+    // We only want to save the parameters we decide on.
+    var safeQuery = {};
+    safeQuery.email = query.email;
+    safeQuery.name = query.name;
+    safeQuery.password = query.password;
+
+    // So we can't use query anymore
+    query = {};
+
+    if(!safeQuery.password) {
       console.log("No password");
       done({code: 400, err: "Password required"}, null);
       return;
     }
 
-    if(!query.email) {
+    if(!safeQuery.email) {
       console.log("No email");
       done({code: 400, err: "Email required"}, null);
       return;
     }
 
-    if(query.password && query.email) {
+    if(safeQuery.password && safeQuery.email) {
       getCollection(function(error, collection) {
-        collection.insert(query, {safe: true}, function(error, documents) {
+        collection.insert(safeQuery, {safe: true}, function(error, documents) {
           if(error) {
             console.log(error.err, error.code);
             done(error, null);
           }else {
-            console.log("Response from database: ", documents);
-            console.log("First record: ", documents[0]);
+            // console.log("Response from database: ", documents);
+            // console.log("First record: ", documents[0]);
             done(error, documents[0]);
           }
         });
@@ -119,27 +128,6 @@ function setup(app, db, idgen, collectionName) {
   // Export the user functions for easy testing
   module.exports.User = User;
 
-  // Passport session setup.
-  //   To support persistent login sessions, Passport needs to be able to
-  //   serialize users into and deserialize users out of the session.  Typically,
-  //   this will be as simple as storing the user ID when serializing, and finding
-  //   the user by ID when deserializing.  However, since this example does not
-  //   have a database of user records, the complete Facebook profile is serialized
-  //   and deserialized.
-  // passport.serializeUser(function(userFromFacebook, done) {
-  //   // console.log(userFromFacebook);
-  //   // console.log("Serializing:", userFromFacebook);
-  //   console.log("Serializing");
-// 
-  //   getOrCreate(userFromFacebook, function(userFromDatabase){
-  //     done(null, userFromDatabase);
-  //   });
-  // });
-// 
-  // passport.deserializeUser(function(obj, done) {
-  //   return done(null, obj);
-  // });
-
   // Some helpers we need to use
   app.use(express.cookieParser());
   app.use(express.session({ secret: settings.secret }));
@@ -149,21 +137,26 @@ function setup(app, db, idgen, collectionName) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-
   // Passport session setup.
   //   To support persistent login sessions, Passport needs to be able to
   //   serialize users into and deserialize users out of the session.  Typically,
   //   this will be as simple as storing the user ID when serializing, and finding
   //   the user by ID when deserializing.  
   passport.serializeUser(function(user, done) {
-    console.log("Serializing", user);
+    console.log("Serializing");
     done(null, user);
   });
 
-   passport.deserializeUser(function(user, done) {
-    console.log("Deserializing", user);
-    return done(null, user);
-   });
+  passport.deserializeUser(function(user, done) {
+    console.log("Deserializing");
+
+    // We don't want to be passing around sensitive stuff
+    var safeUser = {};
+    safeUser.name = user.name;
+    safeUser.email = user.email;
+
+    return done(null, safeUser);
+  });
 
   // Use the local authentication strategy in Passport. 
   passport.use(new LocalStrategy({
@@ -177,14 +170,20 @@ function setup(app, db, idgen, collectionName) {
         if (error) { return done(error); }
         if(!user) {
           console.log("Login: user not found");
-          return done(null, false, { message: "Sorry, we couldn't log you in with that name." });
+          return done(null, false, { 
+            "name": "BadRequestError",
+            "message": "Account not found" 
+          });
         }
         if(!user.validPassword(password)) {
           console.log("Login: password incorrect");
-          return done(null, false, { message: "Sorry, we couldn't log you in with that password." });
+          return done(null, false, { 
+            "name": "BadRequestError",
+            "message": "Password incorrect" 
+          });
         }
 
-        console.log("Good user: ", user);
+        // console.log("Good user: ", user);
         return done(null, user);
       });
     }
@@ -203,12 +202,45 @@ function setup(app, db, idgen, collectionName) {
   // GET /logout
   //  Does what you think it does. 
   app.get('/logout', function(req, res){
+    console.log("Logging the user out");
     req.logout();
     res.redirect('/');
   });
 
+  // POST  /api/login
+  // Log the user in
+  app.post('/api/login', function(req, response, next) {
+    passport.authenticate(
+      'local', 
+      function(error, user, info) {
+
+        // If there's an error, send back a generic error. 
+        // Note that errors are not things like "incorrect password"
+        console.log(error);
+        if(error) {
+          return next(error);
+        }
+
+        // If we've got a user, create a session
+        if(user) {
+          req.logIn(user, function(error) {
+            if (error) { return next(error); }
+            response.redirect("/api/user");
+          });
+          return;
+        }
+
+        // If there was a problem logging the user in, it'll appear here.
+        if(info) {
+          console.log("Info ", info);
+          response.send(200, info);
+        }
+      })(req, response, next);
+
+  });
+
   // POST /api/user
-  //  Create a user
+  // Create a user
   app.post('/api/user', function(req, response){
     console.log("API: Create a user");
 
@@ -218,20 +250,22 @@ function setup(app, db, idgen, collectionName) {
     user.password = req.body.password;
 
     User.create(user, function(error, results) {
-      console.log("User creation run", error, results);
+      // console.log("User creation run", error, results);
+
       if(error) {
-        console.log("Error saving user", error);
+        // console.log("Error saving user", error);
         response.send(error.code, error.err);
       }else {
-        console.log("Confirming save of user ", results);
+        // console.log("Confirming save of user ", results);
 
-        req.logIn(results, function(err) {
-          if (err) {
-            console.log("Unexpected error");
-            console.log(error);
+        req.logIn(results, function(error) {
+          if (error) {
             //TODO
+            console.log("Unexpected error", error);
           }
-          response.send(results);
+
+          // If successful, give the data of the newly logged in user
+          response.redirect("/api/user");
         });
       }
     });
@@ -242,7 +276,7 @@ function setup(app, db, idgen, collectionName) {
   //  Return details about the current user
   //  Return a 401 if there isn't a current user
   app.get('/api/user', function(req, response){
-    console.log(req.isAuthenticated());
+    console.log("Is the request authenticated? ", req.isAuthenticated());
     if(req.isAuthenticated()) {
       response.send(req.user);
     }else {

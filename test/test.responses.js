@@ -166,6 +166,11 @@ suite('Responses', function () {
       });
     });
 
+    test('Get all responses for a survey the user does not own', function (done) {
+      assert(true === false);
+      done();
+    });
+
     test('Get all responses for a survey', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
         should.not.exist(error);
