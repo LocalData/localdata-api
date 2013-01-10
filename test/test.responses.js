@@ -166,12 +166,12 @@ suite('Responses', function () {
       });
     });
 
-    test('Get all responses for a survey the user does not own', function (done) {
+    test(' all responses for a survey the user does not own', function (done) {
       assert(true === false);
       done();
     });
 
-    test('Get all responses for a survey', function (done) {
+    test(' all responses for a survey', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
@@ -203,13 +203,13 @@ suite('Responses', function () {
     });
 
 
-    test('Get all responses for a survey when authenticated', function (done) {
+    test(' all responses for a survey when authenticated', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
           assert(true === false);
       });
     });
 
-    test('Get all responses for a specific parcel', function (done) {
+    test(' all responses for a specific parcel', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/' + data_two.responses[1].parcel_id + '/responses'},
                   function (error, response, body) {
         should.not.exist(error);
@@ -237,7 +237,7 @@ suite('Responses', function () {
       });
     });
 
-    test('Get a response', function (done) {
+    test(' a response', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
                   function (error, response, body) {
         should.not.exist(error);
