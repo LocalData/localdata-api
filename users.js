@@ -1,9 +1,11 @@
 /*jslint node: true */
 'use strict';
 
-var http = require('http');
+var bcrypt = require('bcrypt');
 var express = require('express');
+var http = require('http');
 var mongo = require('mongodb');
+
 var settings = require('./settings.js');
 
 var passport = require('passport');
@@ -21,6 +23,21 @@ function setup(app, db, idgen, collectionName) {
 
   var User = {};
 
+  // Dangerous! 
+  User.wipe = function(done) {
+    getCollection(function(error, collection) {
+      collection.remove({}, function(error, response){
+        //done();
+      });
+    });
+  };
+
+  User.sanitizeToSave = function(user) {
+    // TODO
+
+    return user;
+  };
+
   // Find a given user
   // @param {Object} query An object with a "username" parameter.
   //  username should be an email
@@ -32,9 +49,11 @@ function setup(app, db, idgen, collectionName) {
         console.log(error, user);
 
         if(user) {
-          console.log("Checking password");
           user.validPassword = function(password) {
-            return user.password === password;
+            console.log("Validating password", password);
+            console.log("Validating hash", user.hash);
+
+            return bcrypt.compareSync(password, user.hash);
           };
         }
 
@@ -54,46 +73,51 @@ function setup(app, db, idgen, collectionName) {
   User.create = function(query, done) {
     console.log("Creating user ", query);
 
-    // We only want to save the parameters we decide on.
-    var safeQuery = {};
-    safeQuery.email = query.email;
-    safeQuery.name = query.name;
-    safeQuery.password = query.password;
-
-    // So we can't use query anymore
-    query = {};
-
-    if(!safeQuery.password) {
-      console.log("No password");
-      done({code: 400, err: "Password required"}, null);
-      return;
-    }
-
-    if(!safeQuery.email) {
+    if(!query.email) {
       console.log("No email");
       done({code: 400, err: "Email required"}, null);
       return;
     }
 
-    if(safeQuery.password && safeQuery.email) {
-      getCollection(function(error, collection) {
-        collection.insert(safeQuery, {safe: true}, function(error, documents) {
-          if(error) {
-            console.log(error.err, error.code);
-            done(error, null);
-          }else {
-            // console.log("Response from database: ", documents);
-            // console.log("First record: ", documents[0]);
-            done(error, documents[0]);
-          }
-        });
-      });
+    if(!query.password) {
+      console.log("No password");
+      done({code: 400, err: "Password required"}, null);
+      return;
     }
+
+    // We only want to save the parameters we decide on.
+    var safeQuery = {};
+    safeQuery.email = query.email;
+    safeQuery.name = query.name;
+    safeQuery.hash = bcrypt.hashSync(query.password, 10);
+
+    // So we can't use query anymore
+    query = {};
+
+    // Get ready to save the user
+    getCollection(function(error, collection) {
+      collection.insert(safeQuery, {safe: true}, function(error, documents) {
+        if(error) {
+          console.log(error.err, error.code);
+          if(error.code === 11000) {
+            done({code: 400, err: "An account with this email aready exists"});
+            return;
+          }
+          done({code: 400, err: "Sorry, an error occurred. Please try again."});
+          return;
+        }else {
+          // console.log("Response from database: ", documents);
+          // console.log("First record: ", documents[0]);
+          done(error, documents[0]);
+        }
+      });
+    });
+
   };
 
+
   // Update a given user
-  // WARNING: provides no securiy checks
-  // You must ensure that the caller has verified the user's identity. 
+  // WARNING: The caller has verified the user's identity. 
   //
   // @param {Object} query A user object, with id
   // @param {Function} done
@@ -105,15 +129,20 @@ function setup(app, db, idgen, collectionName) {
       return;
     }
 
-    if(query.email === undefined) {
+    var safeQuery = {};
+    safeQuery.email = query.email;
+    safeQuery.name = query.name;
+    safeQuery.hash = bcrypt.hashSync(query.password, 10);
+
+    if(safeQuery.email === undefined) {
       done({code: 500, err: "Email required"}, null);
       return;
     }
 
-    if(query.password && query.email) {
+    if(query.password && safeQuery.email) {
       getCollection(function(error, collection) {
 
-        collection.save(query, {safe: true}, function(error, user) {
+        collection.save(safeQuery, {safe: true}, function(error, user) {
           if(error) {
             console.log(error.err, error.code);
           }
@@ -154,6 +183,7 @@ function setup(app, db, idgen, collectionName) {
     var safeUser = {};
     safeUser.name = user.name;
     safeUser.email = user.email;
+    safeUser._id = user._id;
 
     return done(null, safeUser);
   });

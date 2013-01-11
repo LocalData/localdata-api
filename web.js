@@ -141,7 +141,6 @@ function sendFile(response, filename, type) {
 // Set up routes
 function setupRoutes(db, settings) {
 
-
   // App routes
   users.setup(app, db, idgen, USERS);
   forms.setup(app, db, idgen, FORMS);

@@ -1,15 +1,17 @@
 /*jslint node: true, indent: 2, white: true, vars: true */
-/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
+/*globals suite, test, setup, suiteSetup, suiteTeardown, beforeEach, done, teardown */
 'use strict';
 
-var server = require('../web.js');
+// Libraries
 var assert = require('assert');
-var util = require('util');
+var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
+var util = require('util');
 
+// LocalData
+var server = require('../web.js');
 var settings = require('../settings-test.js');
-
 var users = require('../users.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
@@ -33,9 +35,12 @@ suite('Users -', function () {
     server.stop();
   });
 
+
   suite('finding, creating and editing without the API:', function () {
+    
 
     test('create a user', function (done) {
+      console.log(users.User.wipe());
       users.User.create(new Matt(), function(error, user){
         user.should.have.property('_id');
         user.should.not.have.property('randomThing');
@@ -45,7 +50,9 @@ suite('Users -', function () {
       });
     });
 
+
     test('users must have an email', function (done) {     
+      users.User.wipe();
       users.User.create({"name": "No Email", "password": "luggage"}, function(error, user){
         should.exist(error);
         error.code.should.equal(400);
@@ -54,6 +61,7 @@ suite('Users -', function () {
     });
 
     test('users must be created with a password', function (done) {     
+      users.User.wipe();
       users.User.create({"name": "No Password", "email": "example@example.com"}, function(error, user){
         should.exist(error);
         error.code.should.equal(400);
@@ -62,6 +70,7 @@ suite('Users -', function () {
     });
 
     test('user emails must be unique', function (done) {
+      users.User.wipe();
       users.User.create(new Matt(), function(error, userOne) {
         // console.log("First user ", userOne);
         users.User.create(new Matt(), function(error, userTwo){
@@ -73,6 +82,7 @@ suite('Users -', function () {
     });
 
     test('update a user name and email', function (done) {
+      users.User.wipe();
       users.User.create(new Matt(), function(error, user) {
         var tempId = user._id;
         user.name = "Prashant";
@@ -118,10 +128,10 @@ suite('Users -', function () {
     });
 
     test('Create a user via API', function (done) {
+      users.User.wipe();
       request.post({url: userUrl, json: new Matt()}, function (error, response, body) {      
         should.not.exist(error);
         response.statusCode.should.equal(302);
-
 
         request.get({url: userUrl}, function (error, response, body){
           should.not.exist(error);
@@ -134,6 +144,7 @@ suite('Users -', function () {
           parsed.should.have.property("name", "Matt Hampel");
           parsed.should.not.have.property("randomThing");
           parsed.should.not.have.property("password");
+          parsed.should.not.have.property("hash");
 
           done();
         });
@@ -141,6 +152,7 @@ suite('Users -', function () {
     });
 
     test('Log in a user via the API', function (done) {
+
       // First, let's log out
       request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
 
@@ -160,6 +172,7 @@ suite('Users -', function () {
             parsed.should.have.property("name", "Matt Hampel");
             parsed.should.not.have.property("randomThing");
             parsed.should.not.have.property("password");
+            parsed.should.not.have.property("hash");
 
             done();
           });
@@ -169,6 +182,7 @@ suite('Users -', function () {
     });
 
     test('Try to get details about the current user via API when not logged in', function (done) {
+      users.User.wipe();
       // First, let's log out
       request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
         request.get({url: userUrl}, function(error, response, body) {
