@@ -125,7 +125,7 @@ function setup(app, db, idgen, collectionName) {
     console.log("Updating user ", query);
 
     if(query.password === undefined) {
-      done({code: 500, err: "Password required"}, null);
+      done({code: 400, err: "Password required"}, null);
       return;
     }
 
@@ -135,7 +135,7 @@ function setup(app, db, idgen, collectionName) {
     safeQuery.hash = bcrypt.hashSync(query.password, 10);
 
     if(safeQuery.email === undefined) {
-      done({code: 500, err: "Email required"}, null);
+      done({code: 400, err: "Email required"}, null);
       return;
     }
 
