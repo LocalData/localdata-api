@@ -32,10 +32,29 @@ function setup(app, db, idgen, collectionName) {
     });
   };
 
+  // Sanitize user input to save to the database
+  //  Keeps only the fields we wants
+  //  Hashes the password
+  // 
+  // @param {Object} user
   User.sanitizeToSave = function(user) {
-    // TODO
+    var safeUser = {};
+    safeUser.email = user.email;
+    safeUser.name = user.name;
 
-    return user;
+    if(user._id) {
+      safeUser._id = user._id;
+    }
+
+    if(user.hash) {
+      safeUser.hash = user.hash;
+    }
+
+    if(user.password) {
+      safeUser.hash = bcrypt.hashSync(user.password, 10);
+    }
+    
+    return safeUser;
   };
 
   // Find a given user
@@ -43,10 +62,8 @@ function setup(app, db, idgen, collectionName) {
   //  username should be an email
   // @param {Function} done 
   User.findOne = function(query, done) {
-    console.log("Finding a user like ", query);
     getCollection(function(error, collection) {
-      collection.findOne({email: query.username}, function(error, user){ 
-        console.log(error, user);
+      collection.findOne({email: query.email}, function(error, user){ 
 
         if(user) {
           user.validPassword = function(password) {
@@ -68,44 +85,38 @@ function setup(app, db, idgen, collectionName) {
   //  parameters. Username must be an email. 
   // @param {Function} done 
   User.create = function(query, done) {
-    console.log("Creating user ", query);
-
-    if(!query.email) {
-      console.log("No email");
+    if(!query.email || query.email === "") {
+      // console.log("No email");
       done({code: 400, err: "Email required"}, null);
       return;
     }
 
-    if(!query.password) {
-      console.log("No password");
+    if(!query.password || query.password === "") {
+      // console.log("No password");
       done({code: 400, err: "Password required"}, null);
       return;
     }
 
     // We only want to save the parameters we decide on.
-    var safeQuery = {};
-    safeQuery.email = query.email;
-    safeQuery.name = query.name;
-    safeQuery.hash = bcrypt.hashSync(query.password, 10);
+    var safeQuery = User.sanitizeToSave(query);
 
-    // So we can't use query anymore
+    // Blank out the query so we can't use it anymore
     query = {};
 
     // Get ready to save the user
     getCollection(function(error, collection) {
       collection.insert(safeQuery, {safe: true}, function(error, documents) {
         if(error) {
-          console.log(error.err, error.code);
           if(error.code === 11000) {
+            // Mongo duplicate key error
             done({code: 400, err: "An account with this email aready exists"});
             return;
           }
+          // Some other error
           done({code: 400, err: "Sorry, an error occurred. Please try again."});
           return;
         }else {
-          // console.log("Response from database: ", documents);
-          // console.log("First record: ", documents[0]);
-          done(error, documents[0]);
+          done(null, documents[0]);
         }
       });
     });
@@ -117,39 +128,33 @@ function setup(app, db, idgen, collectionName) {
   // WARNING: The caller must verify the user's identity.
   // This just does what it's told 
   //
-  // @param {Object} query A user object, with id
+  // @param {Object} query A user object, with ._id property
   // @param {Function} done
   User.update = function(query, done) {
-    console.log("Updating user ", query);
-
-    if(query.password === undefined) {
-      done({code: 400, err: "Password required"}, null);
-      return;
-    }
-
-    var safeQuery = {};
-    safeQuery.email = query.email;
-    safeQuery.name = query.name;
-    safeQuery.hash = bcrypt.hashSync(query.password, 10);
-
-    if(safeQuery.email === undefined) {
+    if(!query.email || query.email === "") {
       done({code: 400, err: "Email required"}, null);
       return;
     }
 
-    if(query.password && safeQuery.email) {
-      getCollection(function(error, collection) {
+    // We only want to save the parameters we decide on.
+    var safeQuery = User.sanitizeToSave(query);
+    
+    // Blank out the query so we can't use it anymore
+    query = {};
 
-        collection.save(safeQuery, {safe: true}, function(error, user) {
-          if(error) {
-            console.log(error.err, error.code);
-          }
+    getCollection(function(error, collection) {
 
-          console.log("Response from database: ", user);
-          done(error, user);
-        });
+      collection.save(safeQuery, {w: 1}, function(error, wc, something) {
+        if(error) {
+          // TODO: Log
+          console.log("error updating: ", error.err, error.code);
+          done(error);
+          return;
+        }
+        console.log(error);
+        done(null);
       });
-    }
+    });
   };
 
   // Export the user functions for easy testing
@@ -171,13 +176,22 @@ function setup(app, db, idgen, collectionName) {
   //   the user by ID when deserializing.  
   passport.serializeUser(function(user, done) {
     console.log("Serializing");
-    done(null, user);
+
+    // We don't want to be passing around sensitive stuff
+    // Like password hashes
+    var safeUser = {};
+    safeUser.name = user.name;
+    safeUser.email = user.email;
+    safeUser._id = user._id;
+
+    return done(null, safeUser);
   });
 
   passport.deserializeUser(function(user, done) {
     console.log("Deserializing");
 
     // We don't want to be passing around sensitive stuff
+    // Like password hashes
     var safeUser = {};
     safeUser.name = user.name;
     safeUser.email = user.email;
@@ -194,7 +208,7 @@ function setup(app, db, idgen, collectionName) {
     function(username, password, done) {
       console.log("Checking user");
       
-      User.findOne({ username: username }, function(error, user) {
+      User.findOne({ email: username }, function(error, user) {
         if (error) { return done(error); }
         if(!user) {
           console.log("Login: user not found");
@@ -211,7 +225,6 @@ function setup(app, db, idgen, collectionName) {
           });
         }
 
-        // console.log("Good user: ", user);
         return done(null, user);
       });
     }
@@ -221,8 +234,6 @@ function setup(app, db, idgen, collectionName) {
 
   // Cheap way to save the URL parameter
   app.get('/auth/return', function(req, res){
-    // console.log("Redirect to ..............................");
-    // console.log(req.query.redirectTo);
     req.session.redirectTo = req.query.redirectTo;
     res.redirect("/login");
   });
@@ -230,7 +241,6 @@ function setup(app, db, idgen, collectionName) {
   // GET /logout
   //  Does what you think it does. 
   app.get('/logout', function(req, res){
-    console.log("Logging the user out");
     req.logout();
     res.redirect('/');
   });
@@ -244,7 +254,6 @@ function setup(app, db, idgen, collectionName) {
 
         // If there's an error, send back a generic error. 
         // Note that errors are not things like "incorrect password"
-        console.log(error);
         if(error) {
           return next(error);
         }
@@ -272,28 +281,24 @@ function setup(app, db, idgen, collectionName) {
   app.post('/api/user', function(req, response){
     console.log("API: Create a user");
 
-    var user = {};
-    user.name = req.body.name;
-    user.email = req.body.email;
-    user.password = req.body.password;
-
-    User.create(user, function(error, results) {
-      // console.log("User creation run", error, results);
-
+    User.create(req.body, function(error, results) {
       if(error) {
-        // console.log("Error saving user", error);
         response.send(error.code, error.err);
       }else {
-        // console.log("Confirming save of user ", results);
-
         req.logIn(results, function(error) {
           if (error) {
             //TODO
             console.log("Unexpected error", error);
+            response.send(401);
           }
 
+          var safeUser = {};
+          safeUser.name = req.user.name;
+          safeUser.email = req.user.email;
+          safeUser._id = req.user._id;
+
           // If successful, give the data of the newly logged in user
-          response.redirect("/api/user");
+          response.json(safeUser);
         });
       }
     });
@@ -304,7 +309,6 @@ function setup(app, db, idgen, collectionName) {
   //  Return details about the current user
   //  Return a 401 if there isn't a current user
   app.get('/api/user', function(req, response){
-    console.log("Is the request authenticated? ", req.isAuthenticated());
     if(req.isAuthenticated()) {
       response.send(req.user);
     }else {
@@ -323,9 +327,7 @@ function setup(app, db, idgen, collectionName) {
 //   the request will proceed.  
 //   Otherwise, the user will be sent a 401.
 function ensureAuthenticated(req, res, next) {
-  console.log("Checking if authenticated");
   if (req.isAuthenticated()) {
-    console.log("User is authenticated");
     return next();
   }
 

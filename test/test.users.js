@@ -38,9 +38,8 @@ suite('Users -', function () {
 
   suite('finding, creating and editing without the API:', function () {
     
-
     test('create a user', function (done) {
-      console.log(users.User.wipe());
+      users.User.wipe();
       users.User.create(new Matt(), function(error, user){
         user.should.have.property('_id');
         user.should.not.have.property('randomThing');
@@ -74,7 +73,7 @@ suite('Users -', function () {
       users.User.create(new Matt(), function(error, userOne) {
         // console.log("First user ", userOne);
         users.User.create(new Matt(), function(error, userTwo){
-          console.log("Second user ", userTwo);
+          // console.log("Second user ", userTwo);
           should.exist(error);
           done();
         });
@@ -88,18 +87,21 @@ suite('Users -', function () {
         user.name = "Prashant";
         user.email = "prashant@codeforamerica.org";
 
-        users.User.update(user, function(error, userEdited){
+        users.User.update(user, function(error){
           // console.log(tempId);
-          // console.log("saved user" , user);
-          // console.log("saved user" , userEdited);
+          console.log("first user" , user);
 
-          assert.equal(String(tempId), String(user._id)); 
-          assert.equal(user.name, "Prashant"); 
-          assert.equal(user.email, "prashant@codeforamerica.org"); 
-          done();
+          should.not.exist(error);
+
+          users.User.findOne({"email": "prashant@codeforamerica.org"}, function(error, user){
+            // Make sure the old and the new have the same Id
+            console.log("Found this user", user);
+            assert.equal(String(tempId), String(user._id)); 
+            assert.equal(user.name, "Prashant"); 
+            done();
+          });
         });
       });
-
     });
 
   });
@@ -131,29 +133,24 @@ suite('Users -', function () {
       users.User.wipe();
       request.post({url: userUrl, json: new Matt()}, function (error, response, body) {      
         should.not.exist(error);
-        response.statusCode.should.equal(302);
+        response.statusCode.should.equal(200);
 
-        request.get({url: userUrl}, function (error, response, body){
-          should.not.exist(error);
-          response.statusCode.should.equal(200);
-          response.should.be.json;
+        response.should.be.json;
 
-          var parsed = JSON.parse(body);
+        body.should.have.property("email", "example@example.com");
+        body.should.have.property("name", "Matt Hampel");
+        body.should.not.have.property("randomThing");
+        body.should.not.have.property("password");
+        body.should.not.have.property("hash");
 
-          parsed.should.have.property("email", "example@example.com");
-          parsed.should.have.property("name", "Matt Hampel");
-          parsed.should.not.have.property("randomThing");
-          parsed.should.not.have.property("password");
-          parsed.should.not.have.property("hash");
-
-          done();
-        });
+        done();
       });
     });
 
     test('Log in a user via the API', function (done) {
 
       // First, let's log out
+      // Just so we don't unfairly pass this test :-) 
       request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
 
         // Then, let's log in. 
