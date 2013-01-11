@@ -117,7 +117,8 @@ function setup(app, db, idgen, collectionName) {
 
 
   // Update a given user
-  // WARNING: The caller has verified the user's identity. 
+  // WARNING: The caller must verify the user's identity.
+  // This just does what it's told 
   //
   // @param {Object} query A user object, with id
   // @param {Function} done
