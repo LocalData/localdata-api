@@ -50,9 +50,6 @@ function setup(app, db, idgen, collectionName) {
 
         if(user) {
           user.validPassword = function(password) {
-            console.log("Validating password", password);
-            console.log("Validating hash", user.hash);
-
             return bcrypt.compareSync(password, user.hash);
           };
         }
