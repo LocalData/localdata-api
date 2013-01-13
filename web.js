@@ -367,7 +367,10 @@ function run(settings, cb) {
     console.log('Postgresql user: ' + settings.psqlUser);
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
-                                                          {}), {});
+                                                          {}), {
+      w: 1,
+      safe: true
+    });
     setupRoutes(db, settings);
   }
 
