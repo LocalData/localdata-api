@@ -4,7 +4,10 @@ uploaded_files/*
 setenv*.sh
 herokuconfig*.sh
 nohup.out
+
 static/client
 static/mobile
 static/dashboard-build
-server.orig.key
+
+*.key
+*.csr
