@@ -11,3 +11,5 @@ static/dashboard-build
 
 *.key
 *.csr
+*.pem
+*.crt
