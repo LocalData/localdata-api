@@ -73,6 +73,9 @@ function textParser(req, res, next) {
 // https://github.com/visionmedia/express/issues/664
 app.set('jsonp callback', true);
 
+// Use a compact JSON representation
+app.set('json spaces', 0);
+
 // Allows clients to simulate DELETE and PUT
 // (some clients don't support those verbs)
 // http://stackoverflow.com/questions/8378338/what-does-connect-js-methodoverride-do
@@ -227,6 +230,10 @@ function ensureStructure(db, callback) {
       function indexCreated(done) {
         // Index the creation date, which we use to sort
         collection.ensureIndex('created', done);
+      },
+      function indexSurvey(done) {
+        // Index the creation date, which we use to sort
+        collection.ensureIndex('survey', done);
       },
       function indexParcelId(done) {
         // Index the parcel ID
