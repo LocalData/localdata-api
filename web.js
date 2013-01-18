@@ -232,7 +232,7 @@ function ensureStructure(db, callback) {
         collection.ensureIndex('created', done);
       },
       function indexSurvey(done) {
-        // Index the creation date, which we use to sort
+        // Index the survey ID, which we use to look up sets of responses
         collection.ensureIndex('survey', done);
       },
       function indexParcelId(done) {
