@@ -1,3 +1,0 @@
-[submodule "formbot"]
-	path = formbot
-	url = git@github.com:codeforamerica/formbot.git
