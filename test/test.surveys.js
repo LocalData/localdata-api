@@ -108,6 +108,41 @@ suite('Surveys', function () {
 
   suite('POST', function () {
     var url = BASEURL + '/surveys';
+
+    var surveyId;
+
+    test('Posting JSON to /surveys', function (done) {
+      request.post({url: url, json: data_two}, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+
+        var i;
+        for (i = 0; i < data_two.surveys.length; i += 1) {
+          // Save the survey id for later tests
+          surveyId = body.surveys[i]._id;
+
+          assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
+          assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
+
+          assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
+
+          body.surveys[i].should.have.property('users');
+          assert.equal("1", body.surveys[i].users[0], 'Wrong or no user stored');
+
+          // Security tests
+          assert.equal(1, body.surveys[i].users.length, 'There should be only one user assigned, even though the POST had two');
+          assert.notEqual("A", body.surveys[i].users[0], 'Wrong user stored');
+
+          // Slug tests
+          body.surveys[i].should.have.property('slug');
+          body.surveys[i].slug.should.be.a('string');
+        }
+
+        done();
+      });
+    });
+
+
     test('Posting JSON to /surveys', function (done) {
       request.post({url: url, json: data_two}, function (error, response, body) {
         assert.ifError(error);
@@ -135,6 +170,8 @@ suite('Surveys', function () {
         done();
       });
     });
+
+
   });
 
   suite('GET', function () {
