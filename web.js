@@ -147,57 +147,6 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-  // Serve our internal operational management app
-  // Should be done BEFORE passport so for efficency 
-  //    (otherwise each request)
-  // TODO: move this to S3
-  var opsPrefix = '/ops';
-  app.use(function (req, res, next) {
-    var path;
-    var url = req.url;
-
-    // If we aren't in /ops, don't do anything. 
-    if (url.length < opsPrefix.length ||
-       url.substr(0, opsPrefix.length) !== opsPrefix) {
-      return next();
-    }
-
-    // Get the path following /ops and serve the correct files
-    path = url.substr(opsPrefix.length);
-    if (path === '' || path === '/') {
-      res.redirect(opsPrefix + '/surveys.html');
-    } else {
-      var index = path.lastIndexOf('.');
-      var format = '';
-      if (index > -1) {
-        format = path.substring(index);
-      }
-
-      var type;
-      switch (format) {
-        case '.html':
-          type = 'text/html';
-        break;
-        case '.css':
-          type = 'text/css';
-        break;
-        case '.js':
-          type = 'application/javascript';
-        break;
-        case '.gif':
-          type = 'image/gif';
-        break;
-        case '.png':
-          type = 'image/png';
-        break;
-        default:
-          type = 'text/html';
-      }
-
-      sendFile(res, path, type);
-    }
-  });
-
   // Serve the mobile collection app from /mobile
   app.use(s3({
     pathPrefix: '/mobile',
