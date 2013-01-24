@@ -371,6 +371,12 @@ function setup(app, db, idgen, collectionName) {
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
   app.post('/api/surveys/:sid/responses', function(req, response) {
     var resps = req.body.responses;
+
+    if (resps === undefined) {
+      response.send(400);
+      return;
+    }
+
     var total = resps.length;
     
     console.log(resps);
