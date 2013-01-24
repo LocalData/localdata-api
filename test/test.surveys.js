@@ -93,14 +93,14 @@ suite('Surveys', function () {
   });
 
   suite("Utilities:", function() {
-    test('Trim a survey of sensitive data', function (done) {
-      var trimmedSurvey = surveys.trimSurvey(sampleSurvey);
+    test('Filter sensitive data from a survey', function (done) {
+      var filteredSurvey = surveys.filterSurvey(sampleSurvey);
       
-      trimmedSurvey.should.have.property('name');
-      trimmedSurvey.should.have.property('slug');
-      trimmedSurvey.should.have.property('id');
+      filteredSurvey.should.have.property('name');
+      filteredSurvey.should.have.property('slug');
+      filteredSurvey.should.have.property('id');
 
-      trimmedSurvey.should.not.have.property('users');
+      filteredSurvey.should.not.have.property('users');
 
       done();
     });
