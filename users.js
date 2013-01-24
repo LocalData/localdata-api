@@ -173,7 +173,7 @@ function setup(app, db, idgen, collectionName) {
   //   To support persistent login sessions, Passport needs to be able to
   //   serialize users into and deserialize users out of the session.  Typically,
   //   this will be as simple as storing the user ID when serializing, and finding
-  //   the user by ID when deserializing.  
+  //   the user by ID when deserializing.
   passport.serializeUser(function(user, done) {
     console.log("Serializing");
 
@@ -200,7 +200,7 @@ function setup(app, db, idgen, collectionName) {
     return done(null, safeUser);
   });
 
-  // Use the local authentication strategy in Passport. 
+  // Use the local authentication strategy in Passport.
   passport.use(new LocalStrategy({
       usernameField: 'email',
       passwordField: 'password'
@@ -239,7 +239,7 @@ function setup(app, db, idgen, collectionName) {
   });
 
   // GET /logout
-  //  Does what you think it does. 
+  //  Does what you think it does.
   app.get('/logout', function(req, res){
     req.logout();
     res.redirect('/');
@@ -249,10 +249,10 @@ function setup(app, db, idgen, collectionName) {
   // Log the user in
   app.post('/api/login', function(req, response, next) {
     passport.authenticate(
-      'local', 
+      'local',
       function(error, user, info) {
 
-        // If there's an error, send back a generic error. 
+        // If there's an error, send back a generic error.
         // Note that errors are not things like "incorrect password"
         if(error) {
           return next(error);
