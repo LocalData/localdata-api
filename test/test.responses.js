@@ -166,10 +166,6 @@ suite('Responses', function () {
       });
     });
 
-    test(' all responses for a survey the user does not own', function (done) {
-      assert(true === false);
-      done();
-    });
 
     test(' all responses for a survey', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
@@ -204,8 +200,32 @@ suite('Responses', function () {
 
 
     test(' all responses for a survey when authenticated', function (done) {
+
+      // Override the auth function to pretend we're logged in
+      users.ensureAuthenticated = function(req, res, next) {
+        req.user = { _id: "1" };
+        return next();
+      };
+
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
-          assert(true === false);
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.be.above(1);
+        var i;
+        var prevTime = Number.MAX_VALUE;
+        var created;
+        for (i = 0; i < parsed.responses.length; i += 1) {
+          parsed.responses[i].survey.should.equal(surveyId);
+
+          created = Date.parse(parsed.responses[i].created);
+          created.should.be.below(prevTime);
+          prevTime = created;
+        }
+        done();
       });
     });
 
