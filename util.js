@@ -26,8 +26,6 @@ function isArray(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]';
 }
 
-<<<<<<< HEAD
-=======
 // Parse the paging information from a request's query parameters.
 // Returns null if we could not determine paging parameters.
 function getPagingParams(request) {
@@ -43,7 +41,6 @@ function getPagingParams(request) {
     count: count
   };
 }
->>>>>>> master
 
 module.exports = {
   handleError: handleError,
