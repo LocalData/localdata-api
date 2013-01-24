@@ -162,4 +162,4 @@ function setup(app, settings) {
 
 module.exports = {
   setup: setup
-}
+};

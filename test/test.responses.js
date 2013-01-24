@@ -77,6 +77,33 @@ suite('Responses', function () {
     };
   };
 
+  var data_twenty = (function () {
+    function makeResponse(parcelId) {
+      return {
+        "source": { "type": "mobile", "collector": "Name" },
+        "geo_info": {
+          "centroid": [ 42.331136749929435, -83.06584382779543 ],
+          "parcel_id": parcelId
+        },
+        "parcel_id": "06000402.",
+        "responses": {
+          "parcel_id": parcelId,
+          "use-count": "1",
+          "collector": "Some Name",
+          "site": "parking-lot",
+          "condition-1": "demolish"
+        }
+      };
+    }
+    var data = { responses: [] };
+    var parcelBase = 123456;
+    var i;
+    for (i = 0; i < 20; i += 1) {
+      data.responses.push(makeResponse((parcelBase + i).toString()));
+    }
+    return data;
+  }());
+
   suiteSetup(function (done) {
     server.run(settings, done);
   });
@@ -108,6 +135,14 @@ suite('Responses', function () {
           assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
         }
 
+        done();
+      });
+    });
+
+    test('Posting bad data /surveys/' + surveyId + '/responses', function (done) {
+      request.post({url: url, json: {respnoses: {}}}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
         done();
       });
     });
@@ -161,7 +196,7 @@ suite('Responses', function () {
     var id;
 
     suiteSetup(function (done) {
-      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo()},
+      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_twenty},
                    function (error, response, body) {
         if (error) { done(error); }
         id = body.responses[0].id;
@@ -185,13 +220,12 @@ suite('Responses', function () {
         for (i = 0; i < parsed.responses.length; i += 1) {
           parsed.responses[i].survey.should.equal(surveyId);
           created = Date.parse(parsed.responses[i].created);
-          created.should.be.below(prevTime);
+          created.should.not.be.above(prevTime);
           prevTime = created;
         }
         done();
       });
     });
-
 
     test('Filtering of results', function (done) {
       var results = dataTwo().responses;
@@ -201,9 +235,9 @@ suite('Responses', function () {
     });
 
 
-    test(' all responses for a specific parcel', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/' + dataTwo().responses[1].parcel_id + '/responses'},
-                  function (error, response, body) {
+    test('Get all responses for a specific parcel', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/' + data_twenty.responses[1].parcel_id + '/responses'},
+       function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
@@ -211,7 +245,7 @@ suite('Responses', function () {
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
         parsed.responses.length.should.be.above(0);
-        parsed.responses[0].parcel_id.should.equal(dataTwo().responses[1].parcel_id);
+        parsed.responses[0].parcel_id.should.equal(data_twenty.responses[1].parcel_id);
         parsed.responses[0].survey.should.equal(surveyId);
 
         var i;
@@ -221,7 +255,7 @@ suite('Responses', function () {
           parsed.responses[i].survey.should.equal(surveyId);
 
           created = Date.parse(parsed.responses[i].created);
-          created.should.be.below(prevTime);
+          created.should.not.be.above(prevTime);
           prevTime = created;
         }
 
@@ -239,10 +273,10 @@ suite('Responses', function () {
         var parsed = JSON.parse(body);
 
         parsed.response.id.should.equal(id);
-        should.deepEqual(parsed.response.source, dataTwo().responses[0].source);
-        should.deepEqual(parsed.response.geo_info, dataTwo().responses[0].geo_info);
-        should.deepEqual(parsed.response.responses, dataTwo().responses[0].responses);
-        parsed.response.parcel_id.should.equal(dataTwo().responses[0].parcel_id);
+        should.deepEqual(parsed.response.source, data_twenty.responses[0].source);
+        should.deepEqual(parsed.response.geo_info, data_twenty.responses[0].geo_info);
+        should.deepEqual(parsed.response.responses, data_twenty.responses[0].responses);
+        parsed.response.parcel_id.should.equal(data_twenty.responses[0].parcel_id);
         parsed.response.survey.should.equal(surveyId);
 
         done();
@@ -250,7 +284,7 @@ suite('Responses', function () {
     });
 
     test('Get all responses in a bounding box', function (done) {
-      var center = dataTwo().responses[0].geo_info.centroid;
+      var center = data_twenty.responses[0].geo_info.centroid;
       var bbox = [center[0] - 0.1, center[1] - 0.1, center[0] + 0.1, center[1] + 0.1];
       var url = BASEURL + '/surveys/' + surveyId + '/responses/in/' + bbox.join(',');
       console.log(url);
@@ -274,12 +308,70 @@ suite('Responses', function () {
           parsed.responses[i].geo_info.centroid[1].should.be.below(bbox[3]);
 
           created = Date.parse(parsed.responses[i].created);
-          created.should.be.below(prevTime);
+          created.should.not.be.above(prevTime);
           prevTime = created;
         }
         done();
       });
     });
+
+    test('Get a chunk of responses', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=5&count=10'}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        // Make sure we got the number we requested.
+        parsed.responses.length.should.equal(10);
+
+        // Make sure the responses are in descending order of creation time.
+        var i;
+        var prevTime = Number.MAX_VALUE;
+        var created;
+        for (i = 0; i < parsed.responses.length; i += 1) {
+          parsed.responses[i].survey.should.equal(surveyId);
+
+          created = Date.parse(parsed.responses[i].created);
+          created.should.not.be.above(prevTime);
+          prevTime = created;
+        }
+
+        // Make sure we got the right range of responses.
+        request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
+          var full = JSON.parse(body);
+          full.responses[5].geo_info.parcel_id.should.equal(parsed.responses[0].geo_info.parcel_id);
+          done();
+        });
+      });
+    });
+
+    test('Get responses in ascending creation order', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?sort=asc'}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+
+        // Make sure the responses are in ascending order of creation time.
+        var i;
+        var prevTime = Number.MIN_VALUE;
+        var created;
+        for (i = 0; i < parsed.responses.length; i += 1) {
+          parsed.responses[i].survey.should.equal(surveyId);
+
+          created = Date.parse(parsed.responses[i].created);
+          created.should.not.be.below(prevTime);
+          prevTime = created;
+        }
+
+        done();
+      });
+    });
+
 
     test('Get response data as CSV', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/csv'},
