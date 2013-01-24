@@ -118,9 +118,6 @@ app.use(function(req, res, next) {
   next();
 });
 
-// Unique ID generator
-var idgen = uuid.v1;
-
 // For sending local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
