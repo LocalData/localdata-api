@@ -297,19 +297,7 @@ function setup(app, db, idgen, collectionName) {
           return;
         }
         cursor.toArray(function(err, items) {
-
           response.send({responses: items});
-
-          // If the user is authenticated, send all the results.
-          if(req.isAuthenticated()) {
-            console.log("Sending items");
-            response.send({responses: items});
-          }else {
-            // If not, we trim the results and then send them back
-            console.log("Trying to filter");
-            var filteredItems = filterToRemoveResults(items);
-            response.send({responses: filteredItems});
-          }
         });
       });
     });
