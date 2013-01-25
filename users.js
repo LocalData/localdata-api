@@ -49,7 +49,7 @@ function setup(app, db, idgen, collectionName) {
   };
 
   // Find a given user
-  // @param {Object} query An object with a "username" parameter.
+  // @param {Object} query An object with a 'username' parameter.
   //  username should be an email
   // @param {Function} done 
   User.findOne = function(query, done) {
@@ -72,19 +72,19 @@ function setup(app, db, idgen, collectionName) {
 
   // Create a given user
   //
-  // @param {Object} query An object with a "username", "name", and "password" 
+  // @param {Object} query An object with a 'username', 'name', and 'password' 
   //  parameters. Username must be an email. 
   // @param {Function} done 
   User.create = function(query, done) {
-    if(!query.email || query.email === "") {
-      // console.log("No email");
-      done({code: 400, err: "Email required"}, null);
+    if(!query.email || query.email === '') {
+      // console.log('No email');
+      done({code: 400, err: 'Email required'}, null);
       return;
     }
 
-    if(!query.password || query.password === "") {
-      // console.log("No password");
-      done({code: 400, err: "Password required"}, null);
+    if(!query.password || query.password === '') {
+      // console.log('No password');
+      done({code: 400, err: 'Password required'}, null);
       return;
     }
 
@@ -100,11 +100,11 @@ function setup(app, db, idgen, collectionName) {
         if(error) {
           if(error.code === 11000) {
             // Mongo duplicate key error
-            done({code: 400, err: "An account with this email aready exists"});
+            done({code: 400, err: 'An account with this email aready exists'});
             return;
           }
           // Some other error
-          done({code: 400, err: "Sorry, an error occurred. Please try again."});
+          done({code: 400, err: 'Sorry, an error occurred. Please try again.'});
           return;
         }else {
           done(null, documents[0]);
@@ -122,8 +122,8 @@ function setup(app, db, idgen, collectionName) {
   // @param {Object} query A user object, with ._id property
   // @param {Function} done
   User.update = function(query, done) {
-    if(!query.email || query.email === "") {
-      done({code: 400, err: "Email required"}, null);
+    if(!query.email || query.email === '') {
+      done({code: 400, err: 'Email required'}, null);
       return;
     }
 
@@ -138,7 +138,7 @@ function setup(app, db, idgen, collectionName) {
       collection.save(safeQuery, {w: 1}, function(error, wc, something) {
         if(error) {
           // TODO: Log
-          console.log("error updating: ", error.err, error.code);
+          console.log('error updating: ', error.err, error.code);
           done(error);
           return;
         }
@@ -166,7 +166,7 @@ function setup(app, db, idgen, collectionName) {
   //   this will be as simple as storing the user ID when serializing, and finding
   //   the user by ID when deserializing.
   passport.serializeUser(function(user, done) {
-    console.log("Serializing");
+    console.log('Serializing');
 
     // We don't want to be passing around sensitive stuff
     // Like password hashes
@@ -179,7 +179,7 @@ function setup(app, db, idgen, collectionName) {
   });
 
   passport.deserializeUser(function(user, done) {
-    console.log("Deserializing");
+    console.log('Deserializing');
 
     // We don't want to be passing around sensitive stuff
     // Like password hashes
@@ -197,22 +197,22 @@ function setup(app, db, idgen, collectionName) {
       passwordField: 'password'
     },
     function(username, password, done) {
-      console.log("Checking user");
+      console.log('Checking user');
       
       User.findOne({ email: username }, function(error, user) {
         if (error) { return done(error); }
         if(!user) {
-          console.log("Login: user not found");
+          console.log('Login: user not found');
           return done(null, false, { 
-            "name": "BadRequestError",
-            "message": "Account not found" 
+            'name': 'BadRequestError',
+            'message': 'Account not found' 
           });
         }
         if(!user.validPassword(password)) {
-          console.log("Login: password incorrect");
+          console.log('Login: password incorrect');
           return done(null, false, { 
-            "name": "BadRequestError",
-            "message": "Password incorrect" 
+            'name': 'BadRequestError',
+            'message': 'Password incorrect' 
           });
         }
 
@@ -226,7 +226,7 @@ function setup(app, db, idgen, collectionName) {
   // Cheap way to save the URL parameter
   app.get('/auth/return', function(req, res){
     req.session.redirectTo = req.query.redirectTo;
-    res.redirect("/login");
+    res.redirect('/login');
   });
 
   // GET /logout
@@ -244,7 +244,7 @@ function setup(app, db, idgen, collectionName) {
       function(error, user, info) {
 
         // If there's an error, send back a generic error.
-        // Note that errors are not things like "incorrect password"
+        // Note that errors are not things like 'incorrect password'
         if(error) {
           return next(error);
         }
@@ -253,14 +253,14 @@ function setup(app, db, idgen, collectionName) {
         if(user) {
           req.logIn(user, function(error) {
             if (error) { return next(error); }
-            response.redirect("/api/user");
+            response.redirect('/api/user');
           });
           return;
         }
 
         // If there was a problem logging the user in, it'll appear here.
         if(info) {
-          console.log("Info ", info);
+          console.log('Info ', info);
           response.send(200, info);
         }
       })(req, response, next);
@@ -270,7 +270,7 @@ function setup(app, db, idgen, collectionName) {
   // POST /api/user
   // Create a user
   app.post('/api/user', function(req, response){
-    console.log("API: Create a user");
+    console.log('API: Create a user');
 
     User.create(req.body, function(error, results) {
       if(error) {
@@ -279,7 +279,7 @@ function setup(app, db, idgen, collectionName) {
         req.logIn(results, function(error) {
           if (error) {
             //TODO
-            console.log("Unexpected error", error);
+            console.log('Unexpected error', error);
             response.send(401);
           }
 
