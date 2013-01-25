@@ -51,10 +51,13 @@ function setup(app, db, idgen, collectionName) {
   // Find a given user
   // @param {Object} query An object with a 'username' parameter.
   //  username should be an email
-  // @param {Function} done 
+  // @param {Function} done
   User.findOne = function(query, done) {
     getCollection(function(error, collection) {
-      collection.findOne({email: query.email}, function(error, user){ 
+      collection.findOne({email: query.email}, function(error, user){
+        if(error) {
+          done(error);
+        }
 
         if(user) {
           user.validPassword = function(password) {
@@ -77,13 +80,11 @@ function setup(app, db, idgen, collectionName) {
   // @param {Function} done 
   User.create = function(query, done) {
     if(!query.email || query.email === '') {
-      // console.log('No email');
       done({code: 400, err: 'Email required'}, null);
       return;
     }
 
     if(!query.password || query.password === '') {
-      // console.log('No password');
       done({code: 400, err: 'Password required'}, null);
       return;
     }
@@ -104,7 +105,7 @@ function setup(app, db, idgen, collectionName) {
             return;
           }
           // Some other error
-          done({code: 400, err: 'Sorry, an error occurred. Please try again.'});
+          done({code: 500, err: 'Sorry, an error occurred. Please try again.'});
           return;
         }else {
           done(null, documents[0]);
