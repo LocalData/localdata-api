@@ -23,15 +23,6 @@ function setup(app, db, idgen, collectionName) {
 
   var User = {};
 
-  // Dangerous! 
-  User.wipe = function(done) {
-    getCollection(function(error, collection) {
-      collection.remove({}, function(error, response){
-        //done();
-      });
-    });
-  };
-
   // Sanitize user input to save to the database
   //  Keeps only the fields we wants
   //  Hashes the password
