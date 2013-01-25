@@ -75,17 +75,25 @@ function setup(app, db, idgen, collectionName) {
 
   // Create a given user
   //
-  // @param {Object} query An object with a 'username', 'name', and 'password' 
-  //  parameters. Username must be an email. 
-  // @param {Function} done 
+  // @param {Object} query An object with a 'username', 'name', and 'password'
+  //  parameters. Username must be an email.
+  // @param {Function} done
   User.create = function(query, done) {
     if(!query.email || query.email === '') {
-      done({code: 400, err: 'Email required'}, null);
+      done({
+        code: 400,
+        name: 'UserCreationError',
+        message: 'Email required'
+      }, null);
       return;
     }
 
     if(!query.password || query.password === '') {
-      done({code: 400, err: 'Password required'}, null);
+      done({
+        code: 400,
+        name:'UserCreationError',
+        message: 'Password required'
+      }, null);
       return;
     }
 
@@ -275,7 +283,7 @@ function setup(app, db, idgen, collectionName) {
 
     User.create(req.body, function(error, results) {
       if(error) {
-        response.send(error.code, error.err);
+        response.send(error.code, error.message);
       }else {
         req.logIn(results, function(error) {
           if (error) {
