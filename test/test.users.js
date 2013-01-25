@@ -27,6 +27,36 @@ suite('Users -', function () {
     };
   };
 
+  /**
+   * Remove all results from a collection
+   * @param  {String}   collection Name of the collection
+   * @param  {Function} done       Callback, accepts error, response
+   */
+  var clearCollection = function(collection, done) {
+    // Default to the user collection
+    if (!collection) {
+      collection = 'usersCollection';
+    }
+
+    // Create a new database connection
+    var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
+                                                          settings.mongo_port,
+                                                          {}), {
+      w: 2,
+      safe: true
+    });
+
+    db.open(function() {
+      db.collection(collection, function(error, collection) {
+        // Remove all the things!
+        collection.remove({}, function(error, response){
+          done(error, response);
+        });
+      });
+
+    });
+  };
+
   suiteSetup(function (done) {
     server.run(settings, done);
   });
@@ -39,66 +69,78 @@ suite('Users -', function () {
   suite('finding, creating and editing without the API:', function () {
     
     test('create a user', function (done) {
-      users.User.wipe();
-      users.User.create(new Matt(), function(error, user){
-        user.should.have.property('_id');
-        user.should.not.have.property('randomThing');
-        assert.equal(user.name, new Matt().name); 
-        assert.equal(user.email, new Matt().email); 
-        done();
-      });
-    });
+      clearCollection(function(error, response){
+        should.not.exist(error);
 
-
-    test('users must have an email', function (done) {     
-      users.User.wipe();
-      users.User.create({"name": "No Email", "password": "luggage"}, function(error, user){
-        should.exist(error);
-        error.code.should.equal(400);
-        done();
-      });
-    });
-
-    test('users must be created with a password', function (done) {     
-      users.User.wipe();
-      users.User.create({"name": "No Password", "email": "example@example.com"}, function(error, user){
-        should.exist(error);
-        error.code.should.equal(400);
-        done();
-      });
-    });
-
-    test('user emails must be unique', function (done) {
-      users.User.wipe();
-      users.User.create(new Matt(), function(error, userOne) {
-        // console.log("First user ", userOne);
-        users.User.create(new Matt(), function(error, userTwo){
-          // console.log("Second user ", userTwo);
-          should.exist(error);
+        users.User.create(new Matt(), function(error, user){
+          user.should.have.property('_id');
+          user.should.not.have.property('randomThing');
+          assert.equal(user.name, new Matt().name);
+          assert.equal(user.email, new Matt().email);
           done();
         });
       });
     });
 
-    test('update a user name and email', function (done) {
-      users.User.wipe();
-      users.User.create(new Matt(), function(error, user) {
-        var tempId = user._id;
-        user.name = "Prashant";
-        user.email = "prashant@codeforamerica.org";
 
-        users.User.update(user, function(error){
-          // console.log(tempId);
-          console.log("first user" , user);
+    test('users must have an email', function (done) { 
+      clearCollection(function(error, response){
+        should.not.exist(error);
 
-          should.not.exist(error);
+        users.User.create({"name": "No Email", "password": "luggage"}, function(error, user){
+          should.exist(error);
+          error.code.should.equal(400);
+          done();
+        });
+      });
+    });
 
-          users.User.findOne({"email": "prashant@codeforamerica.org"}, function(error, user){
-            // Make sure the old and the new have the same Id
-            console.log("Found this user", user);
-            assert.equal(String(tempId), String(user._id)); 
-            assert.equal(user.name, "Prashant"); 
+    test('users must be created with a password', function (done) {
+      clearCollection(function(error, response){
+        should.not.exist(error);
+        users.User.create({"name": "No Password", "email": "example@example.com"}, function(error, user){
+          should.exist(error);
+          error.code.should.equal(400);
+          done();
+        });
+      });
+    });
+
+    test('user emails must be unique', function (done) {
+      clearCollection(function(error, response){
+        should.not.exist(error);
+        users.User.create(new Matt(), function(error, userOne) {
+          // console.log("First user ", userOne);
+          users.User.create(new Matt(), function(error, userTwo){
+            // console.log("Second user ", userTwo);
+            should.exist(error);
             done();
+          });
+        });
+      });
+    });
+
+    test('update a user name and email', function (done) {
+      clearCollection(function(error, response){
+        should.not.exist(error);
+        users.User.create(new Matt(), function(error, user) {
+          var tempId = user._id;
+          user.name = "Prashant";
+          user.email = "prashant@codeforamerica.org";
+
+          users.User.update(user, function(error){
+            // console.log(tempId);
+            console.log("first user" , user);
+
+            should.not.exist(error);
+
+            users.User.findOne({"email": "prashant@codeforamerica.org"}, function(error, user){
+              // Make sure the old and the new have the same Id
+              console.log("Found this user", user);
+              assert.equal(String(tempId), String(user._id));
+              assert.equal(user.name, "Prashant");
+              done();
+            });
           });
         });
       });
@@ -114,7 +156,7 @@ suite('Users -', function () {
 
     test('Deleting a user', function (done) {
       // test for stuff
-      assert.equal(true, false); 
+      assert.equal(true, false);
       done();
     });
 
@@ -130,31 +172,33 @@ suite('Users -', function () {
     });
 
     test('Create a user via API', function (done) {
-      users.User.wipe();
-      request.post({url: userUrl, json: new Matt()}, function (error, response, body) {      
+      clearCollection(function(error, response){
         should.not.exist(error);
-        response.statusCode.should.equal(200);
+        request.post({url: userUrl, json: new Matt()}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
 
-        response.should.be.json;
+          response.should.be.json;
 
-        body.should.have.property("email", "example@example.com");
-        body.should.have.property("name", "Matt Hampel");
-        body.should.not.have.property("randomThing");
-        body.should.not.have.property("password");
-        body.should.not.have.property("hash");
+          body.should.have.property("email", "example@example.com");
+          body.should.have.property("name", "Matt Hampel");
+          body.should.not.have.property("randomThing");
+          body.should.not.have.property("password");
+          body.should.not.have.property("hash");
 
-        done();
+          done();
+        });
       });
     });
 
     test('Log in a user via the API', function (done) {
 
       // First, let's log out
-      // Just so we don't unfairly pass this test :-) 
+      // Just so we don't unfairly pass this test :-)
       request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
 
-        // Then, let's log in. 
-        request.post({url: loginUrl, json: new Matt()}, function (error, response, body) {      
+        // Then, let's log in.
+        request.post({url: loginUrl, json: new Matt()}, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(302);
 
@@ -179,12 +223,14 @@ suite('Users -', function () {
     });
 
     test('Try to get details about the current user via API when not logged in', function (done) {
-      users.User.wipe();
-      // First, let's log out
-      request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
-        request.get({url: userUrl}, function(error, response, body) {
-          response.statusCode.should.equal(401);
-          done();
+      clearCollection(function(error, response){
+        should.not.exist(error);
+        // First, let's log out
+        request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
+          request.get({url: userUrl}, function(error, response, body) {
+            response.statusCode.should.equal(401);
+            done();
+          });
         });
       });
     });
