@@ -32,22 +32,20 @@ suite('Users -', function () {
    * @param  {String}   collection Name of the collection
    * @param  {Function} done       Callback, accepts error, response
    */
-  var clearCollection = function(collection, done) {
-    // Default to the user collection
-    if (!collection) {
-      collection = 'usersCollection';
-    }
-
-    // Create a new database connection
+  var clearCollection = function(collectionName, done) {
     var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
-                                                          {}), {
-      w: 2,
-      safe: true
-    });
+                                                          {}), { w: 1, safe: true });
 
     db.open(function() {
-      db.collection(collection, function(error, collection) {
+      db.collection(collectionName, function(error, collection) {
+        if(error) {
+          console.log("BIG ERROR");
+          console.log(error);
+          assert(false);
+          done(error);
+        }
+
         // Remove all the things!
         collection.remove({}, function(error, response){
           done(error, response);
@@ -69,7 +67,7 @@ suite('Users -', function () {
   suite('finding, creating and editing without the API:', function () {
     
     test('create a user', function (done) {
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
         users.User.create(new Matt(), function(error, user){
@@ -84,7 +82,7 @@ suite('Users -', function () {
 
 
     test('users must have an email', function (done) { 
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
         users.User.create({"name": "No Email", "password": "luggage"}, function(error, user){
@@ -96,7 +94,7 @@ suite('Users -', function () {
     });
 
     test('users must be created with a password', function (done) {
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
         users.User.create({"name": "No Password", "email": "example@example.com"}, function(error, user){
           should.exist(error);
@@ -107,7 +105,7 @@ suite('Users -', function () {
     });
 
     test('user emails must be unique', function (done) {
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
         users.User.create(new Matt(), function(error, userOne) {
           // console.log("First user ", userOne);
@@ -121,7 +119,7 @@ suite('Users -', function () {
     });
 
     test('update a user name and email', function (done) {
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
         users.User.create(new Matt(), function(error, user) {
           var tempId = user._id;
@@ -172,7 +170,7 @@ suite('Users -', function () {
     });
 
     test('Create a user via API', function (done) {
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
         request.post({url: userUrl, json: new Matt()}, function (error, response, body) {
           should.not.exist(error);
@@ -223,7 +221,7 @@ suite('Users -', function () {
     });
 
     test('Try to get details about the current user via API when not logged in', function (done) {
-      clearCollection(function(error, response){
+      clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
         // First, let's log out
         request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
