@@ -24,6 +24,8 @@ var scans = require('./scans');
 var parcels = require('./parcels');
 
 // Names of the MongoDB collections we use
+// TODO:
+// Should these be in settings? Yes.
 var USERS = 'usersCollection';
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
@@ -321,7 +323,7 @@ function run(settings, cb) {
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
                                                           {}), {
-      w: 1,
+      w: 2,
       safe: true
     });
     setupRoutes(db, settings);
