@@ -7,12 +7,10 @@ var mongo = require('mongodb');
 var uuid = require('node-uuid');
 var fs = require('fs');
 var s3 = require('connect-s3');
-var settings = require('./settings.js');
 
 // Login requirements
 var passport = require('passport');
 var util = require('util');
-var FacebookStrategy = require('passport-facebook').Strategy;
 
 // Routes are split into separate modules.
 var users = require('./users');
