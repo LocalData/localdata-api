@@ -26,7 +26,7 @@ function setup(app, db, idgen, collectionName) {
   // Sanitize user input to save to the database
   //  Keeps only the fields we wants
   //  Hashes the password
-  // 
+  //
   // @param {Object} user
   User.sanitizeToSave = function(user) {
     var safeUser = {};
@@ -151,6 +151,7 @@ function setup(app, db, idgen, collectionName) {
           done(error);
           return;
         }
+
         console.log(error);
         done(null);
       });
@@ -206,22 +207,20 @@ function setup(app, db, idgen, collectionName) {
       passwordField: 'password'
     },
     function(username, password, done) {
-      console.log('Checking user');
-      
       User.findOne({ email: username }, function(error, user) {
         if (error) { return done(error); }
         if(!user) {
           console.log('Login: user not found');
-          return done(null, false, { 
+          return done(null, false, {
             'name': 'BadRequestError',
-            'message': 'Account not found' 
+            'message': 'Account not found'
           });
         }
         if(!user.validPassword(password)) {
           console.log('Login: password incorrect');
-          return done(null, false, { 
+          return done(null, false, {
             'name': 'BadRequestError',
-            'message': 'Password incorrect' 
+            'message': 'Password incorrect'
           });
         }
 
@@ -270,7 +269,7 @@ function setup(app, db, idgen, collectionName) {
         // If there was a problem logging the user in, it'll appear here.
         if(info) {
           console.log('Info ', info);
-          response.send(200, info);
+          response.send(400, info.message);
         }
       })(req, response, next);
 
@@ -279,15 +278,16 @@ function setup(app, db, idgen, collectionName) {
   // POST /api/user
   // Create a user
   app.post('/api/user', function(req, response){
-    console.log('API: Create a user');
-
     User.create(req.body, function(error, results) {
       if(error) {
-        response.send(error.code, error.message);
+        // TODO
+        // Log better
+        response.send(error.code, "We're sorry, an error has occurred");
       }else {
         req.logIn(results, function(error) {
           if (error) {
-            //TODO
+            // TODO
+            // Log beter
             console.log('Unexpected error', error);
             response.send(401);
           }
