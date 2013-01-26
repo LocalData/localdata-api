@@ -8,7 +8,12 @@ var uuid = require('node-uuid');
 var fs = require('fs');
 var s3 = require('connect-s3');
 
+// Login requirements
+var passport = require('passport');
+var util = require('util');
+
 // Routes are split into separate modules.
+var users = require('./users');
 var forms = require('./forms');
 var responses = require('./responses');
 var collectors = require('./collectors');
@@ -17,6 +22,9 @@ var scans = require('./scans');
 var parcels = require('./parcels');
 
 // Names of the MongoDB collections we use
+// TODO:
+// Should these be in settings? Yes.
+var USERS = 'usersCollection';
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
 var COLLECTORS = 'collectorCollection';
@@ -27,6 +35,10 @@ var SCANIMAGES = 'scanCollection';
 var server;
 var app = express(express.logger());
 var db;
+
+// ID generator
+var idgen = uuid.v1;
+
 
 // IE 8 and 9 can't post application/json for cross-origin requests, so we
 // accept text/plain treat it as JSON.
@@ -84,6 +96,7 @@ app.use(express.methodOverride());
 // Actually have Express parse text/plain as JSON
 app.use(textParser);
 
+
 // Default to text/plain if no content-type was provided.
 app.use(function(req, res, next) {
   if (req.body) { return next(); }
@@ -108,9 +121,6 @@ app.use(function(req, res, next) {
   next();
 });
 
-// Unique ID generator
-var idgen = uuid.v1;
-
 // For sending local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
@@ -130,6 +140,9 @@ function sendFile(response, filename, type) {
 
 // Set up routes
 function setupRoutes(db, settings) {
+
+  // App routes
+  users.setup(app, db, idgen, USERS);
   forms.setup(app, db, idgen, FORMS);
   responses.setup(app, db, idgen, RESPONSES);
   collectors.setup(app, db, idgen, COLLECTORS);
@@ -137,67 +150,21 @@ function setupRoutes(db, settings) {
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
 
-  // Internal operational management app
-  // TODO: move this to S3
-  var opsPrefix = '/ops';
-  app.use(function (req, res, next) {
-    var path;
-    var url = req.url;
-
-    if (url.length < opsPrefix.length ||
-       url.substr(0, opsPrefix.length) !== opsPrefix) {
-      return next();
-    }
-
-    path = url.substr(opsPrefix.length);
-    if (path === '' || path === '/') {
-      res.redirect(opsPrefix + '/surveys.html');
-    } else {
-      var index = path.lastIndexOf('.');
-      var format = '';
-      if (index > -1) {
-        format = path.substring(index);
-      }
-
-      var type;
-      switch (format) {
-        case '.html':
-          type = 'text/html';
-        break;
-        case '.css':
-          type = 'text/css';
-        break;
-        case '.js':
-          type = 'application/javascript';
-        break;
-        case '.gif':
-          type = 'image/gif';
-        break;
-        case '.png':
-          type = 'image/png';
-        break;
-        default:
-          type = 'text/html';
-      }
-
-      sendFile(res, path, type);
-    }
-  });
-
-  // Mobile collection app
+  // Serve the mobile collection app from /mobile
   app.use(s3({
     pathPrefix: '/mobile',
     remotePrefix: settings.mobilePrefix
   }));
 
-  // Dasboard app
+  // Serve the ringleader's administration/dashboard app from /
   app.use(s3({
     pathPrefix: '/',
     remotePrefix: settings.adminPrefix
   }));
+
 }
 
-// Ensure certain database structure.
+// Ensure certain database structure
 function ensureStructure(db, callback) {
   // Map f(callback) to f(error, callback)
   // If we encounter an error, bail early with the callback.
@@ -219,6 +186,16 @@ function ensureStructure(db, callback) {
 
   // Make sure our collections are in good working order.
   // This primarily means making sure indexes are set up.
+  function ensureUsers(done) {
+    db.collection(USERS, function(error, collection) {
+      if (error) { return done(error); }
+
+      chain([function indexCreated(done) {
+        // Make sure email is unique
+          collection.ensureIndex({ "email": 1 }, { unique: true }, done);
+      }], done)();
+    });
+  }
 
   function ensureResponses(done) {
     db.collection(RESPONSES, function (error, collection) {
@@ -272,22 +249,28 @@ function ensureStructure(db, callback) {
 
   function ensureSlugs(done) {
     db.collection(SURVEYS, function (error, collection) {
-      // Look for surveys with no slug
+
+      // First, find all surveys.
       collection.find({}, function(err, cursor) {
         cursor.toArray(function (err, arr) {
+
+          // Reject if there's an error
           if (err) { return done(err); }
           var count = 0;
 
+          // Look for surveys with no slug
           // There are no surveys yet, so there's nothing to do.
           if (arr.length === 0) {
             return done();
           }
 
           arr.forEach(function (item) {
+
+            // Add a slug if there isn't one
             if (item.slug === undefined) {
-              // Add a slug
               surveys.checkSlug(collection, item.name, 0, function (err, slug) {
                 if (err) { return done(err); }
+
                 // Update entry
                 collection.update({_id: item._id}, {'$set': {slug: slug}}, function (error) {
                   if (err) { return done(err); }
@@ -308,10 +291,13 @@ function ensureStructure(db, callback) {
       });
     });
   }
-
-  chain([ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
+  
+  // Chain everything together
+  chain([ensureUsers, ensureResponses, ensureForms, ensureSurveys, ensureSlugs], callback)();
 }
 
+// We're done with our preflight stuff.
+// Now, we start listening for requests. 
 function startServer(port, cb) {  
   server = http.createServer(app);
   server.listen(port, function (err) {
@@ -321,7 +307,6 @@ function startServer(port, cb) {
 }
 
 function run(settings, cb) {
-
   // Set up the database object
   if (!db) {
     console.log('Using the following settings:');
@@ -335,7 +320,10 @@ function run(settings, cb) {
     console.log('Postgresql user: ' + settings.psqlUser);
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
-                                                          {}), {});
+                                                          {}), {
+      w: 1,
+      safe: true
+    });
     setupRoutes(db, settings);
   }
 
@@ -348,6 +336,8 @@ function run(settings, cb) {
           console.log(err.message);
           return cb(err);
         }
+
+        // Ensure good database structure when the app first loads.
         ensureStructure(db, function (error) {
           if (error) { throw error; }
           startServer(settings.port, cb);

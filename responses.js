@@ -76,15 +76,15 @@ function listToCSVString(row, headers, maxEltsInCell) {
             row[i] = '"' + row[i] + '"';
           }
 
-          arr.push(row[i]);      
+          arr.push(row[i]);
         }else {
-          arr.push('');          
+          arr.push('');
         }
         
         len = 1;
       } else {
         // If it's an array of responses, join them with a semicolon
-        arr.push(row[i].join(';'));          
+        arr.push(row[i].join(';'));
       }
     }
   }
@@ -92,27 +92,27 @@ function listToCSVString(row, headers, maxEltsInCell) {
 }
 
 
-/* 
+/*
  * Turn a list of parcel attributes into a KML string
- */ 
+ */
 function listToKMLString(row, headers, maxEltsInCell) {
   var i;
   var elt = "\n<Placemark>";
   elt += "<name></name>";
   elt += "<description></description>";
 
-  // The coordinates come escaped, so we need to unescape them: 
-  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>"; 
+  // The coordinates come escaped, so we need to unescape them:
+  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>";
 
   elt += "<ExtendedData>";
   for (i = 0; i < row.length; i += 1) {
       elt += "<Data name=\"" + headers[i] + "\">";
-      elt += "<displayName>" + headers[i] + "</displayName>";  
+      elt += "<displayName>" + headers[i] + "</displayName>";
       
       if(row[i] !== undefined) {
-        elt += "<value>" + row[i] + "</value>";              
+        elt += "<value>" + row[i] + "</value>";
       }else {
-        elt += "<value>" + "</value>";              
+        elt += "<value>" + "</value>";
       }
       elt += "</Data>";
   }
@@ -243,6 +243,33 @@ function filterToMostRecent(items) {
   return latest_list;
 }
 
+
+/*
+ * Filter the results to remove any of the answers and personally identifying
+ * information. You'll just see where the results are, not the actual results.
+ */
+function filterToRemoveResults(items) {
+  var i;
+  var key;
+  var sanitized = {};
+
+  // Loop through all the items
+  for (i=0; i < items.length; i += 1) {
+    var item = items[i];
+    var parcelId = item.parcel_id;
+    
+    var sanitizedItem = {};
+    sanitizedItem.parcel_id = item.parcel_id;
+    sanitizedItem.geo_info = item.geo_info;
+    sanitizedItem.parcel_id = item.parcel_id;
+
+    items[i] = sanitizedItem;
+  }
+
+  return items;
+}
+
+
 /*
  * app: express server
  * db: mongodb database
@@ -366,7 +393,7 @@ function setup(app, db, idgen, collectionName) {
   // Add responses for a survey.
   // POST http://localhost:3000/api/surveys/{SURVEY ID}/reponses
   // POST http://localhost:3000/api/surveys/1/reponses
-  // Expects data in the format: 
+  // Expects data in the format:
   // responses: [
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
   app.post('/api/surveys/:sid/responses', function(req, response) {
@@ -384,7 +411,7 @@ function setup(app, db, idgen, collectionName) {
     
     var count = 0;
     getCollection(function(err, collection) {
-      var surveyid = req.params.sid;
+      var surveyId = req.params.sid;
       
       // Iterate over each survey response we received.
       resps.forEach(function(resp) {
@@ -392,7 +419,7 @@ function setup(app, db, idgen, collectionName) {
         // Add metadata to the survey response
         var id = idgen();
         resp.id = id;
-        resp.survey = surveyid;
+        resp.survey = surveyId;
         resp.created = new Date();
         
         // check if there is a centroid. if yes, make sure the values are floats
@@ -453,7 +480,7 @@ function setup(app, db, idgen, collectionName) {
       response.send(400);
     }
 
-    for (i = 0, ln = coords.length; i < ln; i += 1) { 
+    for (i = 0, ln = coords.length; i < ln; i += 1) {
       coords[i] = parseFloat(coords[i]);
     }
     
@@ -482,16 +509,15 @@ function setup(app, db, idgen, collectionName) {
 
   /**
   * Export a given survey. Includes options to filter and format the results.
-  * 
+  *
   * @method exportSurveyAs
   * @param surveyID {String}
   * @param response {Object}
-  * @param listOfFilteringFunctions {Array} Prepares the results for exporting 
-  *           Each function in the array iterates through objects in the 
+  * @param listOfFilteringFunctions {Array} Prepares the results for exporting
+  *           Each function in the array iterates through objects in the
   *           survey and manipulates them, eg selects the most recent results
   * @param writer {Function} Writes a given record to a string
   */
-  // 
   function exportSurveyAs(response, surveyId, listOfFilteringFunctions, writer){
     getCollection(function(err, collection) {
       collection.find({'survey': surveyId}, function(err, cursor) {
@@ -530,11 +556,11 @@ function setup(app, db, idgen, collectionName) {
 
             // Add context entries (parcel ID, source type)
             var row = [
-              items[i].parcel_id, 
+              items[i].parcel_id,
               items[i].source.collector,
               items[i].created,
               items[i].source.type,
-              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0] 
+              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0]
             ];
 
             // Then, add the survey results
@@ -594,7 +620,7 @@ function setup(app, db, idgen, collectionName) {
   app.get('/api/surveys/:sid/kml', function(req, response) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [], KMLWriter);
-  });  
+  });
 
 } // setup()
 
@@ -603,6 +629,7 @@ module.exports = {
   listToCSVString: listToCSVString,
   filterAllResults: filterAllResults,
   filterToMostRecent: filterToMostRecent,
+  filterToRemoveResults: filterToRemoveResults,
   CSVWriter: CSVWriter,
   KMLWriter: KMLWriter
 };

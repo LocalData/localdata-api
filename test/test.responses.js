@@ -9,6 +9,8 @@ var request = require('request');
 var should = require('should');
 
 var settings = require('../settings-test.js');
+var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
+
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
@@ -38,39 +40,41 @@ suite('Responses', function () {
       }
     ]
   };
-  var data_two = {
-    "responses": [
-      {
-        "source": { "type": "mobile", "collector": "Name" },
-        "geo_info": {
-          "centroid": [ 42.331136749929435, -83.06584382779543 ],
-          "parcel_id": "06000402."
-        },
-        "parcel_id": "06000402.",
-        "responses": {
+  var dataTwo = function(){
+    return {
+      "responses": [
+        {
+          "source": { "type": "mobile", "collector": "Name" },
+          "geo_info": {
+            "centroid": [ 42.331136749929435, -83.06584382779543 ],
+            "parcel_id": "06000402."
+          },
           "parcel_id": "06000402.",
-          "use-count": "1",
-          "collector": "Some Name",
-          "site": "parking-lot",
-          "condition-1": "demolish"
-        }
-      },
-      {
-        "source": { "type": "mobile", "collector": "Name" },
-        "geo_info": {
-          "centroid": [ 42.331136749929435, -83.06584382779543 ],
-          "parcel_id": "06000403."
+          "responses": {
+            "parcel_id": "06000402.",
+            "use-count": "1",
+            "collector": "Some Name",
+            "site": "parking-lot",
+            "condition-1": "demolish"
+          }
         },
-        "parcel_id": "06000403.",
-        "responses": {
+        {
+          "source": { "type": "mobile", "collector": "Name" },
+          "geo_info": {
+            "centroid": [ 42.331136749929435, -83.06584382779543 ],
+            "parcel_id": "06000403."
+          },
           "parcel_id": "06000403.",
-          "use-count": "1",
-          "collector": "Some Name",
-          "site": "parking-lot",
-          "condition-1": "demolish"
+          "responses": {
+            "parcel_id": "06000403.",
+            "use-count": "1",
+            "collector": "Some Name",
+            "site": "parking-lot",
+            "condition-1": "demolish"
+          }
         }
-      }
-    ]
+      ]
+    };
   };
 
   var data_twenty = (function () {
@@ -149,7 +153,7 @@ suite('Responses', function () {
     var id;
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_two},
+      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo()},
                    function (error, response, body) {
         if (error) { done(error); }
         id = body.responses[0].id;
@@ -200,7 +204,8 @@ suite('Responses', function () {
       });
     });
 
-    test('Get all responses for a survey', function (done) {
+
+    test(' all responses for a survey', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
@@ -214,7 +219,6 @@ suite('Responses', function () {
         var created;
         for (i = 0; i < parsed.responses.length; i += 1) {
           parsed.responses[i].survey.should.equal(surveyId);
-
           created = Date.parse(parsed.responses[i].created);
           created.should.not.be.above(prevTime);
           prevTime = created;
@@ -223,9 +227,17 @@ suite('Responses', function () {
       });
     });
 
+    test('Filtering of results', function (done) {
+      var results = dataTwo().responses;
+      var sanitizedResults = filterToRemoveResults(results);
+      results[0].should.not.have.property('responses');
+      done();
+    });
+
+
     test('Get all responses for a specific parcel', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/' + data_twenty.responses[1].parcel_id + '/responses'},
-                  function (error, response, body) {
+       function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
@@ -251,7 +263,7 @@ suite('Responses', function () {
       });
     });
 
-    test('Get a response', function (done) {
+    test('one response', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
                   function (error, response, body) {
         should.not.exist(error);
@@ -259,6 +271,7 @@ suite('Responses', function () {
         response.should.be.json;
 
         var parsed = JSON.parse(body);
+
         parsed.response.id.should.equal(id);
         should.deepEqual(parsed.response.source, data_twenty.responses[0].source);
         should.deepEqual(parsed.response.geo_info, data_twenty.responses[0].geo_info);
