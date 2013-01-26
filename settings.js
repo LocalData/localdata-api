@@ -3,6 +3,9 @@
 
 var settings = module.exports;
 
+// Are we in debug mode?
+settings.secret = process.env.SECRET;
+
 // MongoDB
 settings.mongo_host = process.env.MONGO_HOST || 'localhost';
 settings.mongo_port = parseInt(process.env.MONGO_PORT, 10);
@@ -26,6 +29,8 @@ settings.psqlPass = process.env.PSQL_PASS;
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
+
+settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
 // Web server
 settings.port = process.env.PORT || 3000;

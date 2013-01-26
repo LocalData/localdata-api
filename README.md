@@ -13,13 +13,13 @@ Run with
 
     $ node web.js
 
-To test the API, use testclient.js:
+To test the API, use:
+
+    $ make test
+
+Our previous test setup: 
 
     $ node testclient.js seedforms
     $ node testclient.js getform FORMID
 
-See the testclient.js code for more.
-
-We're also experimenting with using mocha for tests:
-
-    $ make test
+(See the testclient.js code for more.)

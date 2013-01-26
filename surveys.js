@@ -8,9 +8,21 @@
  */
 
 var util = require('./util');
+var users = require('./users');
 var makeSlug = require('slug');
 
 
+// Trim a survey to only show non-sensitive properties
+function filterSurvey(survey) {
+  var filteredSurvey = {};
+  filteredSurvey.name = survey.name;
+  filteredSurvey.slug = survey.slug;
+  filteredSurvey.id = survey.id;
+  return filteredSurvey;
+}
+
+
+// Make sure an item has a unique slug
 function checkSlug(collection, name, index, done) {
   var slug = makeSlug(name);
   if (index > 0) {
@@ -42,69 +54,114 @@ function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
-  
+
   // Get all surveys
   // GET http://localhost:3000/api/surveys
-  app.get('/api/surveys', function(req, response) {
+  app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
+
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
-            
+
       if (handleError(err)) { return; }
-      collection.find({}, function(err, cursor) {
+      collection.find({users: { $in: [req.user._id]}}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
           response.send({surveys: items});
         });
       });
+
     });
   });
 
-  // Get a survey
+
+  // Get a survey by ID
   // GET http://localhost:3000/api/surveys/{SURVEY ID}
   app.get('/api/surveys/:sid', function(req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
       if (handleError(err)) { return; }
+
+      // Find the survey
       collection.find({id: req.params.sid}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
+
+          var survey = items[0];
+          var trimmedSurvey; 
+
+          // If there are no results, it's a 404
           if (items.length === 0) {
-            response.send();
+            response.send(404);
             return;
           }
+
+          // We should only get one result
+          // TODO: log this better
           if (items.length > 1) {
             console.log('!!! WARNING: There should only be one item with a given ID');
             console.log('!!! Found ' + items.length);
             console.log('!!! Items: ' + JSON.stringify(items));
           }
-          response.send({survey: items[0]});
+
+          // Check if the first survey returned belongs to this user.
+          if (survey.hasOwnProperty("users")) {
+
+            // Check if the request is authenticated
+            if (req.isAuthenticated()) {
+              if (survey.users.indexOf(req.user._id) != -1) {
+                response.send({survey: items[0]});
+                return;
+              }
+
+            }else {
+
+              response.send({survey: items[0]});
+              return;
+
+            }
+          }
+
+          // Something has gone wrong if we get this far
+          // TODO: log this better (rare case tho)
+          response.send(500);
+          return;
+
         });
       });
     });
   });
 
   // Get the survey ID associated with a slug
+  // Not authenticated.
   // GET http://localhost:3000/api/slugs/{SLUG}
   app.get('/api/slugs/:slug', function (req, response) {
     var handleError = util.makeErrorHandler(response);
     getCollection(function (err, collection) {
       if (handleError(err)) { return; }
+
+      // Find the survey by slug
       collection.find({slug: req.params.slug}, function (err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function (err, items) {
           if (handleError(err)) { return; }
+
+          // If it's not found, send a 404.
           if (items.length === 0) {
             response.send(404);
             return;
           }
 
+          // If we found more than one, that's bad
+          // TODO: throw an exception / log this better (rare case, tho)
           if (items.length > 1) {
             console.log('!!! WARNING: There should only be one item with a given slug');
             console.log('!!! Found ' + items.length);
             console.log('!!! Items: ' + JSON.stringify(items));
           }
+
+          // Send the ID of first survey we found.
           response.send({
             survey: items[0].id
           });
@@ -113,13 +170,17 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+
   // Add a survey
   // POST http://localhost:3000/api/surveys
-  app.post('/api/surveys', function(req, response) {
+  app.post('/api/surveys', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
+
     var surveys = req.body.surveys;
+    
     var total = surveys.length;
     var count = 0;
+
 
     getCollection(function(err, collection) {
 
@@ -128,6 +189,14 @@ function setup(app, db, idgen, collectionName) {
         var id = idgen();
         survey.id = id;
 
+        // For security, delete anything sent in under the user key
+        delete survey.users;
+
+        // Then, we set the user assigned to the survey here
+        survey.users = [req.user._id];
+
+        // Now, we give the survey a slug.
+        // We need check to see if the slug is unique.
         checkSlug(collection, survey.name, 0, function (err, slug) {
           if (handleError(err)) { return; }
           survey.slug = slug;
@@ -150,7 +219,7 @@ function setup(app, db, idgen, collectionName) {
   // DELETE http://localhost:5000/api/surveys/{SURVEY ID}
   // TODO: We should probably clean up the objects from other collections that
   // pertain only to this survey.
-  app.del('/api/surveys/:sid', function(req, response) {
+  app.del('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
     var sid = req.params.sid;
     getCollection(function(err, collection) {
       collection.remove({id: sid}, {safe: true}, function(error, count) {
@@ -172,5 +241,6 @@ function setup(app, db, idgen, collectionName) {
 
 module.exports = {
   setup: setup,
-  checkSlug: checkSlug
+  checkSlug: checkSlug,
+  filterSurvey: filterSurvey
 };
