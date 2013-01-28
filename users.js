@@ -9,7 +9,6 @@ var mongo = require('mongodb');
 var settings = require('./settings.js');
 
 var passport = require('passport');
-var FacebookStrategy = require('passport-facebook').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
 
 module.exports = {};
