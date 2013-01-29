@@ -34,6 +34,46 @@ function clean(val) {
   return '';
 }
 
+function CustomParcelArrayBuilder() {
+  this.output = [];
+}
+
+CustomParcelArrayBuilder.prototype.addParcel = function (id, address, polygon, centroid, type) {
+  this.output.push({
+    parcelId: id,
+    address: address,
+    polygon: polygon,
+    centroid: centroid,
+    type: type
+  });
+};
+
+CustomParcelArrayBuilder.prototype.generate = function () {
+  return this.output;
+};
+
+function GeoJSONBuilder() {
+  this.features = [];
+}
+
+GeoJSONBuilder.prototype.addParcel = function (id, address, geometry, centroid, type) {
+  this.features.push({
+    type: 'Feature',
+    id: id,
+    geometry: geometry,
+    properties: {
+      address: address,
+      centroid: centroid
+    }
+  });
+};
+
+GeoJSONBuilder.prototype.generate = function () {
+  return {
+    type: 'FeatureCollection',
+    features: this.features
+  };
+};
 
 /*
  * app: express server
@@ -51,12 +91,8 @@ function setup(app, settings) {
   // Get parcels
   // Filter to include only parcels inside a bounding box or only parcels that
   // intersect a point.
-  // We do not allow filtering by both, and we require one of the filters.
-  // GET http://localhost:3000/api/parcels?bbox=-{SW_LON},{SW_LAT},{NE_LON},{NE_LAT}
-  // GET http://localhost:3000/api/parcels?bbox=-83.0805,42.336,-83.08,42.34
-  // GET http://localhost:3000/api/parcels?lon={LONGITUDE}&lat={LATITUDE}
-  // GET http://localhost:3000/api/parcels?lon=-83.08076&lat=42.338
-  app.get('/api/parcels', function(req, response) {
+  // Use outputBuilder to generate the appropriate type of output
+  function getParcels(req, response, outputBuilder) {
     var bbox = req.query.bbox;
     var lon = req.query.lon;
     var lat = req.query.lat;
@@ -131,15 +167,11 @@ function setup(app, settings) {
     query
     .on('row', function (row, result) {
       try {
-        
-        output.push({
-          parcelId: clean(row.object_id),
-          address: clean(row.name1) + ' ' + clean(row.name2),
-          polygon: JSON.parse(row.polygon),
-          centroid: JSON.parse(row.centroid),
-          type: clean(row.type)
-        });
-
+        outputBuilder.addParcel(clean(row.object_id),
+                                clean(row.name1) + ' ' + clean(row.name2),
+                                JSON.parse(row.polygon),
+                                JSON.parse(row.centroid),
+                                clean(row.type));
       } catch (e) {
         console.log(row);
         error = e;
@@ -154,10 +186,35 @@ function setup(app, settings) {
         console.log(error);
         response.send(500);
       } else {
-        response.send(output);
+        response.send(outputBuilder.generate());
       }
     });
+  }
+
+  // Get parcels
+  // Filter to include only parcels inside a bounding box or only parcels that
+  // intersect a point.
+  // We do not allow filtering by both, and we require one of the filters.
+  // GET http://localhost:3000/api/parcels?bbox=-{SW_LON},{SW_LAT},{NE_LON},{NE_LAT}
+  // GET http://localhost:3000/api/parcels?bbox=-83.0805,42.336,-83.08,42.34
+  // GET http://localhost:3000/api/parcels?lon={LONGITUDE}&lat={LATITUDE}
+  // GET http://localhost:3000/api/parcels?lon=-83.08076&lat=42.338
+  app.get('/api/parcels', function(req, response) {
+    return getParcels(req, response, new CustomParcelArrayBuilder());
   });
+
+  // Get parcels as a GeoJSON FeatureCollection
+  // Filter to include only parcels inside a bounding box or only parcels that
+  // intersect a point.
+  // We do not allow filtering by both, and we require one of the filters.
+  // GET http://localhost:3000/api/parcels?bbox=-{SW_LON},{SW_LAT},{NE_LON},{NE_LAT}
+  // GET http://localhost:3000/api/parcels?bbox=-83.0805,42.336,-83.08,42.34
+  // GET http://localhost:3000/api/parcels?lon={LONGITUDE}&lat={LATITUDE}
+  // GET http://localhost:3000/api/parcels?lon=-83.08076&lat=42.338
+  app.get('/api/parcels.geojson', function(req, response) {
+    return getParcels(req, response, new GeoJSONBuilder());
+  });
+
 }
 
 module.exports = {
