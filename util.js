@@ -26,11 +26,27 @@ function isArray(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]';
 }
 
+// Parse the paging information from a request's query parameters.
+// Returns null if we could not determine paging parameters.
+function getPagingParams(request) {
+  var startIndex = parseInt(request.query.startIndex, 10);
+  var count = parseInt(request.query.count, 10);
+
+  if (isNaN(startIndex) || isNaN(count)) {
+    return null;
+  }
+
+  return {
+    startIndex: startIndex,
+    count: count
+  };
+}
 
 module.exports = {
   handleError: handleError,
   makeErrorHandler: makeErrorHandler,
-  isArray: isArray
+  isArray: isArray,
+  getPagingParams: getPagingParams
 }
 
  

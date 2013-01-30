@@ -76,15 +76,15 @@ function listToCSVString(row, headers, maxEltsInCell) {
             row[i] = '"' + row[i] + '"';
           }
 
-          arr.push(row[i]);      
+          arr.push(row[i]);
         }else {
-          arr.push('');          
+          arr.push('');
         }
         
         len = 1;
       } else {
         // If it's an array of responses, join them with a semicolon
-        arr.push(row[i].join(';'));          
+        arr.push(row[i].join(';'));
       }
     }
   }
@@ -92,27 +92,27 @@ function listToCSVString(row, headers, maxEltsInCell) {
 }
 
 
-/* 
+/*
  * Turn a list of parcel attributes into a KML string
- */ 
+ */
 function listToKMLString(row, headers, maxEltsInCell) {
   var i;
   var elt = "\n<Placemark>";
   elt += "<name></name>";
   elt += "<description></description>";
 
-  // The coordinates come escaped, so we need to unescape them: 
-  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>"; 
+  // The coordinates come escaped, so we need to unescape them:
+  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>";
 
   elt += "<ExtendedData>";
   for (i = 0; i < row.length; i += 1) {
       elt += "<Data name=\"" + headers[i] + "\">";
-      elt += "<displayName>" + headers[i] + "</displayName>";  
+      elt += "<displayName>" + headers[i] + "</displayName>";
       
       if(row[i] !== undefined) {
-        elt += "<value>" + row[i] + "</value>";              
+        elt += "<value>" + row[i] + "</value>";
       }else {
-        elt += "<value>" + "</value>";              
+        elt += "<value>" + "</value>";
       }
       elt += "</Data>";
   }
@@ -245,8 +245,8 @@ function filterToMostRecent(items) {
 
 
 /*
- * Filter the results to remove any of the answers and personally identifying 
- * information. 
+ * Filter the results to remove any of the answers and personally identifying
+ * information. You'll just see where the results are, not the actual results.
  */
 function filterToRemoveResults(items) {
   var i;
@@ -262,12 +262,6 @@ function filterToRemoveResults(items) {
     sanitizedItem.parcel_id = item.parcel_id;
     sanitizedItem.geo_info = item.geo_info;
     sanitizedItem.parcel_id = item.parcel_id;
-
-    // console.log("testing========");
-    // console.log(item);
-    // console.log("--");
-    // console.log(latest);
-    // console.log("----");
 
     items[i] = sanitizedItem;
   }
@@ -293,9 +287,24 @@ function setup(app, db, idgen, collectionName) {
   // GET http://localhost:3000/api/surveys/1/responses
   app.get('/api/surveys/:sid/responses', function(req, response) {
     var surveyid = req.params.sid;
+
+    // Get paging parameters, if any
+    var paging = util.getPagingParams(req);
+
+    // Allow ascending or descending order according to creation time
+    var sort = req.query.sort;
+    if (sort !== 'asc') {
+      sort = 'desc';
+    }
+
     getCollection(function(err, collection) {
+      var options = {sort: [['created', sort]]};
+      if (paging !== null) {
+        options.skip = paging.startIndex;
+        options.limit = paging.count;
+      }
       collection.find({'survey': surveyid},
-                      {'sort': [['created', 'desc']]},
+                      options,
                       function(err, cursor) {
         if (err) {
           console.log('Error retrieving responses for survey ' + surveyid + ': ' + err.message);
@@ -303,17 +312,7 @@ function setup(app, db, idgen, collectionName) {
           return;
         }
         cursor.toArray(function(err, items) {
-
-          // If the user is authenticated, send all the results.
-          if(req.isAuthenticated()) {
-            console.log("Sending items");
-            response.send({responses: items});
-          }else {
-            // If not, we trim the results and then send them back
-            console.log("Trying to filter");
-            var filteredItems = filterToRemoveResults(items);
-            response.send({responses: filteredItems});
-          }
+          response.send({responses: items});
         });
       });
     });
@@ -394,11 +393,17 @@ function setup(app, db, idgen, collectionName) {
   // Add responses for a survey.
   // POST http://localhost:3000/api/surveys/{SURVEY ID}/reponses
   // POST http://localhost:3000/api/surveys/1/reponses
-  // Expects data in the format: 
+  // Expects data in the format:
   // responses: [
   //  { parcels: [ {parcel_id: '10', responses: {'Q0': 0, 'Q1': 3}} ]}, ...]
   app.post('/api/surveys/:sid/responses', function(req, response) {
     var resps = req.body.responses;
+
+    if (resps === undefined) {
+      response.send(400);
+      return;
+    }
+
     var total = resps.length;
     
     console.log(resps);
@@ -475,7 +480,7 @@ function setup(app, db, idgen, collectionName) {
       response.send(400);
     }
 
-    for (i = 0, ln = coords.length; i < ln; i += 1) { 
+    for (i = 0, ln = coords.length; i < ln; i += 1) {
       coords[i] = parseFloat(coords[i]);
     }
     
@@ -504,16 +509,15 @@ function setup(app, db, idgen, collectionName) {
 
   /**
   * Export a given survey. Includes options to filter and format the results.
-  * 
+  *
   * @method exportSurveyAs
   * @param surveyID {String}
   * @param response {Object}
-  * @param listOfFilteringFunctions {Array} Prepares the results for exporting 
-  *           Each function in the array iterates through objects in the 
+  * @param listOfFilteringFunctions {Array} Prepares the results for exporting
+  *           Each function in the array iterates through objects in the
   *           survey and manipulates them, eg selects the most recent results
   * @param writer {Function} Writes a given record to a string
   */
-  // 
   function exportSurveyAs(response, surveyId, listOfFilteringFunctions, writer){
     getCollection(function(err, collection) {
       collection.find({'survey': surveyId}, function(err, cursor) {
@@ -552,11 +556,11 @@ function setup(app, db, idgen, collectionName) {
 
             // Add context entries (parcel ID, source type)
             var row = [
-              items[i].parcel_id, 
+              items[i].parcel_id,
               items[i].source.collector,
               items[i].created,
               items[i].source.type,
-              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0] 
+              items[i].geo_info.centroid[1] + ',' + items[i].geo_info.centroid[0]
             ];
 
             // Then, add the survey results
@@ -616,7 +620,7 @@ function setup(app, db, idgen, collectionName) {
   app.get('/api/surveys/:sid/kml', function(req, response) {
     var sid = req.params.sid;
     exportSurveyAs(response, sid, [], KMLWriter);
-  });  
+  });
 
 } // setup()
 

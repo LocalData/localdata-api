@@ -7,12 +7,10 @@ var mongo = require('mongodb');
 var uuid = require('node-uuid');
 var fs = require('fs');
 var s3 = require('connect-s3');
-var settings = require('./settings.js');
 
 // Login requirements
 var passport = require('passport');
 var util = require('util');
-var FacebookStrategy = require('passport-facebook').Strategy;
 
 // Routes are split into separate modules.
 var users = require('./users');
@@ -24,6 +22,8 @@ var scans = require('./scans');
 var parcels = require('./parcels');
 
 // Names of the MongoDB collections we use
+// TODO:
+// Should these be in settings? Yes.
 var USERS = 'usersCollection';
 var RESPONSES = 'responseCollection';
 var FORMS = 'formCollection';
@@ -85,6 +85,9 @@ function textParser(req, res, next) {
 // https://github.com/visionmedia/express/issues/664
 app.set('jsonp callback', true);
 
+// Use a compact JSON representation
+app.set('json spaces', 0);
+
 // Allows clients to simulate DELETE and PUT
 // (some clients don't support those verbs)
 // http://stackoverflow.com/questions/8378338/what-does-connect-js-methodoverride-do
@@ -118,9 +121,6 @@ app.use(function(req, res, next) {
   next();
 });
 
-// Unique ID generator
-var idgen = uuid.v1;
-
 // For sending local static files
 function sendFile(response, filename, type) {
   fs.readFile('static/' + filename, function(err, data) {
@@ -149,57 +149,6 @@ function setupRoutes(db, settings) {
   surveys.setup(app, db, idgen, SURVEYS);
   scans.setup(app, db, idgen, SCANIMAGES, settings);
   parcels.setup(app, settings);
-
-  // Serve our internal operational management app
-  // Should be done BEFORE passport so for efficency 
-  //    (otherwise each request)
-  // TODO: move this to S3
-  var opsPrefix = '/ops';
-  app.use(function (req, res, next) {
-    var path;
-    var url = req.url;
-
-    // If we aren't in /ops, don't do anything. 
-    if (url.length < opsPrefix.length ||
-       url.substr(0, opsPrefix.length) !== opsPrefix) {
-      return next();
-    }
-
-    // Get the path following /ops and serve the correct files
-    path = url.substr(opsPrefix.length);
-    if (path === '' || path === '/') {
-      res.redirect(opsPrefix + '/surveys.html');
-    } else {
-      var index = path.lastIndexOf('.');
-      var format = '';
-      if (index > -1) {
-        format = path.substring(index);
-      }
-
-      var type;
-      switch (format) {
-        case '.html':
-          type = 'text/html';
-        break;
-        case '.css':
-          type = 'text/css';
-        break;
-        case '.js':
-          type = 'application/javascript';
-        break;
-        case '.gif':
-          type = 'image/gif';
-        break;
-        case '.png':
-          type = 'image/png';
-        break;
-        default:
-          type = 'text/html';
-      }
-
-      sendFile(res, path, type);
-    }
-  });
 
   // Serve the mobile collection app from /mobile
   app.use(s3({
@@ -258,6 +207,10 @@ function ensureStructure(db, callback) {
       function indexCreated(done) {
         // Index the creation date, which we use to sort
         collection.ensureIndex('created', done);
+      },
+      function indexSurvey(done) {
+        // Index the survey ID, which we use to look up sets of responses
+        collection.ensureIndex('survey', done);
       },
       function indexParcelId(done) {
         // Index the parcel ID

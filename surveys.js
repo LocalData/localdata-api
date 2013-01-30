@@ -13,12 +13,12 @@ var makeSlug = require('slug');
 
 
 // Trim a survey to only show non-sensitive properties
-function trimSurvey(survey) {
-  var trimmedSurvey = {};
-  trimmedSurvey.name = survey.name;
-  trimmedSurvey.slug = survey.slug;
-  trimmedSurvey.id = survey.id;
-  return trimmedSurvey;
+function filterSurvey(survey) {
+  var filteredSurvey = {};
+  filteredSurvey.name = survey.name;
+  filteredSurvey.slug = survey.slug;
+  filteredSurvey.id = survey.id;
+  return filteredSurvey;
 }
 
 
@@ -109,17 +109,11 @@ function setup(app, db, idgen, collectionName) {
           if (survey.hasOwnProperty("users")) {
 
             // Check if the request is authenticated
-            if (req.isAuthenticated()) { 
+            if (req.isAuthenticated()) {
               if (survey.users.indexOf(req.user._id) != -1) {
                 response.send({survey: items[0]});
                 return;
               }
-            // Used to be, we would just send a 403.
-            // Now, we send some results.
-            // else { 
-            //   response.send(403);
-            //   return;
-            // };
 
             }else {
 
@@ -127,11 +121,11 @@ function setup(app, db, idgen, collectionName) {
               return;
 
             }
-          };
+          }
 
           // Something has gone wrong if we get this far
           // TODO: log this better (rare case tho)
-          response.send(500); 
+          response.send(500);
           return;
 
         });
@@ -182,12 +176,8 @@ function setup(app, db, idgen, collectionName) {
   app.post('/api/surveys', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
 
-    console.log("Creating survey");
-
     var surveys = req.body.surveys;
     
-    console.log(surveys);
-
     var total = surveys.length;
     var count = 0;
 
@@ -205,8 +195,8 @@ function setup(app, db, idgen, collectionName) {
         // Then, we set the user assigned to the survey here
         survey.users = [req.user._id];
 
-        // Now, we give the survey a slug. 
-        // We need check to see if the slug is unique. 
+        // Now, we give the survey a slug.
+        // We need check to see if the slug is unique.
         checkSlug(collection, survey.name, 0, function (err, slug) {
           if (handleError(err)) { return; }
           survey.slug = slug;
@@ -272,5 +262,5 @@ function setup(app, db, idgen, collectionName) {
 module.exports = {
   setup: setup,
   checkSlug: checkSlug,
-  trimSurvey: trimSurvey
+  filterSurvey: filterSurvey
 };

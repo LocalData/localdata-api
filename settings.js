@@ -4,8 +4,7 @@
 var settings = module.exports;
 
 // Are we in debug mode?
-settings.debug = process.env.DEBUG === 'true';
-settings.secret = process.env.SECRET || 'Zsqe>8kQjUmHDyTiY4veXaQXxZtEK2N^osY3Uw9FPZdnJbdZbp';
+settings.secret = process.env.SECRET;
 
 // MongoDB
 settings.mongo_host = process.env.MONGO_HOST || 'localhost';
@@ -31,8 +30,6 @@ settings.psqlPass = process.env.PSQL_PASS;
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
 
-settings.FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID;
-settings.FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
 // Web server

@@ -9,7 +9,6 @@ var mongo = require('mongodb');
 var settings = require('./settings.js');
 
 var passport = require('passport');
-var FacebookStrategy = require('passport-facebook').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
 
 module.exports = {};
@@ -23,19 +22,10 @@ function setup(app, db, idgen, collectionName) {
 
   var User = {};
 
-  // Dangerous! 
-  User.wipe = function(done) {
-    getCollection(function(error, collection) {
-      collection.remove({}, function(error, response){
-        //done();
-      });
-    });
-  };
-
   // Sanitize user input to save to the database
   //  Keeps only the fields we wants
   //  Hashes the password
-  // 
+  //
   // @param {Object} user
   User.sanitizeToSave = function(user) {
     var safeUser = {};
@@ -58,12 +48,15 @@ function setup(app, db, idgen, collectionName) {
   };
 
   // Find a given user
-  // @param {Object} query An object with a "username" parameter.
+  // @param {Object} query An object with a 'username' parameter.
   //  username should be an email
-  // @param {Function} done 
+  // @param {Function} done
   User.findOne = function(query, done) {
     getCollection(function(error, collection) {
-      collection.findOne({email: query.email}, function(error, user){ 
+      collection.findOne({email: query.email}, function(error, user){
+        if(error) {
+          done(error);
+        }
 
         if(user) {
           user.validPassword = function(password) {
@@ -81,19 +74,25 @@ function setup(app, db, idgen, collectionName) {
 
   // Create a given user
   //
-  // @param {Object} query An object with a "username", "name", and "password" 
-  //  parameters. Username must be an email. 
-  // @param {Function} done 
+  // @param {Object} query An object with a 'username', 'name', and 'password'
+  //  parameters. Username must be an email.
+  // @param {Function} done
   User.create = function(query, done) {
-    if(!query.email || query.email === "") {
-      // console.log("No email");
-      done({code: 400, err: "Email required"}, null);
+    if(!query.email || query.email === '') {
+      done({
+        code: 400,
+        name: 'UserCreationError',
+        message: 'Email required'
+      }, null);
       return;
     }
 
-    if(!query.password || query.password === "") {
-      // console.log("No password");
-      done({code: 400, err: "Password required"}, null);
+    if(!query.password || query.password === '') {
+      done({
+        code: 400,
+        name:'UserCreationError',
+        message: 'Password required'
+      }, null);
       return;
     }
 
@@ -109,11 +108,11 @@ function setup(app, db, idgen, collectionName) {
         if(error) {
           if(error.code === 11000) {
             // Mongo duplicate key error
-            done({code: 400, err: "An account with this email aready exists"});
+            done({code: 400, err: 'An account with this email aready exists'});
             return;
           }
           // Some other error
-          done({code: 400, err: "Sorry, an error occurred. Please try again."});
+          done({code: 500, err: 'Sorry, an error occurred. Please try again.'});
           return;
         }else {
           done(null, documents[0]);
@@ -131,8 +130,8 @@ function setup(app, db, idgen, collectionName) {
   // @param {Object} query A user object, with ._id property
   // @param {Function} done
   User.update = function(query, done) {
-    if(!query.email || query.email === "") {
-      done({code: 400, err: "Email required"}, null);
+    if(!query.email || query.email === '') {
+      done({code: 400, err: 'Email required'}, null);
       return;
     }
 
@@ -147,10 +146,11 @@ function setup(app, db, idgen, collectionName) {
       collection.save(safeQuery, {w: 1}, function(error, wc, something) {
         if(error) {
           // TODO: Log
-          console.log("error updating: ", error.err, error.code);
+          console.log('error updating: ', error.err, error.code);
           done(error);
           return;
         }
+
         console.log(error);
         done(null);
       });
@@ -173,9 +173,9 @@ function setup(app, db, idgen, collectionName) {
   //   To support persistent login sessions, Passport needs to be able to
   //   serialize users into and deserialize users out of the session.  Typically,
   //   this will be as simple as storing the user ID when serializing, and finding
-  //   the user by ID when deserializing.  
+  //   the user by ID when deserializing.
   passport.serializeUser(function(user, done) {
-    console.log("Serializing");
+    console.log('Serializing');
 
     // We don't want to be passing around sensitive stuff
     // Like password hashes
@@ -188,7 +188,7 @@ function setup(app, db, idgen, collectionName) {
   });
 
   passport.deserializeUser(function(user, done) {
-    console.log("Deserializing");
+    console.log('Deserializing');
 
     // We don't want to be passing around sensitive stuff
     // Like password hashes
@@ -200,28 +200,26 @@ function setup(app, db, idgen, collectionName) {
     return done(null, safeUser);
   });
 
-  // Use the local authentication strategy in Passport. 
+  // Use the local authentication strategy in Passport.
   passport.use(new LocalStrategy({
       usernameField: 'email',
       passwordField: 'password'
     },
     function(username, password, done) {
-      console.log("Checking user");
-      
       User.findOne({ email: username }, function(error, user) {
         if (error) { return done(error); }
         if(!user) {
-          console.log("Login: user not found");
-          return done(null, false, { 
-            "name": "BadRequestError",
-            "message": "Account not found" 
+          console.log('Login: user not found');
+          return done(null, false, {
+            'name': 'BadRequestError',
+            'message': 'Account not found'
           });
         }
         if(!user.validPassword(password)) {
-          console.log("Login: password incorrect");
-          return done(null, false, { 
-            "name": "BadRequestError",
-            "message": "Password incorrect" 
+          console.log('Login: password incorrect');
+          return done(null, false, {
+            'name': 'BadRequestError',
+            'message': 'Password incorrect'
           });
         }
 
@@ -235,11 +233,11 @@ function setup(app, db, idgen, collectionName) {
   // Cheap way to save the URL parameter
   app.get('/auth/return', function(req, res){
     req.session.redirectTo = req.query.redirectTo;
-    res.redirect("/login");
+    res.redirect('/login');
   });
 
   // GET /logout
-  //  Does what you think it does. 
+  //  Does what you think it does.
   app.get('/logout', function(req, res){
     req.logout();
     res.redirect('/');
@@ -249,11 +247,11 @@ function setup(app, db, idgen, collectionName) {
   // Log the user in
   app.post('/api/login', function(req, response, next) {
     passport.authenticate(
-      'local', 
+      'local',
       function(error, user, info) {
 
-        // If there's an error, send back a generic error. 
-        // Note that errors are not things like "incorrect password"
+        // If there's an error, send back a generic error.
+        // Note that errors are not things like 'incorrect password'
         if(error) {
           return next(error);
         }
@@ -262,15 +260,15 @@ function setup(app, db, idgen, collectionName) {
         if(user) {
           req.logIn(user, function(error) {
             if (error) { return next(error); }
-            response.redirect("/api/user");
+            response.redirect('/api/user');
           });
           return;
         }
 
         // If there was a problem logging the user in, it'll appear here.
         if(info) {
-          console.log("Info ", info);
-          response.send(200, info);
+          console.log('Info ', info);
+          response.send(400, info.message);
         }
       })(req, response, next);
 
@@ -279,16 +277,17 @@ function setup(app, db, idgen, collectionName) {
   // POST /api/user
   // Create a user
   app.post('/api/user', function(req, response){
-    console.log("API: Create a user");
-
     User.create(req.body, function(error, results) {
       if(error) {
-        response.send(error.code, error.err);
+        // TODO
+        // Log better
+        response.send(error.code, "We're sorry, an error has occurred");
       }else {
         req.logIn(results, function(error) {
           if (error) {
-            //TODO
-            console.log("Unexpected error", error);
+            // TODO
+            // Log beter
+            console.log('Unexpected error', error);
             response.send(401);
           }
 

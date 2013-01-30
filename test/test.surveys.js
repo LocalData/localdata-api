@@ -93,14 +93,14 @@ suite('Surveys', function () {
   });
 
   suite("Utilities:", function() {
-    test('Trim a survey of sensitive data', function (done) {
-      var trimmedSurvey = surveys.trimSurvey(sampleSurvey);
+    test('Filter sensitive data from a survey', function (done) {
+      var filteredSurvey = surveys.filterSurvey(sampleSurvey);
       
-      trimmedSurvey.should.have.property('name');
-      trimmedSurvey.should.have.property('slug');
-      trimmedSurvey.should.have.property('id');
+      filteredSurvey.should.have.property('name');
+      filteredSurvey.should.have.property('slug');
+      filteredSurvey.should.have.property('id');
 
-      trimmedSurvey.should.not.have.property('users');
+      filteredSurvey.should.not.have.property('users');
 
       done();
     });
@@ -217,22 +217,12 @@ suite('Surveys', function () {
         assert.ok(parsed.survey, 'Parsed response body should have a property called "survey".');
 
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
-        assert.equal(data_one.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
-        assert.deepEqual(data_one.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
+        assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
+        assert.deepEqual(data_two.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
 
-        done();
-      });
-    });
-
-    test('Getting a survey the user does not own', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
-        // TODO
-        // We expect that the user will get basic survey information (survey name)
-        // Response will still be 200 (??? -- is this the best?)
-        assert.equal(response.statusCode, 403, 'Status should be 403 forbidden. Status is ' + response.statusCode);
         done();
       });
     });
