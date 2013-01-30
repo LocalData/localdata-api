@@ -105,29 +105,9 @@ function setup(app, db, idgen, collectionName) {
             console.log('!!! Items: ' + JSON.stringify(items));
           }
 
-          // Check if the first survey returned belongs to this user.
-          if (survey.hasOwnProperty("users")) {
-
-            // Check if the request is authenticated
-            if (req.isAuthenticated()) {
-              if (survey.users.indexOf(req.user._id) != -1) {
-                response.send({survey: items[0]});
-                return;
-              }
-
-            }else {
-
-              response.send({survey: items[0]});
-              return;
-
-            }
-          }
-
-          // Something has gone wrong if we get this far
-          // TODO: log this better (rare case tho)
-          response.send(500);
+          // Send the survey
+          response.send({survey: items[0]});
           return;
-
         });
       });
     });
