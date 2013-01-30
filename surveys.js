@@ -89,7 +89,7 @@ function setup(app, db, idgen, collectionName) {
           if (handleError(err)) { return; }
 
           var survey = items[0];
-          var trimmedSurvey; 
+          var trimmedSurvey;
 
           // If there are no results, it's a 404
           if (items.length === 0) {
@@ -181,7 +181,6 @@ function setup(app, db, idgen, collectionName) {
     var total = surveys.length;
     var count = 0;
 
-
     getCollection(function(err, collection) {
 
       // Iterate over each survey
@@ -218,18 +217,26 @@ function setup(app, db, idgen, collectionName) {
   
   // Update a survey
   // PUT http://localhost:3000/api/surveys/:id
-  app.put('/api/surveys/:sid', function(req, response) {
+  app.put('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
     var handleError = util.makeErrorHandler(response);
     var surveyId = req.params.sid;
     var survey = req.body.survey;
-    
+
+    // Mongo won't let us save it with the _id
+    delete survey._id;
+
     getCollection(function(err, collection) {
       if (handleError(err)) { return; }
-      collection.findAndModify({'survey': surveyId},
+      collection.findAndModify({'id': surveyId},
                                {_id: 1},
                                survey,
-                               {new: true}, function(err, object) {
-        response.send({scan: object});
+                               {new: true}, function(error, object) {
+        if(error) {
+          console.log(error);
+          response.send(500);
+        }else {
+          response.send({survey: object});
+        }
       });
     });
   });

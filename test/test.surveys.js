@@ -113,8 +113,8 @@ suite('Surveys', function () {
 
     test('Posting JSON to /surveys', function (done) {
       request.post({url: url, json: data_two}, function (error, response, body) {
-        assert.ifError(error);
-        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
 
         var i;
         for (i = 0; i < data_two.surveys.length; i += 1) {
@@ -236,12 +236,21 @@ suite('Surveys', function () {
 
     test('PUT JSON to /surveys', function (done) {
       request.post({url: url, json: data_two}, function (error, response, body) {
-        assert.ifError(error);
-        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
 
-        console.log("PUT BODY ----------", body);
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
 
-        request.put({url: url, json: data_two}, function (error, response, body) {
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          json: {'survey': surveyToChange}
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          assert(body.survey.name === 'new name');
           done();
         });
       });
