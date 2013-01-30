@@ -225,6 +225,26 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+  
+  // Update a survey
+  // PUT http://localhost:3000/api/surveys/:id
+  app.put('/api/surveys/:sid', function(req, response) {
+    var handleError = util.makeErrorHandler(response);
+    var surveyId = req.params.sid;
+    var survey = req.body.survey;
+    
+    getCollection(function(err, collection) {
+      if (handleError(err)) { return; }
+      collection.findAndModify({'survey': surveyId},
+                               {_id: 1},
+                               survey,
+                               {new: true}, function(err, object) {
+        response.send({scan: object});
+      });
+    });
+  });
+
+
   // Delete a survey
   // DELETE http://localhost:5000/api/surveys/{SURVEY ID}
   // TODO: We should probably clean up the objects from other collections that

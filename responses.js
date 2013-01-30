@@ -5,9 +5,9 @@
  * ==================================================
  * Responses
  * ==================================================
- * 
+ *git 
  * Collects responses from web, mobile, and paper forms.
- * 
+ *
  * Data structure for paper-originating response:
  * responses: [
  *   { parcel_id: "3728049",
@@ -26,7 +26,7 @@
  *     source : {type : "mobile"}
  *   }
  * ]
- *   
+ *
  */
 
 var util = require('./util');
@@ -35,7 +35,7 @@ var handleError = util.handleError;
 var isArray = util.isArray;
 
 
-/* Export helpers ........................................................................*/
+/* Export helpers ...........................................................*/
 
 /*
  * Turn a list of parcel attributes into a comma-separated string.

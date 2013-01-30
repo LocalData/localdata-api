@@ -19,7 +19,7 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
 
-  // Fake log in the user. 
+  // Fake log in the user.
   users.ensureAuthenticated = function(req, res, next) {
     req.user = { _id: "1" };
     return next();
@@ -237,6 +237,25 @@ suite('Surveys', function () {
       });
     });
 
+  });
+
+  suite('PUT', function () {
+    var url = BASEURL + '/surveys';
+
+    var surveyId;
+
+    test('PUT JSON to /surveys', function (done) {
+      request.post({url: url, json: data_two}, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+
+        console.log("PUT BODY ----------", body);
+
+        request.put({url: url, json: data_two}, function (error, response, body) {
+          done();
+        });
+      });
+    });
   });
 
   suite('DEL', function () {
