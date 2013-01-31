@@ -111,6 +111,17 @@ app.use(function(req, res, next) {
 });
 app.use(express.bodyParser());
 
+// For Ember :-\
+app.use(function(err, req, res, next) {
+    if (err.message == 'invalid json')  {
+        next()
+    } else {
+        next(err)
+    }
+});
+
+
+
 // Let's compress everything!
 app.use(express.compress());
 

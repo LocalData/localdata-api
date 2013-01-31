@@ -57,13 +57,13 @@ function setup(app, db, idgen, collectionName) {
 
   // Get all surveys
   // GET http://localhost:3000/api/surveys
-  app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
+  app.get('/api/surveys', function(req, response) {
 
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
 
       if (handleError(err)) { return; }
-      collection.find({users: { $in: [req.user._id]}}, function(err, cursor) {
+      collection.find({}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
