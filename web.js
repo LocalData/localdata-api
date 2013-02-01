@@ -329,7 +329,7 @@ function run(settings, cb) {
                                                           { auto_reconnect: true }), {
       w: 1,
       safe: true,
-      native_parser: true
+      native_parser: settings.mongo_native_parser
     });
     setupRoutes(db, settings);
   }

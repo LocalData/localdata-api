@@ -11,6 +11,7 @@ var settings = module.exports;
 settings.mongo_host = 'localhost';
 settings.mongo_port = 27017;
 settings.mongo_db = 'scratchdb';
+settings.mongo_native_parser = false;
 
 // S3
 settings.s3_key = process.env.S3_KEY || 'FAKE_KEY';
