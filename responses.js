@@ -138,7 +138,6 @@ function KMLWriter(response, rows, headers, maxEltsInCell){
   response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
   response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
     
-  console.log(rows);
   // Turn each row into a KML line
   for (i = 0; i < rows.length; i++) {
     response.write(listToKMLString(rows[i], headers, maxEltsInCell));
@@ -213,12 +212,6 @@ function filterToMostRecent(items) {
   for (i=0; i < items.length; i += 1) {
     var item = items[i];
     var parcelId = item.parcel_id;
-    
-    // console.log("testing========");
-    // console.log(item);
-    // console.log("--");
-    // console.log(latest);
-    // console.log("----");
     
     if (latest[parcelId] === undefined){
       // If there isn't a most recent result yet, just add it
@@ -405,10 +398,6 @@ function setup(app, db, idgen, collectionName) {
     }
 
     var total = resps.length;
-    
-    console.log(resps);
-    console.log('Adding ' + total + ' responses to the database.');
-    
     var count = 0;
     getCollection(function(err, collection) {
       var surveyId = req.params.sid;
@@ -434,11 +423,9 @@ function setup(app, db, idgen, collectionName) {
         
         // Add response to database.
         collection.insert(resp, function() {
-          console.log(resp);
           // Check if we've added all of them.
           count += 1;
           if (count === total) {
-            console.log('Created ' + total + 'items. Returning.');
             response.send({responses: resps}, 201);
           }
         });
