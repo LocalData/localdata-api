@@ -328,7 +328,8 @@ function run(settings, cb) {
                                                           settings.mongo_port,
                                                           { auto_reconnect: true }), {
       w: 1,
-      safe: true
+      safe: true,
+      native_parser: settings.mongo_native_parser
     });
     setupRoutes(db, settings);
   }
