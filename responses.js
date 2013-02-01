@@ -468,7 +468,7 @@ function setup(app, db, idgen, collectionName) {
   
   // Get all responses in a bounding box
   // Sort by creation date, newest first.
-  // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/lower-left lat,lower-left lng, upper-right lat, upper-right lng
+  // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/lower-left lng,lower-left lat, upper-right lng, upper-right lat
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/reponses/in/1,2,3,4
   app.get('/api/surveys/:sid/responses/in/:bounds', function(req, response) {
     var i, ln;
@@ -487,7 +487,6 @@ function setup(app, db, idgen, collectionName) {
     
     var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
     var query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
-    console.log("Bounds query ====================");
     
     getCollection(function(err, collection) {
       collection.find(query,

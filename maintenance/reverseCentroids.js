@@ -1,9 +1,6 @@
 /*
- * DO NOT RUN
- * DO NOT RUN
- * DO NOT RUN
- * DO NOT RUN
- *
+ * Reverse centroid coordinates in the database 
+ * 
  * Usage:
  * $ mongo server:port/database_name -u username -p password reverseCentroids.js
  *
