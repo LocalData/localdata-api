@@ -124,10 +124,18 @@ function polygonToKML(geoInfo) {
   return elt;
 }
 
-/*
- * Turn a list of parcel attributes into a Point-based KML string
+
+
+/**
+ * Turn respones attributes into a KML Placemark
+ * @param {Object} response
+ * @param {Array}  row           An array containing data for each response
+ * @param {Object} headers       A mapping of a data row column to column name
+ * @param {Object} maxEltsInCell The maximum number of records in each column
+ * @param {Object} geoInfo       The geodata for this response (can be a point
+ *                               or multipolygon right now)
  */
-function listToKMLString(row, headers, maxEltsInCell, geoInfo) {
+function responseToKMLString(row, headers, maxEltsInCell, geoInfo) {
   var i;
   var elt = "\n<Placemark>";
   elt += "<name></name>";
@@ -167,7 +175,7 @@ function listToKMLString(row, headers, maxEltsInCell, geoInfo) {
 
 
 /**
- * Take a list of rows and export them as KML
+ * Take a list of rows and format them as KML
  * @param {Object} response
  * @param {Array}  rows          An array containing data for each response
  * @param {Object} headers       A mapping of a data row column to column name
@@ -193,7 +201,7 @@ function KMLWriter(response, rows, headers, maxEltsInCell, geoInfo){
     
   // Turn each row into a KML line
   for (i = 0; i < rows.length; i++) {
-    response.write(listToKMLString(rows[i], headers, maxEltsInCell, geoInfo[i]));
+    response.write(responseToKMLString(rows[i], headers, maxEltsInCell, geoInfo[i]));
     response.write('\n');
   }
   
