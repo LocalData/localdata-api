@@ -94,7 +94,8 @@ function listToCSVString(row, headers, maxEltsInCell) {
 
 
 /**
- * Turn a polygon into a KML string
+ * Turn a multipolygon into a KML string
+ * DANGER: pretends that multipolygons are just one polygon.
  * @param  {Object} geodata An object with a geometry property
  * @return {String}         A <polygon>...</polygon> string for KML
  */
