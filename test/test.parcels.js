@@ -28,6 +28,38 @@ function shouldBeParcel(item) {
   item.should.have.property('address');
 }
 
+// Confirm that an item is a GeoJSON MultiPolygon geometry
+function shouldBeMultiPolygon(item) {
+  item.should.have.property('type');
+  item.type.should.equal('MultiPolygon');
+  item.should.have.property('coordinates');
+  item.coordinates.should.be.an.instanceOf(Array);
+  var i;
+  for (i = 0; i < item.coordinates.length; i += 1) {
+    item.coordinates[i].should.be.an.instanceOf(Array);
+  }
+}
+
+// Confirm that an item is a GeoJSON Feature object
+function shouldBeFeature(item) {
+  item.should.have.property('type');
+  item.type.should.equal('Feature');
+  item.should.have.property('geometry');
+  item.should.have.property('properties');
+}
+
+// Confirm that an item is a GeoJSON FeatureCollection object
+function shouldBeFeatureCollection(item) {
+  item.should.have.property('type');
+  item.type.should.equal('FeatureCollection');
+  item.should.have.property('features');
+  item.features.should.be.an.instanceOf(Array);
+  var i;
+  for (i = 0; i < item.features.length; i += 1) {
+    shouldBeFeature(item.features[i]);
+  }
+}
+
 suite('Parcels', function () {
   suiteSetup(function (done) {
     server.run(settings, done);
@@ -53,6 +85,39 @@ suite('Parcels', function () {
         var i;
         for (i = 0; i < parsed.length; i += 1) {
           shouldBeParcel(parsed[i]);
+        }
+
+        done();
+      });
+    });
+
+    test('Get GeoJSON parcels inside a bounding box', function (done) {
+      // lower-left longitude, lower-left latitude, upper-right longitude,
+      // upper-right latitude
+      request({
+        url: BASEURL + '/parcels.geojson?bbox=-83.0805,42.336,-83.08,42.34'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        shouldBeFeatureCollection(parsed);
+        parsed.features.length.should.be.above(40);
+        var i;
+        var feature;
+        for (i = 0; i < parsed.features.length; i += 1) {
+          feature = parsed.features[i];
+          // Parcel ID
+          feature.should.have.property('id');
+          // Centroid
+          feature.properties.should.have.property('centroid');
+          feature.properties.centroid.should.have.property('type');
+          feature.properties.centroid.type.should.equal('Point');
+          feature.properties.centroid.should.have.property('coordinates');
+          feature.properties.centroid.coordinates.should.have.lengthOf(2);
+          // Address
+          feature.properties.should.have.property('address');
         }
 
         done();

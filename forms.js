@@ -60,7 +60,6 @@ function setup(app, db, idgen, FORMS) {
 app.get('/api/surveys/:surveyid/forms/:formid', function(req, response) {
   var surveyid = req.params.surveyid;
   var formid = req.params.formid;
-  console.log('Getting form ' + formid + ' of survey ' + surveyid);
   db.collection(FORMS, function(err, collection) {
     collection.find({'survey': surveyid, 'id': formid}, function(err, cursor) {
       if (err) {
@@ -88,7 +87,6 @@ app.get('/api/surveys/:surveyid/forms/:formid', function(req, response) {
 // Sort by creation date, newest first.
 // GET http://localhost:3000/api/surveys/{SURVEY ID}/forms
 app.get('/api/surveys/:sid/forms', function(req, response) {
-  console.log('Returning all forms for survey ' + req.params.sid);
   db.collection(FORMS, function(err, collection) {
     collection.find({'survey': req.params.sid},
                     {'sort': [['created', 'desc']]},
@@ -119,7 +117,6 @@ app.post('/api/surveys/:sid/forms', function(req, response) {
   var forms = req.body.forms;
   var total = forms.length;
   var count = 0;
-  console.log('Adding ' + total + ' forms to the database.');
   
   db.collection(FORMS, function(err, collection) {
     var survey = req.params.sid;
@@ -215,7 +212,7 @@ app.get('/api/surveys/:sid/parcels/:pid/forms', function(req, response) {
   var handleError = util.makeErrorHandler(response);
   var sid = String(req.params.sid);
   var pid = String(req.params.pid);
-  console.log('Getting forms for survey ' + sid + ' that reference parcel ' + pid);
+
   getCollection(function(err, collection) {
     if (handleError(err)) { return; }
     collection.find({survey: sid, 'parcels.parcel_id': pid},

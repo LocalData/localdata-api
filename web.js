@@ -33,7 +33,7 @@ var SCANIMAGES = 'scanCollection';
 
 // Basic app variables
 var server;
-var app = express(express.logger());
+var app = express();
 var db;
 
 // ID generator
@@ -79,6 +79,12 @@ function textParser(req, res, next) {
       next(err);
     }
   });
+}
+
+// Use color-coded dev logging for development environments
+// On production, we'll rely on the Heroku router's logging for now
+if ('development' === process.env.NODE_ENV) {
+  app.use(express.logger('dev'));
 }
 
 // Have Express wrap the response in a function for JSONP requests
@@ -331,9 +337,10 @@ function run(settings, cb) {
     console.log('Postgresql user: ' + settings.psqlUser);
     db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
                                                           settings.mongo_port,
-                                                          {}), {
+                                                          { auto_reconnect: true }), {
       w: 1,
-      safe: true
+      safe: true,
+      native_parser: settings.mongo_native_parser
     });
     setupRoutes(db, settings);
   }

@@ -13,6 +13,10 @@ if (isNaN(settings.mongo_port)) { settings.mongo_port = 27017; }
 settings.mongo_db = process.env.MONGO_DB || 'scratchdb';
 settings.mongo_user = process.env.MONGO_USER;
 settings.mongo_password = process.env.MONGO_PASSWORD;
+settings.mongo_native_parser = false;
+if (process.env.MONGO_NATIVE_PARSER !== undefined && process.env.MONGO_NATIVE_PARSER.toLowerCase() === 'true') {
+  settings.mongo_native_parser = true;
+}
 
 // S3
 settings.s3_key = process.env.S3_KEY;
