@@ -207,17 +207,43 @@ function setup(app, db, idgen, collectionName) {
 
     getCollection(function(err, collection) {
       if (handleError(err)) { return; }
-      collection.findAndModify({'id': surveyId},
-                               {_id: 1},
-                               survey,
-                               {new: true}, function(error, object) {
-        if(error) {
-          console.log(error);
-          response.send(500);
-        }else {
-          response.send({survey: object});
-        }
+
+      // Find the survey
+      collection.find({id: req.params.sid}, function(err, cursor) {
+        if (handleError(err)) { return; }
+        cursor.toArray(function(err, items) {
+          if (handleError(err)) { return; }
+
+          // If there are no results, it's a 404
+          if (items.length === 0) {
+            response.send(404);
+            return;
+          }
+
+          // If the current user doesn't own the survey, we can't save it.
+          if (items[0].users.indexOf(req.user._id) == -1) {
+            response.send(403);
+            return;
+          }
+
+          // Update the survey
+          // The new: true option returns the updated surve object
+          // (it doesn't mean upsert)
+          collection.findAndModify({'id': surveyId},
+                                   {_id: 1},
+                                   survey,
+                                   {new: true}, function(error, object) {
+            if(error) {
+              console.log(error);
+              response.send(500);
+            }else {
+              response.send({survey: object});
+            }
+          });
+        });
       });
+
+
     });
   });
 
@@ -227,17 +253,17 @@ function setup(app, db, idgen, collectionName) {
   // TODO: We should probably clean up the objects from other collections that
   // pertain only to this survey.
   app.del('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
-    var sid = req.params.sid;
+    var surveyId = req.params.sid;
     getCollection(function(err, collection) {
-      collection.remove({id: sid}, {safe: true}, function(error, count) {
+      collection.remove({id: surveyId}, {safe: true}, function(error, count) {
         if (error) {
-          console.log('Error removing survey ' + sid + 'from the survey collection: ' + error.message);
+          console.log('Error removing survey ' + surveyId + 'from the survey collection: ' + error.message);
           response.send(500);
         } else {
           if (count !== 1) {
             console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
           }
-          console.log('Deleted survey ' + sid);
+          console.log('Deleted survey ' + surveyId);
           response.send({count: count});
         }
       });

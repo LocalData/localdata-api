@@ -229,7 +229,7 @@ suite('Surveys', function () {
 
   });
 
-  suite('PUT', function () {
+  suite('PUT: ', function () {
     var url = BASEURL + '/surveys';
 
     var surveyId;
@@ -250,11 +250,40 @@ suite('Surveys', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          assert(body.survey.name === 'new name');
+          body.survey.name.should.equal('new name');
           done();
         });
       });
     });
+
+    test('PUT JSON to /surveys from an unauthorized user', function (done) {
+      request.post({url: url, json: data_one}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        // TODO:
+        // This isn't working (why? injected to late?)
+        users.ensureAuthenticated = function(req, res, next) {
+          req.user = { _id: "evil" };
+          return next();
+        };
+
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          json: {'survey': surveyToChange}
+        }, function (error, response, body) {
+          should.exist(error);
+          response.statusCode.should.equal(403);
+
+          done();
+        });
+      });
+    });
+
   });
 
   suite('DEL', function () {
