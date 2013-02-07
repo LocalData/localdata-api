@@ -9,10 +9,12 @@ var should = require('should');
 var fs = require('fs');
 
 var settings = require('../settings-test.js');
+var users = require('../users.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Slugs', function () {
+
   var data_one = {
     "surveys" : [ {
       "name": "Just a survey",

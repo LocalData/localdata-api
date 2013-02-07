@@ -3,10 +3,12 @@
 'use strict';
 
 var server = require('../web.js');
+
 var assert = require('assert');
-var util = require('util');
+var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
+var util = require('util');
 
 var settings = require('../settings-test.js');
 var users = require('../users.js');
@@ -19,10 +21,44 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
 
-  // Fake log in the user.
-  users.ensureAuthenticated = function(req, res, next) {
-    req.user = { _id: "1" };
-    return next();
+  /**
+   * Remove all results from a collection
+   * @param  {String}   collection Name of the collection
+   * @param  {Function} done       Callback, accepts error, response
+   */
+  var clearCollection = function(collectionName, done) {
+    var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
+                                                          settings.mongo_port,
+                                                          {}), { w: 1, safe: true });
+
+    db.open(function() {
+      db.collection(collectionName, function(error, collection) {
+        if(error) {
+          console.log("BIG ERROR");
+          console.log(error);
+          assert(false);
+          done(error);
+        }
+
+        // Remove all the things!
+        collection.remove({}, function(error, response){
+          done(error, response);
+        });
+      });
+
+    });
+  };
+
+  var userA = {
+    'name': 'User A',
+    'email': 'a@localdata.com',
+    'password': 'password'
+  };
+
+  var userB = {
+    'name': 'User B',
+    'email': 'b@localdata.com',
+    'password': 'drowssap'
   };
 
   var data_one = {
@@ -84,8 +120,16 @@ suite('Surveys', function () {
     }
   };
 
+
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(settings, function(){
+      var url = BASEURL + '/user';
+      clearCollection('usersCollection', function(error, response){
+        request.post({url: url, json: userA}, function (error, response, body) {
+          done();
+        });
+      });
+    });
   });
 
   suiteTeardown(function () {
@@ -257,6 +301,8 @@ suite('Surveys', function () {
     });
 
     test('PUT JSON to /surveys from an unauthorized user', function (done) {
+      var url = BASEURL + '/surveys';
+
       request.post({url: url, json: data_one}, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
@@ -264,22 +310,22 @@ suite('Surveys', function () {
         var surveyToChange = body.surveys[0];
         surveyToChange.name = 'new name';
 
-        // TODO:
-        // This isn't working (why? injected to late?)
-        users.ensureAuthenticated = function(req, res, next) {
-          req.user = { _id: "evil" };
-          return next();
-        };
+        // Log in as a new user
+        clearCollection('usersCollection', function(error, response){
+          url = BASEURL + '/user';
+          request.post({url: url, json: userB}, function (error, response, body) {
+            url = BASEURL + '/surveys/' + surveyToChange.id;
+            request.put({
+              url: url,
+              json: {'survey': surveyToChange}
+            }, function (error, response, body) {
+              console.log(body);
+              should.exist(error);
+              response.statusCode.should.equal(403);
 
-        url = BASEURL + '/surveys/' + surveyToChange.id;
-        request.put({
-          url: url,
-          json: {'survey': surveyToChange}
-        }, function (error, response, body) {
-          should.exist(error);
-          response.statusCode.should.equal(403);
-
-          done();
+              done();
+            });
+          });
         });
       });
     });

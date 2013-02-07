@@ -163,7 +163,6 @@ suite('Users -', function () {
   suite('authentication API:', function () {
     var userUrl = BASEURL + '/user';
     var loginUrl = BASEURL + '/login';
-    var logoutUrl = 
 
     suiteSetup(function (done) {
       done();
