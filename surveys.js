@@ -199,23 +199,23 @@ function setup(app, db, idgen, collectionName) {
   // DELETE http://localhost:5000/api/surveys/{SURVEY ID}
   // TODO: We should probably clean up the objects from other collections that
   // pertain only to this survey.
-  app.del('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
-    var sid = req.params.sid;
-    getCollection(function(err, collection) {
-      collection.remove({id: sid}, {safe: true}, function(error, count) {
-        if (error) {
-          console.log('Error removing survey ' + sid + 'from the survey collection: ' + error.message);
-          response.send(500);
-        } else {
-          if (count !== 1) {
-            console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + count + ' entries.');
-          }
-          console.log('Deleted survey ' + sid);
-          response.send({count: count});
-        }
-      });
-    });
-  });
+  // app.del('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
+  //   var sid = req.params.sid;
+  //   getCollection(function(err, collection) {
+  //     collection.remove({id: sid}, {safe: true}, function(error, count) {
+  //       if (error) {
+  //         console.log('Error removing survey ' + sid + 'from the survey collection: ' + error.// message);
+  //         response.send(500);
+  //       } else {
+  //         if (count !== 1) {
+  //           console.log('!!! We should have removed exactly 1 entry. Instead we removed ' + // count + ' entries.');
+  //         }
+  //         console.log('Deleted survey ' + sid);
+  //         response.send({count: count});
+  //       }
+  //     });
+  //   });
+  // });
 
 }
 
