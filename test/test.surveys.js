@@ -203,18 +203,18 @@ suite('Surveys', function () {
       });
     });
 
-    test('Deleting a survey', function (done) {
-      request.del({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
-        assert.ifError(error);
-        assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
-
-        var parsed = JSON.parse(body);
-
-        assert.equal(parsed.count, 1, 'We should have deleted 1 item.');
-
-        done();
-      });
-    });
+    // test('Deleting a survey', function (done) {
+    //   request.del({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
+    //     assert.ifError(error);
+    //     response.statusCode.should.equal(200);
+// 
+    //     var parsed = JSON.parse(body);
+// 
+    //     assert.equal(parsed.count, 1, 'We should have deleted 1 item.');
+// 
+    //     done();
+    //   });
+    // });
 
   });
 
