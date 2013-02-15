@@ -432,26 +432,6 @@ function setup(app, db, idgen, collectionName) {
       });
     });
   });
-
-  // Delete all responses for a survey.
-  // This is maintainence functionality. Regular clients should not delete forms.
-  // DELETE http://localhost:3000/api/surveys/{SURVEY ID}/responses
-  // DELETE http://localhost:3000/api/surveys/1/responses
-  app.del('/api/surveys/:sid/responses', function(req, response) {
-    var survey = req.params.sid;
-    console.log('!!! Deleting responses for survey ' + survey + ' from the database.');
-    getCollection(function(err, collection) {
-      collection.remove({survey: survey}, {safe: true}, function(error, count) {
-        if (error) {
-          console.log('Error removing responses for survey ' + survey + ' from the response collection: ' + err.message);
-          response.send();
-        } else {
-          response.send({count: count});
-        }
-      });
-    });
-  });
-  
   
   // Get all responses in a bounding box
   // Sort by creation date, newest first.
