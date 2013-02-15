@@ -175,20 +175,6 @@ suite('Responses', function () {
       });
     });
 
-    test('Deleting all responses for a survey', function (done) {
-      request.del({url: BASEURL + '/surveys/' + surveyId + '/responses'}, function (error, response, body) {
-        should.not.exist(error);
-        should.exist(response);
-        response.statusCode.should.equal(200);
-        response.should.be.json;
-
-        var parsed = JSON.parse(body);
-        parsed.should.have.property('count').above(1);
-
-        done();
-
-      });
-    });
   });
 
   suite('GET', function () {
