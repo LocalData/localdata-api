@@ -18,6 +18,7 @@
     , "passport" : "0.1.15"
     , "passport-local" : "0.1.6"
     , "bcrypt" : ">= 0.5"
+    , "lru-cache" : "2.2.2"
   }
   , "devDependencies": {
       "mocha" : "https://github.com/visionmedia/mocha/tarball/master"
