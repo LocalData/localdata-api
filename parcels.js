@@ -10,6 +10,8 @@
  */
 
 var pg = require('pg');
+var lru = require('lru-cache');
+var crypto = require('crypto');
 
 var client = null;
 
@@ -86,6 +88,36 @@ function setup(app, settings) {
   if (client === null) {
     client = new pg.Client(connectionString);
     client.connect();
+  }
+
+  var cache = lru({
+    max: 500,
+    maxAge: 1000 * 60 * 60 // 1 hour
+  });
+
+  function useCache(req, res, next) {
+    var etag = req.headers['if-none-match'];
+
+    if (etag !== undefined && cache.get(req.url) === etag) {
+      res.set('ETag', etag);
+      res.send(304);
+      return;
+    }
+
+    var end = res.end;
+    res.end = function (body) {
+      var etag = this.get('ETag');
+      if (etag === undefined) {
+        var hash = crypto.createHash('md5');
+        hash.update(body);
+        etag = '"' + hash.digest('base64') + '"';
+        res.set('ETag', etag);
+      }
+      cache.set(req.url, etag);
+      end.call(res, body);
+    };
+
+    return next();
   }
 
   // Get parcels
@@ -211,7 +243,7 @@ function setup(app, settings) {
   // GET http://localhost:3000/api/parcels?bbox=-83.0805,42.336,-83.08,42.34
   // GET http://localhost:3000/api/parcels?lon={LONGITUDE}&lat={LATITUDE}
   // GET http://localhost:3000/api/parcels?lon=-83.08076&lat=42.338
-  app.get('/api/parcels.geojson', function(req, response) {
+  app.get('/api/parcels.geojson', useCache, function(req, response, next) {
     return getParcels(req, response, new GeoJSONBuilder());
   });
 
