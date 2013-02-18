@@ -204,6 +204,35 @@ suite('Parcels', function () {
         done();
       });
     });
+
+    test('ETag and 304 response', function (done) {
+      // bounding box -122.431640625,37.77288579232438,-122.42889404296875,37.77505678240507
+      // is in San Francisco, so we should find parcels, and the second request
+      // should receive a status code 304 response
+      var url = BASEURL + '/parcels?bbox=-122.431640625,37.77288579232438,-122.42889404296875,37.77505678240507';
+      request({
+        url: url
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var etag = response.headers.etag;
+        request({
+          url: url,
+          headers: {
+            'If-None-Match': etag
+          }
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(304);
+          response.headers.etag.should.equal(etag);
+
+          done();
+        });
+      });
+    });
+
   });
 });
 
