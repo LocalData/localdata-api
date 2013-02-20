@@ -146,19 +146,19 @@ suite('Users -', function () {
 
   });
 
-  suite('DEL', function () {
+  // suite('DEL', function () {
 
-    setup(function (done) {
-      done();
-    });
+  //   setup(function (done) {
+  //     done();
+  //   });
 
-    test('Deleting a user', function (done) {
-      // test for stuff
-      assert.equal(true, false);
-      done();
-    });
+  //   test('Deleting a user', function (done) {
+  //     // test for stuff
+  //     assert.equal(true, false);
+  //     done();
+  //   });
 
-  });
+  // });
 
   suite('authentication API:', function () {
     var userUrl = BASEURL + '/user';
