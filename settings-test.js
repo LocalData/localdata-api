@@ -10,6 +10,7 @@ var settings = module.exports;
 // Email settings
 settings.email = {};
 settings.email.from = 'LocalData <support@localdata.com>';
+settings.email.to = 'matth@localdata.com'; // Send test emails to your address!
 
 // MongoDB
 settings.mongo_host = 'localhost';

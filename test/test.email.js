@@ -16,7 +16,7 @@ suite('Email', function () {
   test('Send an email', function (done) {
 
     var options = {
-      'to': 'example@example.com',
+      'to': settings.email.to || 'example@example.com',
       'subject': 'hello world',
       'text': 'email body here'
     };
