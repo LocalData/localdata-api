@@ -88,5 +88,10 @@ suite('In kmlExport,', function(){
       }
     }
   ];
-  
+
+  // Possible tests:
+  // Some of these tests are generic export tests
+  // Make sure a polygon gets turned into correct KML?
+  // Do a long string comparison?
+
 });

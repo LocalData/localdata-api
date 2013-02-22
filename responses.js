@@ -5,9 +5,9 @@
  * ==================================================
  * Responses
  * ==================================================
- * 
+ *
  * Collects responses from web, mobile, and paper forms.
- * 
+ *
  * Data structure for paper-originating response:
  * responses: [
  *   { parcel_id: "3728049",
@@ -26,7 +26,7 @@
  *     source : {type : "mobile"}
  *   }
  * ]
- *   
+ *
  */
 
 var util = require('./util');
@@ -35,11 +35,11 @@ var handleError = util.handleError;
 var isArray = util.isArray;
 
 
-/* Export helpers ........................................................................*/
+/* Export helpers ...........................................................*/
 
 /*
  * Turn a list of parcel attributes into a comma-separated string.
- * NOTE: Will break if used with strings with commas (doesn't escape!)
+ * NOTE: Output may be invalid if given strings with commas (doesn't escape!)
  */
 function listToCSVString(row, headers, maxEltsInCell) {
   var arr = [];
@@ -92,18 +92,70 @@ function listToCSVString(row, headers, maxEltsInCell) {
 }
 
 
-/*
- * Turn a list of parcel attributes into a KML string
+
+/**
+ * Turn a multipolygon into a KML string
+ * DANGER: pretends that multipolygons are just one polygon.
+ * @param  {Object} geodata An object with a geometry property
+ * @return {String}         A <polygon>...</polygon> string for KML
  */
-function listToKMLString(row, headers, maxEltsInCell) {
+function polygonToKML(geoInfo) {
+  var elt = '';
+  var i;
+
+  // Here's an ugly but visible style to start with
+  elt += '<Style id="transBluePoly"><LineStyle><width>7</width></LineStyle><PolyStyle><color>7dff0000</color></PolyStyle></Style>';
+
+  // Set it up
+  elt += '<Polygon><outerBoundaryIs><LinearRing><coordinates>';
+
+  // We're going to pretend that everything has only one polygon for now.
+  var firstPoly = geoInfo.coordinates[0][0];
+
+  // Print out each of the points in turn, separated by a newline
+  for (i = 0; i < firstPoly.length; i++) {
+    elt += firstPoly[i][0] + ',' + firstPoly[i][1] + '\n';
+  }
+
+  // And close up the loop
+  elt += firstPoly[0][0] + ',' + firstPoly[0][1] + '\n';
+  elt += '</coordinates></LinearRing></outerBoundaryIs></Polygon>';
+
+  return elt;
+}
+
+
+
+/**
+ * Turn respones attributes into a KML Placemark
+ * @param {Object} response
+ * @param {Array}  row           An array containing data for each response
+ * @param {Object} headers       A mapping of a data row column to column name
+ * @param {Object} maxEltsInCell The maximum number of records in each column
+ * @param {Object} geoInfo       The geodata for this response (can be a point
+ *                               or multipolygon right now)
+ */
+function responseToKMLString(row, headers, maxEltsInCell, geoInfo) {
   var i;
   var elt = "\n<Placemark>";
   elt += "<name></name>";
   elt += "<description></description>";
 
-  // The coordinates come escaped, so we need to unescape them:
-  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>";
+  // Handle the geodata
+  console.log(geoInfo);
 
+  // If we've got multipolygons, deal with that:
+  if (geoInfo.type === 'MultiPolygon') {
+    console.log("Multipolygon here");
+    elt += polygonToKML(geoInfo);
+  }else {
+    // Otherwise, we've just got a coordinate pair:
+    elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>";
+  }
+
+  // List out the data fields.
+  // They're a little crude right now (just the question slugs)
+  // TODO: let's make them more human-readable in the future
   elt += "<ExtendedData>";
   for (i = 0; i < row.length; i += 1) {
       elt += "<Data name=\"" + headers[i] + "\">";
@@ -122,17 +174,26 @@ function listToKMLString(row, headers, maxEltsInCell) {
 }
 
 
-/*
- * Take a list of rows and export them as KML
+/**
+ * Take a list of rows and format them as KML
+ * @param {Object} response
+ * @param {Array}  rows          An array containing data for each response
+ * @param {Object} headers       A mapping of a data row column to column name
+ * @param {Object} maxEltsInCell The maximum number of records in each column
+ * @param {Array}  geoInfo       A list of geodata for each response
  */
-function KMLWriter(response, rows, headers, maxEltsInCell){
+function KMLWriter(response, rows, headers, maxEltsInCell, geoInfo){
   var i;
 
   response.writeHead(200, {
     'Content-Type': 'application/vnd.google-earth.kml+xml',
     'Content-disposition': 'attachment; filename=Survey Export.kml'
   });
-  
+
+  // TODO
+  // We really ought to be using an XML library
+  // And not writing these crummy strings
+  // I'm just waiting for some one to write a GeoJSON => KML formatter for us.
   response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
   response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
@@ -140,7 +201,7 @@ function KMLWriter(response, rows, headers, maxEltsInCell){
     
   // Turn each row into a KML line
   for (i = 0; i < rows.length; i++) {
-    response.write(listToKMLString(rows[i], headers, maxEltsInCell));
+    response.write(responseToKMLString(rows[i], headers, maxEltsInCell, geoInfo[i]));
     response.write('\n');
   }
   
@@ -152,7 +213,7 @@ function KMLWriter(response, rows, headers, maxEltsInCell){
 
 /*
  * Take a list of rows and export them as CSV
- * Rows: a list of rows of survey data, eg: 
+ * Rows: a list of rows of survey data, eg:
  * [ ["good", "bad", "4"], ["fine", "excellent", "5"]]
  * Headers: a list of survey headers as strings
  */
@@ -199,7 +260,7 @@ function clone(obj) {
 }
 
 
-/* 
+/*
  * Return only the most recent result for each parcel
  */
 function filterToMostRecent(items) {
@@ -499,9 +560,8 @@ function setup(app, db, idgen, collectionName) {
         }
 
         cursor.toArray(function(err, items) {
-
           // Filter the items
-          for (i=0; i < listOfFilteringFunctions.length; i += 1) {
+          for (i = 0; i < listOfFilteringFunctions.length; i += 1) {
             items = listOfFilteringFunctions[i](items);
           }
 
@@ -517,6 +577,9 @@ function setup(app, db, idgen, collectionName) {
           }
 
           // Iterate over each response
+          // Store each row of question responses in order in a list
+          // Same thing for the geodata (a polygon or a point)
+          var geoInfo = [];
           var rows = [];
           for (i = 0; i < items.length; i += 1) {
 
@@ -560,15 +623,23 @@ function setup(app, db, idgen, collectionName) {
               }
             }
 
+            // Add the point or polygon, depending.
+            var geometry = {
+              type: 'Point',
+              centroid: items[i].geo_info.centroid.reverse()
+            };
+            if (items[i].geo_info.geometry !== undefined) {
+              geometry = items[i].geo_info.geometry;
+            }
+            geoInfo.push(geometry);
+            
             // Add the CSV row.
             rows.push(row);
           } // End loop over every result
 
-
           // Write the response
-          writer(response, rows, headers, maxEltsInCell);
+          writer(response, rows, headers, maxEltsInCell, geoInfo);
           
-
         }); // end cursor.toArray()
       }); // end find results for survey
     });
