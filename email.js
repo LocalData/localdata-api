@@ -11,14 +11,6 @@ var transport = nodemailer.createTransport("SES", {
   AWSSecretKey: settings.aws_secret
 });
 
-// TODO:
-// Use DKIM email signing once the certificate has been verified by Amazon
-// transport.useDKIM({
-//     domainName: "localdata.com",
-//     keySelector: "dkimselector",
-//     privateKey: fs.readFileSync("private_key.pem")
-// });
-
 /**
  * Send an email
  * @param  {Object}   options Options: to, subject, text; all strings
