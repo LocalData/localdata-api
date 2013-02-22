@@ -7,6 +7,10 @@
 
 var settings = module.exports;
 
+// Email settings
+settings.email = {};
+settings.email.from = 'LocalData <support@localdata.com>';
+
 // MongoDB
 settings.mongo_host = 'localhost';
 settings.mongo_port = 27017;
