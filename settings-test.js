@@ -13,6 +13,10 @@ settings.mongo_port = 27017;
 settings.mongo_db = 'scratchdb';
 settings.mongo_native_parser = false;
 
+// AWS
+settings.aws_key = process.env.AWS_KEY || 'FAKE_KEY';
+settings.aws_secret = process.env.AWS_SECRET || 'FAKE_SECRET';
+
 // S3
 settings.s3_key = process.env.S3_KEY || 'FAKE_KEY';
 settings.s3_secret = process.env.S3_SECRET || 'FAKE_SECRET';
