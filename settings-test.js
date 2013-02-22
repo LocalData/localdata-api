@@ -7,11 +7,20 @@
 
 var settings = module.exports;
 
+// Email settings
+settings.email = {};
+settings.email.from = 'LocalData <support@localdata.com>';
+settings.email.to = 'matth@localdata.com'; // Send test emails to your address!
+
 // MongoDB
 settings.mongo_host = 'localhost';
 settings.mongo_port = 27017;
 settings.mongo_db = 'scratchdb';
 settings.mongo_native_parser = false;
+
+// AWS
+settings.aws_key = process.env.AWS_KEY || 'FAKE_KEY';
+settings.aws_secret = process.env.AWS_SECRET || 'FAKE_SECRET';
 
 // S3
 settings.s3_key = process.env.S3_KEY || 'FAKE_KEY';
