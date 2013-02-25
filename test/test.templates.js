@@ -17,8 +17,8 @@ suite('Surveys', function () {
         data: 'hello world'
       };
 
-      templates.render('sample', data, function(rendered){
-        assert(rendered === 'static hello world');
+      templates.render('sample', data, function(error, data){
+        assert(data === 'static hello world');
         done();
       });
     });
