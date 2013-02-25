@@ -16,11 +16,11 @@ suite('Surveys', function () {
       var data = {
         data: 'hello world'
       };
-      var rendered = templates.render('sample', data);
 
-      assert(rendered === 'static hello world');
-
-      done();
+      templates.render('sample', data, function(rendered){
+        assert(rendered === 'static hello world');
+        done();
+      });
     });
   });
 
