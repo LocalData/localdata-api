@@ -197,7 +197,7 @@ function KMLWriter(response, rows, headers, maxEltsInCell, geoInfo){
   response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
   response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
-  response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
+  response.write("<name>Placemarks</name>\n<description></description>\n");
     
   // Turn each row into a KML line
   for (i = 0; i < rows.length; i++) {
@@ -205,7 +205,7 @@ function KMLWriter(response, rows, headers, maxEltsInCell, geoInfo){
     response.write('\n');
   }
   
-  response.write("\n</Folder></Document></kml>");
+  response.write("\n</Document></kml>");
   
   response.end();
 }
