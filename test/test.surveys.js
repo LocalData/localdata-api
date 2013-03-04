@@ -120,14 +120,20 @@ suite('Surveys', function () {
     }
   };
 
+  var userAJar = request.jar();
+  var userBJar = request.jar();
 
   suiteSetup(function (done) {
     server.run(settings, function(){
       var url = BASEURL + '/user';
       clearCollection('usersCollection', function(error, response){
-        request.post({url: url, json: userA}, function (error, response, body) {
-          done();
+        request.post({url: url, json: userA, jar: userAJar}, function (error, response, body) {
+          request.post({url: url, json: userB, jar: userBJar}, function (error, response, body) {
+            done();
+          });
         });
+
+        request = request.defaults({jar: userAJar});
       });
     });
   });
@@ -139,7 +145,7 @@ suite('Surveys', function () {
   suite("Utilities:", function() {
     test('Filter sensitive data from a survey', function (done) {
       var filteredSurvey = surveys.filterSurvey(sampleSurvey);
-      
+
       filteredSurvey.should.have.property('name');
       filteredSurvey.should.have.property('slug');
       filteredSurvey.should.have.property('id');
@@ -310,23 +316,20 @@ suite('Surveys', function () {
         var surveyToChange = body.surveys[0];
         surveyToChange.name = 'new name';
 
-        // Log in as a new user
-        clearCollection('usersCollection', function(error, response){
-          url = BASEURL + '/user';
-          request.post({url: url, json: userB}, function (error, response, body) {
-            url = BASEURL + '/surveys/' + surveyToChange.id;
-            request.put({
-              url: url,
-              json: {'survey': surveyToChange}
-            }, function (error, response, body) {
-              console.log(body);
-              should.exist(error);
-              response.statusCode.should.equal(403);
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          json: {'survey': surveyToChange},
+          jar: userBJar
+        }, function (error, response, body) {
+          console.log(body);
+          should.not.exist(error);
+          response.statusCode.should.equal(401);
 
-              done();
-            });
-          });
+          done();
         });
+
       });
     });
 
