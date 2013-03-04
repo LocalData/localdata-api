@@ -9,7 +9,7 @@
 
 var util = require('./util');
 var users = require('./users');
-var makeSlug = require('slug');
+var makeSlug = require('slugs');
 
 
 // Trim a survey to only show non-sensitive properties
@@ -157,7 +157,7 @@ function setup(app, db, idgen, collectionName) {
     var handleError = util.makeErrorHandler(response);
 
     var surveys = req.body.surveys;
-    
+
     var total = surveys.length;
     var count = 0;
 

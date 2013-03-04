@@ -123,12 +123,33 @@ suite('Surveys', function () {
   var userAJar = request.jar();
   var userBJar = request.jar();
 
+  var data_slug = {
+    "surveys" : [ {
+      "name": "Someone's cool, \"hip\" survey ~!@#$%^&*()-=_+<>?,./;: title",
+      "users": ["A", "B"],
+      "paperinfo": {
+        "dpi": 150,
+        "regmarks": [
+          {"type": 0, "bbox": [20, 20, 70, 70]},
+          {"type": 0, "bbox": [20, 1580, 70, 1630]},
+          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
+        ],
+        "barcode": {"bbox": [1055, 20, 1255, 220]}
+      }
+    } ]
+  };
+
   suiteSetup(function (done) {
     server.run(settings, function(){
       var url = BASEURL + '/user';
       clearCollection('usersCollection', function(error, response){
         request.post({url: url, json: userA, jar: userAJar}, function (error, response, body) {
+          console.log("RETURNED USER", body, userAJar);
+          userA._id = body._id;
+
           request.post({url: url, json: userB, jar: userBJar}, function (error, response, body) {
+            userB._id = body._id;
+
             done();
           });
         });
@@ -177,11 +198,11 @@ suite('Surveys', function () {
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
 
           body.surveys[i].should.have.property('users');
-          assert.equal("1", body.surveys[i].users[0], 'Wrong or no user stored');
+          assert.equal(userA._id, body.surveys[i].users[0], 'Wrong or no user stored');
 
           // Security tests
           assert.equal(1, body.surveys[i].users.length, 'There should be only one user assigned, even though the POST had two');
-          assert.notEqual("A", body.surveys[i].users[0], 'Wrong user stored');
+          assert.notEqual(userB._id, body.surveys[i].users[0], 'Wrong user stored');
 
           // Slug tests
           body.surveys[i].should.have.property('slug');
@@ -192,35 +213,21 @@ suite('Surveys', function () {
       });
     });
 
+    test('Posting a survey with funny characters', function (done) {
+      request.post({ url: url, json: data_slug }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        body.surveys.length.should.equal(1);
+        var survey = body.surveys[0];
+        survey.should.have.property('slug');
+        survey.slug.should.be.a('string');
 
-    test('Posting JSON to /surveys', function (done) {
-      request.post({url: url, json: data_two}, function (error, response, body) {
-        assert.ifError(error);
-        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
-
-        var i;
-        for (i = 0; i < data_two.surveys.length; i += 1) {
-          assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
-          assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
-
-          assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
-
-          body.surveys[i].should.have.property('users');
-          assert.equal("1", body.surveys[i].users[0], 'Wrong or no user stored');
-
-          // Security tests
-          assert.equal(1, body.surveys[i].users.length, 'There should be only one user assigned, even though the POST had two');
-          assert.notEqual("A", body.surveys[i].users[0], 'Wrong user stored');
-
-          // Slug tests
-          body.surveys[i].should.have.property('slug');
-          body.surveys[i].slug.should.be.a('string');
-        }
+        // Test for unacceptable characters
+        /[~`!@#$%\^&*()+;:'",<>\/?\\{}\[\]|]/.test(survey.slug).should.equal(false);
 
         done();
       });
     });
-
 
   });
 
