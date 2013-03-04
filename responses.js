@@ -5,7 +5,7 @@
  * ==================================================
  * Responses
  * ==================================================
- *git
+ *
  * Collects responses from web, mobile, and paper forms.
  *
  * Data structure for paper-originating response:
