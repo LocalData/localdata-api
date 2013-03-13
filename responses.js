@@ -526,8 +526,8 @@ function setup(app, db, idgen, collectionName) {
               items[i].source.collector,
               items[i].created,
               items[i].source.type,
-              items[i].geo_info.centroid[0], // lat
-              items[i].geo_info.centroid[1]  // lng
+              items[i].geo_info.centroid[1], // lat
+              items[i].geo_info.centroid[0]  // lng
             ];
 
             // Then, add the survey results
