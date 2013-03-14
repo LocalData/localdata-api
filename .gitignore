@@ -5,6 +5,8 @@ setenv*.sh
 herokuconfig*.sh
 nohup.out
 
+*.geojson
+
 *.key
 *.csr
 *.pem
