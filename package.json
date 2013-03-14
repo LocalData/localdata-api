@@ -21,6 +21,7 @@
     , "lru-cache" : "2.2.2"
     , "ejs" : "~0.8.3"
     , "nodemailer" : "~0.3.42"
+    , "lodash" : "~1.0.1"
   }
   , "devDependencies": {
       "mocha" : "https://github.com/visionmedia/mocha/tarball/master"
