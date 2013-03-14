@@ -6,20 +6,36 @@ var server = require('../web.js');
 var assert = require('assert');
 var fs = require('fs');
 var _ = require('lodash');
+var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
 var util = require('util');
+var uuid = require('node-uuid');
 
 var settings = require('../settings.js');
 
+var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
+                                                          settings.mongo_port,
+                                                          {}), {safe: true});
+
 /**
  * Insert a number of fake responses
- * Usage: `node fakedata.js count surveyId`
+ * Why insert directly into the DB instead of posting to /surveyId/responses? 
+ * This way we can fake more things, like the submission timestamp. 
+ *
+ * Requires a base data file (DATA_PATH) that specifies a geojson file
+ * This script expects that you're using a copy of the SF parce shapefile
+ * reprojected to EPSG:4326 and saved as GeoJSON.
+ * 
+ * Usage: `node fakedata.js number surveyId`
  *    eg: `node fakedata.js 100 my-survey-id-here`
+ *
+ * To clear all results for a survey:
+ *        `node fakedata.js clear surveyId`
  */
 
-var BASEURL = 'http://localhost:' + settings.port + '/api';
-var surveyId;
+var idgen = uuid.v1; // ID generator
+var DATA_PATH = 'test/data/sf.geojson';
 
 var computeRingCentroid = function(ring) {
   var off = ring[0];
@@ -71,15 +87,16 @@ var use = ['residential', 'commercial', 'park', 'church'];
  * @param  {Object} geo 
  * @return {Object}     A response object
  */
-var generator = function(feature) {
+var generator = function(feature, survey) {
   var r6 = Math.floor(Math.random() * 6);
   var r4 = Math.floor(Math.random() * 4);
   var rbool = !Math.floor(Math.random() * 2);
+  var rbool2 = !Math.floor(Math.random() * 2);
+
   var dateInRange = function() {
     var now = new Date();
-    var minutes = Math.floor(Math.random() * 1000);
+    var minutes = Math.floor(Math.random() * 2880); // distribute over ~2 days
     var date = new Date(now.getTime() + (minutes * 60 * 1000));
-    console.log(date);
     return date;
   };
 
@@ -90,64 +107,148 @@ var generator = function(feature) {
     },
     geo_info: {
       centroid: computeCentroid(feature.geometry),
-      geometry: feature.geometry
+      geometry: feature.geometry,
+      humanReadableName: feature.properties.FROM_ST + ' ' + feature.properties.STREET
     },
+    id: idgen(),
     parcel_id: feature.properties.MAPBLKLOT,
-    survey: surveyId,
+    survey: survey,
     created: dateInRange(),
     responses: {
+      'structure': rbool ? 'yes' : 'no',
       'condition': conditions[r4],
       'use': use[r4],
-      'demolish': 'yes'
+      'improvements': 'yes',
+      'dumping': 'yes'
     }
   };
 
   // Randomly don't mark demolish
   if(rbool) {
-    delete response.demolish;
+    delete response.responses.improvements;
+  }
+
+  if(rbool2) {
+    delete response.responses.dumping;
   }
 
   return response;
 };
 
 
+// Keep track of the responses as we generate them
 var responses = [];
-var build = function(number, survey) {
-  surveyId = survey;
 
-  console.log("Opening huge geojson data file");
-  fs.readFile('test/data/sf.geojson', function(err, data) {
+/**
+ * Generate the responses
+ * @param  {Int}    number Number of responses to create
+ * @param  {String} survey ID of the survey
+ */
+var build = function(number, survey) {
+  console.log("Opening geojson data file");
+  fs.readFile(DATA_PATH, function(err, data) {
     if(err) {
       console.log("Error opening the file:", err);
     }
 
-    console.log("Parsing geojson features");
+    console.log("Loading lots of geojson features");
     var features = JSON.parse(data).features;
-    console.log("Done getting geojson features");
+    console.log("Done loading geojson features");
 
     // Only save after we have all the features
     var saveAll = _.after(number, save);
 
     _.times(number, function(index) {
       console.log("Generating ", index);
-      responses.push(generator(features[index]));
+      responses.push(generator(features[index], survey));
 
-      save(saveAll);
+      saveAll();
     });
 
   });
 };
 
+
+/**
+ * Save everything in [responses]
+ * Assumes the DB connection is open (dumb, I know)
+ */
 var save = function() {
-  console.log(responses);
-  console.log(responses[0].geo_info.centroid);
-  console.log(responses[0].geo_info.geometry);
+  db.collection('responseCollection', function(err, collection) {
+    collection.insert(responses, {safe: true}, function(error, docs) {
+      if(error) {
+        console.log("Error inserting", error);
+        process.exit(1);
+      }
+      console.log("Done inserting data. Exiting.");
+      process.exit();
+    });
+  });
 };
 
-var times = parseInt(process.argv[2], 10);
-surveyId = process.argv[3];
 
-console.log("Preparing to add", times, "responses to ", surveyId);
-build(times, surveyId);
+/**
+ * Clear all the results from a given survey
+ * @param  {Object} db       Mongo db connection
+ * @param  {String} surveyId 
+ */
+var clear = function(db, surveyId) {
+  console.log("Getting read to clear responses");
+  db.collection('responseCollection', function(err, collection) {
+    collection.remove({survey: surveyId}, {safe: true}, function(error, docs) {
+      if(error) {
+        console.log("Error clearing the survey responses", error);
+        process.exit(1);
+      }
+      console.log("Done clearing the survey responses");
+      process.exit();
+    });
+  });
+};
+
+// Get the surveyId
+var surveyId = process.argv[3];
+
+db.open(function() {
+  if (settings.mongo_user !== undefined) {
+    db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
+      if (err) {
+        console.log(err.message);
+        db.close();
+        return;
+      }
+
+      console.log("DB authenticated");
+
+      if(process.argv[2] === 'clear') {
+        console.log("You asked me to clear the responses... here goes");
+        clear(db, surveyId);
+      }
+
+      var times = parseInt(process.argv[2], 10);
+      if(!isNaN(times)) {
+        build(times, surveyId);
+      }
+
+    });
+  } else {
+    // Add the data
+    console.log("DB connected");
+
+    // Check if we're supposed to clear the data
+    if(process.argv[2] === 'clear') {
+      console.log("You asked me to clear the responses... here goes");
+      clear(db, surveyId);
+    }
+
+    var times = parseInt(process.argv[2], 10);
+    if(!isNaN(times)) {
+      // Ok, we're not clearing the survey
+      // We must be adding data
+      console.log("Preparing to add", times, "responses to", surveyId);
+      build(times, surveyId);
+    }
+  }
+});
 
 
