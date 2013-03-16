@@ -84,6 +84,13 @@ suite('Surveys', function () {
     }
   };
 
+  var data_bad = {
+    "surveys" : [ {
+      "slug": "this's no good!!",
+      "paperpaper": { "dpi" : null }
+    } ]
+  };
+
   suiteSetup(function (done) {
     server.run(settings, done);
   });
@@ -135,6 +142,16 @@ suite('Surveys', function () {
         done();
       });
     });
+
+    test('Posting bad survey JSON', function (done) { 
+      request.post({ url: url, json: data_bad }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
+
+        done();
+      });
+    });
+
   });
 
   suite('GET', function () {
