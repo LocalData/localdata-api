@@ -1,8 +1,11 @@
+/*jslint node: true, indent: 2, white: true, vars: true */
+/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
+'use strict';
+
 var assert = require('assert');
-var listToCSVString = require('./../responses.js').listToCSVString;
-var filterToMostRecent = require('./../responses.js').filterToMostRecent;
-var filterAllResults = require('./../responses.js').filterAllResults;
-var CSVWriter = require('./../responses.js').CSVWriter;
+var responses = require('../lib/controllers/responses.js');
+var listToCSVString = responses.listToCSVString;
+var filterToMostRecent = responses.filterToMostRecent;
 
   
 suite('In csvExport,', function(){
