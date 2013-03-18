@@ -291,7 +291,7 @@ suite('Surveys', function () {
 
     var surveyId;
 
-    test('PUT JSON to /surveys', function (done) {
+    test('PUT JSON to /survey/:id', function (done) {
       request.post({url: url, json: data_two}, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
@@ -313,7 +313,7 @@ suite('Surveys', function () {
       });
     });
 
-    test('PUT JSON to /surveys from an unauthorized user', function (done) {
+    test('PUT JSON to /surveys/:id from an unauthorized user', function (done) {
       var url = BASEURL + '/surveys';
 
       request.post({url: url, json: data_one}, function (error, response, body) {
