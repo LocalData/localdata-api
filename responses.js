@@ -35,7 +35,7 @@ var handleError = util.handleError;
 var isArray = util.isArray;
 
 
-/* Export helpers ........................................................................*/
+/* Export helpers ............................................................*/
 
 /*
  * Turn a list of parcel attributes into a comma-separated string.
@@ -80,7 +80,7 @@ function listToCSVString(row, headers, maxEltsInCell) {
         }else {
           arr.push('');
         }
-        
+
         len = 1;
       } else {
         // If it's an array of responses, join them with a semicolon
@@ -97,26 +97,26 @@ function listToCSVString(row, headers, maxEltsInCell) {
  */
 function listToKMLString(row, headers, maxEltsInCell) {
   var i;
-  var elt = "\n<Placemark>";
-  elt += "<name></name>";
-  elt += "<description></description>";
+  var elt = '\n<Placemark>';
+  elt += '<name></name>';
+  elt += '<description></description>';
 
   // The coordinates come escaped, so we need to unescape them:
-  elt += "<Point><coordinates>" + row[4] + "</coordinates></Point>";
+  elt += '<Point><coordinates>' + row[4] + ',' + row[5] + '</coordinates></Point>';
 
-  elt += "<ExtendedData>";
+  elt += '<ExtendedData>';
   for (i = 0; i < row.length; i += 1) {
-      elt += "<Data name=\"" + headers[i] + "\">";
-      elt += "<displayName>" + headers[i] + "</displayName>";
-      
+      elt += '<Data name="' + headers[i] + '">';
+      elt += '<displayName>' + headers[i] + '</displayName>';
+
       if(row[i] !== undefined) {
-        elt += "<value>" + row[i] + "</value>";
+        elt += '<value>' + row[i] + '</value>';
       }else {
-        elt += "<value>" + "</value>";
+        elt += '<value></value>';
       }
-      elt += "</Data>";
+      elt += '</Data>';
   }
-  elt += "</ExtendedData></Placemark>\n";
+  elt += '</ExtendedData></Placemark>\n';
 
   return elt;
 }
@@ -132,20 +132,20 @@ function KMLWriter(response, rows, headers, maxEltsInCell){
     'Content-Type': 'application/vnd.google-earth.kml+xml',
     'Content-disposition': 'attachment; filename=Survey Export.kml'
   });
-  
-  response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  response.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
-  response.write("<Document><name>KML Export</name><open>1</open><description></description>\n");
-  response.write("<Folder>\n<name>Placemarks</name>\n<description></description>\n");
-    
+
+  response.write('<?xml version="1.0" encoding="UTF-8"?>\n');
+  response.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n');
+  response.write('<Document><name>KML Export</name><open>1</open><description></description>\n');
+  response.write('<Folder>\n<name>Placemarks</name>\n<description></description>\n');
+
   // Turn each row into a KML line
   for (i = 0; i < rows.length; i++) {
     response.write(listToKMLString(rows[i], headers, maxEltsInCell));
     response.write('\n');
   }
-  
-  response.write("\n</Folder></Document></kml>");
-  
+
+  response.write('\n</Folder></Document></kml>');
+
   response.end();
 }
 
@@ -273,7 +273,7 @@ function setup(app, db, idgen, collectionName) {
   function getCollection(cb) {
     return db.collection(collectionName, cb);
   }
-  
+
   // Get all responses for a survey.
   // Sort by creation date, newest first.
   // GET http://localhost:3000/api/surveys/{SURVEY ID}/responses
@@ -450,11 +450,11 @@ function setup(app, db, idgen, collectionName) {
     for (i = 0, ln = coords.length; i < ln; i += 1) {
       coords[i] = parseFloat(coords[i]);
     }
-    
-    
+
+
     var bbox = [[coords[0], coords[1]], [coords[2],  coords[3]]];
     var query = {'survey': surveyid, 'geo_info.centroid': {"$within": { "$box": bbox}}};
-    
+
     getCollection(function(err, collection) {
       collection.find(query,
                       {'sort': [['created', 'desc']]},
@@ -506,7 +506,7 @@ function setup(app, db, idgen, collectionName) {
           }
 
           // Start with some basic headers
-          var headers = ['parcel_id', 'collector', 'timestamp', 'source', 'centroid'];
+          var headers = ['parcel_id', 'collector', 'timestamp', 'source', 'lat', 'lng'];
 
           // Record which header is at which index
           var headerIndices = {};
@@ -526,7 +526,8 @@ function setup(app, db, idgen, collectionName) {
               items[i].source.collector,
               items[i].created,
               items[i].source.type,
-              items[i].geo_info.centroid[0] + ',' + items[i].geo_info.centroid[1]
+              items[i].geo_info.centroid[1], // lat
+              items[i].geo_info.centroid[0]  // lng
             ];
 
             // Then, add the survey results

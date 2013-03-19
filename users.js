@@ -5,8 +5,11 @@ var bcrypt = require('bcrypt');
 var express = require('express');
 var http = require('http');
 var mongo = require('mongodb');
+var uuid = require('node-uuid');
 
+var mailer = require('./email.js');
 var settings = require('./settings.js');
+var templates = require('./templates/templates.js');
 
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
@@ -40,6 +43,10 @@ function setup(app, db, idgen, collectionName) {
       safeUser.hash = user.hash;
     }
 
+    if(user.reset) {
+      safeUser.reset = user.reset;
+    }
+
     if(user.password) {
       safeUser.hash = bcrypt.hashSync(user.password, 10);
     }
@@ -53,7 +60,7 @@ function setup(app, db, idgen, collectionName) {
   // @param {Function} done
   User.findOne = function(query, done) {
     getCollection(function(error, collection) {
-      collection.findOne({email: query.email}, function(error, user){
+      collection.findOne(query, function(error, user){
         if(error) {
           done(error);
         }
@@ -127,8 +134,8 @@ function setup(app, db, idgen, collectionName) {
   // WARNING: The caller must verify the user's identity.
   // This just does what it's told 
   //
-  // @param {Object} query A user object, with ._id property
-  // @param {Function} done
+  // @param {Object}   query A user object, with ._id property
+  // @param {Function} done  Param error
   User.update = function(query, done) {
     if(!query.email || query.email === '') {
       done({code: 400, err: 'Email required'}, null);
@@ -151,7 +158,6 @@ function setup(app, db, idgen, collectionName) {
           return;
         }
 
-        console.log(error);
         done(null);
       });
     });
@@ -274,6 +280,167 @@ function setup(app, db, idgen, collectionName) {
 
   });
 
+  /**
+   * Given a token, hash it for storage / reuse
+   * Broken out into a function so it can be easily overridden by tests
+   * @param  {String} token
+   * @return {String}       bcrypt hashed token
+   */
+  User.hash = function(token) {
+    return bcrypt.hashSync(token, 10);
+  };
+
+  /**
+   * Return the date when a token should expire
+   * Right now, that's 24 hours
+   * @return {Date}
+   */
+  User.createTokenExpiry = function() {
+    var now = new Date();
+    return now.setDate(now.getDate()+1);
+  };
+
+  /**
+   * POST /api/user/forgot
+   * Reset a user's password
+   * Or, given a valid reset token, allow the user to reset their password.
+   */
+  app.post('/api/user/forgot', function(req, response, next){
+    var email = req.body.user.email;
+    if(email === undefined) {
+      response.send({ type: 'PasswordResetError', message: 'Email required' }, 400);
+      return;
+    }
+
+    // Find the user
+    User.findOne({ email: email }, function(error, user) {
+      if (error) {
+        // TODO: Log
+        return next(error);
+      }
+      if(!user) {
+        response.send({ type: 'PasswordResetError', message: 'Account not found' }, 400);
+        return;
+      }
+
+      // Generate a new token
+      // & set an expiration date
+      var token = uuid.v4(); // random uuid (v1 is time-based)
+      var expiry = User.createTokenExpiry();
+      
+      // We store the token hashed, since it's a password equivalent.
+      var tokenHash = User.hash(token);
+
+      // Save it to the user
+      user.reset = {
+        token: tokenHash,
+        expiry: expiry
+      };
+      User.update(user, function(error){
+        if(error) {
+          // TODO: Log
+          console.log("Error saving user", error);
+          return next(error);
+        }
+        
+        // Generate the email
+        console.log(req.headers.host);
+        var host = req.headers.host;
+        var resetText = templates.render('passwordReset', {
+          'link': 'https://' + host + '/reset/' + token
+        }, function(error, resetText) {
+          var message = {
+            to: email,
+            subject: 'Your LocalData password',
+            text: resetText
+          };
+
+          // Send the email!
+          mailer.send(message, function(error){
+            if(error){
+              return next(error);
+            }
+            response.send(200);
+          });
+        });
+      });
+    });
+  });
+
+  /**
+   * POST /api/user/reset
+   * Reset a user's password
+   * Requires a valid email (tied to a user), password, and auth token
+   */
+  app.post('/api/user/reset', function(req, response, next){
+    // Get the parameters
+    var token = req.body.reset.token;
+    var password = req.body.reset.password;
+
+    if(!token) {
+      response.send({ type: 'PasswordResetError', message: 'Password reset code required' }, 400);
+      return;
+    }
+    if(!password) {
+      response.send({ type: 'PasswordResetError', message: 'Password required' }, 400);
+      return;
+    }
+
+    // We store the token hashed, since it's a password equivalent.
+    var tokenHash = User.hashToken(token);
+    // Find the user based on the token 
+    var user = User.findOne({'reset.token': tokenHash}, function(error, user){
+      if(error) {
+        return next(error);
+      }
+      if(user === null) {
+        console.log('User not found');
+        response.send('User not found', 400);
+        return;
+      }
+
+      console.log("Found user", user);
+      // Check that the user has a reset object
+      if (user.reset === undefined) {
+        response.send({ type: 'PasswordResetError', message: 'Email required' }, 400);
+        return;
+      }
+
+      // Check that the token hasn't expired.
+      var now = new Date().getTime();
+      var expiry = new Date(user.reset.expiry);
+      console.log("Expiry", expiry);
+      if(expiry.getTime() < now) {
+        console.log('Token expired');
+        response.send('Token expired', 400);
+        return;
+      }
+
+      // Change their password
+      user.password = password;
+      // Invalidate the reset token
+      delete user.reset;
+
+      User.update(user, function(error) {
+        if(error) {
+          return next(error);
+        }
+
+        // Log in the user
+        req.logIn(user, function(error) {
+          if (error) {
+            // TODO:
+            // Log
+            console.log('Unexpected error', error);
+            response.send(401);
+          }
+          response.redirect('/api/user');
+          return;
+        });
+      });
+    });
+  });
+
   // POST /api/user
   // Create a user
   app.post('/api/user', function(req, response){
@@ -323,7 +490,7 @@ function setup(app, db, idgen, collectionName) {
 // Simple route middleware to ensure user is authenticated.
 //   Use this route middleware on any resource that needs to be protected.  If
 //   the request is authenticated (typically via a persistent login session),
-//   the request will proceed.  
+//   the request will proceed.
 //   Otherwise, the user will be sent a 401.
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {

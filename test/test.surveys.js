@@ -90,6 +90,22 @@ suite('Surveys', function () {
     } ]
   };
 
+  var data_slug = {
+    "surveys" : [ {
+      "name": "Someone's cool, \"hip\" survey ~!@#$%^&*()-=_+<>?,./;: title",
+      "users": ["A", "B"],
+      "paperinfo": {
+        "dpi": 150,
+        "regmarks": [
+          {"type": 0, "bbox": [20, 20, 70, 70]},
+          {"type": 0, "bbox": [20, 1580, 70, 1630]},
+          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
+        ],
+        "barcode": {"bbox": [1055, 20, 1255, 220]}
+      }
+    } ]
+  };
+
   suiteSetup(function (done) {
     server.run(settings, done);
   });
@@ -146,6 +162,22 @@ suite('Surveys', function () {
       request.post({ url: url, json: data_bad }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(400);
+
+        done();
+      });
+    });
+
+    test('Posting a survey with funny characters', function (done) {
+      request.post({ url: url, json: data_slug }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        body.surveys.length.should.equal(1);
+        var survey = body.surveys[0];
+        survey.should.have.property('slug');
+        survey.slug.should.be.a('string');
+
+        // Test for unacceptable characters
+        /[~`!@#$%\^&*()+;:'",<>\/?\\{}\[\]|]/.test(survey.slug).should.equal(false);
 
         done();
       });
