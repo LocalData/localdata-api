@@ -1,6 +1,6 @@
 var assert = require('assert');
-var KMLWriter = require('./../responses.js').KMLWriter;
-var listToKMLString = require('./../responses.js').listToKMLString;
+var responses = require('../lib/controllers/responses.js');
+var listToKMLString = responses.listToKMLString;
   
   
 suite('In kmlExport,', function(){
