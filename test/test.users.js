@@ -10,8 +10,9 @@ var should = require('should');
 var util = require('util');
 
 // LocalData
-var server = require('../web.js');
+var server = require('../lib/server.js');
 var settings = require('../settings-test.js');
+var User = require('../lib/models/User.js');
 var users = require('../users.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
@@ -70,11 +71,13 @@ suite('Users -', function () {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
-        users.User.create(new Matt(), function(error, user){
+        var mattData = new Matt();
+        var matt = new User(mattData);
+        matt.save(function (error, user) {
           user.should.have.property('_id');
           user.should.not.have.property('randomThing');
-          assert.equal(user.name, new Matt().name);
-          assert.equal(user.email, new Matt().email);
+          assert.equal(user.name, mattData.name);
+          assert.equal(user.email, mattData.email);
           done();
         });
       });
@@ -85,9 +88,9 @@ suite('Users -', function () {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
-        users.User.create({"name": "No Email", "password": "luggage"}, function(error, user){
+        (new User({"name": "No Email", "password": "luggage"})).save(function (error, user) {
           should.exist(error);
-          error.code.should.equal(400);
+          error.name.should.equal('ValidationError');
           done();
         });
       });
@@ -96,9 +99,9 @@ suite('Users -', function () {
     test('users must be created with a password', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
-        users.User.create({"name": "No Password", "email": "example@example.com"}, function(error, user){
+        (new User({"name": "No Password", "email": "example@example.com"})).save(function (error, user) {
           should.exist(error);
-          error.code.should.equal(400);
+          error.name.should.equal('ValidationError');
           done();
         });
       });
@@ -107,10 +110,8 @@ suite('Users -', function () {
     test('user emails must be unique', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
-        users.User.create(new Matt(), function(error, userOne) {
-          // console.log("First user ", userOne);
-          users.User.create(new Matt(), function(error, userTwo){
-            // console.log("Second user ", userTwo);
+        (new User(new Matt())).save(function (error, userOne) {
+          (new User(new Matt())).save(function (error, userTwo) {
             should.exist(error);
             done();
           });
@@ -121,18 +122,19 @@ suite('Users -', function () {
     test('update a user name and email', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
-        users.User.create(new Matt(), function(error, user) {
+        var matt = new User(new Matt());
+        matt.save(function (error, user) {
           var tempId = user._id;
           user.name = "Prashant";
           user.email = "prashant@codeforamerica.org";
 
-          users.User.update(user, function(error){
+          user.save(function (error) {
             // console.log(tempId);
             console.log("first user" , user);
 
             should.not.exist(error);
 
-            users.User.findOne({"email": "prashant@codeforamerica.org"}, function(error, user){
+            User.findOne({"email": "prashant@codeforamerica.org"}, function (error, user) {
               // Make sure the old and the new have the same Id
               console.log("Found this user", user);
               assert.equal(String(tempId), String(user._id));
@@ -152,11 +154,11 @@ suite('Users -', function () {
       done();
     });
 
-    test('Deleting a user', function (done) {
-      // test for stuff
-      assert.equal(true, false);
-      done();
-    });
+    // test('Deleting a user', function (done) {
+    //   // test for stuff
+    //   assert.equal(true, false);
+    //   done();
+    // });
 
   });
 
