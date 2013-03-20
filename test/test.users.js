@@ -26,7 +26,7 @@ suite('Users -', function () {
   var generateUser = function() {
     return {
       name: "Matt Hampel",
-      email: "matth@localdata.com",
+      email: settings.email.to,
       randomThing: "security problem!",
       password: "abc123"
     };
@@ -201,8 +201,9 @@ suite('Users -', function () {
 
           response.should.be.json;
 
-          body.should.have.property("email", "matth@localdata.com");
-          body.should.have.property("name", "Matt Hampel");
+          var userData = generateUser();
+          body.should.have.property("email", userData.email);
+          body.should.have.property("name", userData.name);
           body.should.not.have.property("randomThing");
           body.should.not.have.property("password");
           body.should.not.have.property("hash");
@@ -230,8 +231,9 @@ suite('Users -', function () {
 
             var parsed = JSON.parse(body);
 
-            parsed.should.have.property("email", "matth@localdata.com");
-            parsed.should.have.property("name", "Matt Hampel");
+            var userData = generateUser();
+            parsed.should.have.property("email", userData.email);
+            parsed.should.have.property("name", userData.name);
             parsed.should.not.have.property("randomThing");
             parsed.should.not.have.property("password");
             parsed.should.not.have.property("hash");
