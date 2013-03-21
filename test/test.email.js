@@ -2,13 +2,9 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../web.js');
-var assert = require('assert');
-var util = require('util');
-var request = require('request');
 var should = require('should');
 
-var mailer = require('../email.js');
+var mailer = require('../lib/email');
 var settings = require('../settings-test.js');
 
 suite('Email', function () {

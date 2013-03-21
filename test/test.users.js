@@ -10,10 +10,10 @@ var should = require('should');
 var util = require('util');
 
 // LocalData
-var server = require('../lib/server.js');
+var server = require('../lib/server');
 var settings = require('../settings-test.js');
-var User = require('../lib/models/User.js');
-var users = require('../users.js');
+var User = require('../lib/models/User');
+var users = require('../lib/controllers/users');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 var BASE_LOGOUT_URL = 'http://localhost:' + settings.port + '/logout';
@@ -260,6 +260,10 @@ suite('Users -', function () {
     });
 
     test('Reset a user password', function (done) {
+      // There are a lot of things happening in the test and on the server, so
+      // we need some more time for this test.
+      this.timeout(3000);
+
       setupTest(function(error, response) {
         var user = generateUser();
         // Set a reset token
@@ -267,22 +271,21 @@ suite('Users -', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          // Get the reset token
-          // (uses an internal API; by default, this is emailed to the user)
-          user = users.User.findOne({ email: user.email }, function(error, user) {
+          // FIXME: this is a hack
+          // Set the hashed reset token, so we know what it is.
+          var token = 'THISISAFAKETOKEN';
+          User.findOneAndUpdate({ email: user.email }, { $set: { 'reset.hashedToken': User.hashToken(token) } }, function (error, doc) {
+            var resetString = users.serializeResetInfo(doc.email, token);
 
             // Change the password using the token
             var newPassword = 'placebased';
+            var resetInfo = users.deserializeResetInfo(resetString);
             var resetObj = {
               'reset': {
-                token: user.reset.token,
+                email: resetInfo.email,
+                token: resetInfo.token,
                 password: newPassword
               }
-            };
-
-            // Override the token hash function to just pass the value through
-            users.User.hashToken = function(token) {
-              return token;
             };
 
             // Reset the password
@@ -291,19 +294,27 @@ suite('Users -', function () {
               should.not.exist(error);
               response.statusCode.should.equal(302);
 
-              // Check to see that we changed the password successfully
-              user.password = newPassword;
-              request.post({url: LOGIN_URL, json: user}, function(error, response, body) {
+              // Logout, since the reset action logs us in
+              request.get({url: BASE_LOGOUT_URL}, function (error, response, body) {
                 should.not.exist(error);
-                response.statusCode.should.equal(302);
+                response.statusCode.should.equal(200);
 
-                // Make sure that the token doesn't work twice
-                request.post({url: RESET_URL, json: resetObj}, function(error, response, body) {
+                // Check to see that we changed the password successfully
+                user.password = newPassword;
+                request.post({url: LOGIN_URL, json: user}, function(error, response, body) {
                   should.not.exist(error);
-                  response.statusCode.should.equal(400);
-                  done();
+                  response.statusCode.should.equal(302);
+
+                  // Make sure that the token doesn't work twice
+                  request.post({url: RESET_URL, json: resetObj}, function(error, response, body) {
+                    should.not.exist(error);
+                    response.statusCode.should.equal(400);
+                    done();
+                  });
                 });
+
               });
+
             });
           });
         });
