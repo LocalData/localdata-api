@@ -346,7 +346,7 @@ suite('Surveys', function () {
         }, function (error, response, body) {
           console.log(body);
           should.not.exist(error);
-          response.statusCode.should.equal(401);
+          response.statusCode.should.equal(403);
 
           done();
         });
