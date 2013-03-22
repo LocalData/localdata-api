@@ -15,6 +15,7 @@ var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Responses', function () {
+
   var data_one = {
     "responses": [
       {

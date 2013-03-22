@@ -3,10 +3,12 @@
 'use strict';
 
 var server = require('../web.js');
+
 var assert = require('assert');
-var util = require('util');
+var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
+var util = require('util');
 
 var settings = require('../settings-test.js');
 var users = require('../users.js');
@@ -19,10 +21,44 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
 
-  // Fake log in the user. 
-  users.ensureAuthenticated = function(req, res, next) {
-    req.user = { _id: "1" };
-    return next();
+  /**
+   * Remove all results from a collection
+   * @param  {String}   collection Name of the collection
+   * @param  {Function} done       Callback, accepts error, response
+   */
+  var clearCollection = function(collectionName, done) {
+    var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
+                                                          settings.mongo_port,
+                                                          {}), { w: 1, safe: true });
+
+    db.open(function() {
+      db.collection(collectionName, function(error, collection) {
+        if(error) {
+          console.log("BIG ERROR");
+          console.log(error);
+          assert(false);
+          done(error);
+        }
+
+        // Remove all the things!
+        collection.remove({}, function(error, response){
+          done(error, response);
+        });
+      });
+
+    });
+  };
+
+  var userA = {
+    'name': 'User A',
+    'email': 'a@localdata.com',
+    'password': 'password'
+  };
+
+  var userB = {
+    'name': 'User B',
+    'email': 'b@localdata.com',
+    'password': 'drowssap'
   };
 
   var data_one = {
@@ -84,6 +120,9 @@ suite('Surveys', function () {
     }
   };
 
+  var userAJar = request.jar();
+  var userBJar = request.jar();
+
   var data_slug = {
     "surveys" : [ {
       "name": "Someone's cool, \"hip\" survey ~!@#$%^&*()-=_+<>?,./;: title",
@@ -101,7 +140,23 @@ suite('Surveys', function () {
   };
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(settings, function(){
+      var url = BASEURL + '/user';
+      clearCollection('usersCollection', function(error, response){
+        request.post({url: url, json: userA, jar: userAJar}, function (error, response, body) {
+          console.log("RETURNED USER", body, userAJar);
+          userA._id = body._id;
+
+          request.post({url: url, json: userB, jar: userBJar}, function (error, response, body) {
+            userB._id = body._id;
+
+            done();
+          });
+        });
+
+        request = request.defaults({jar: userAJar});
+      });
+    });
   });
 
   suiteTeardown(function () {
@@ -111,7 +166,7 @@ suite('Surveys', function () {
   suite("Utilities:", function() {
     test('Filter sensitive data from a survey', function (done) {
       var filteredSurvey = surveys.filterSurvey(sampleSurvey);
-      
+
       filteredSurvey.should.have.property('name');
       filteredSurvey.should.have.property('slug');
       filteredSurvey.should.have.property('id');
@@ -124,24 +179,30 @@ suite('Surveys', function () {
 
   suite('POST', function () {
     var url = BASEURL + '/surveys';
+
+    var surveyId;
+
     test('Posting JSON to /surveys', function (done) {
       request.post({url: url, json: data_two}, function (error, response, body) {
-        assert.ifError(error);
-        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
 
         var i;
         for (i = 0; i < data_two.surveys.length; i += 1) {
+          // Save the survey id for later tests
+          surveyId = body.surveys[i]._id;
+
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
 
           body.surveys[i].should.have.property('users');
-          assert.equal("1", body.surveys[i].users[0], 'Wrong or no user stored');
+          assert.equal(userA._id, body.surveys[i].users[0], 'Wrong or no user stored');
 
           // Security tests
           assert.equal(1, body.surveys[i].users.length, 'There should be only one user assigned, even though the POST had two');
-          assert.notEqual("A", body.surveys[i].users[0], 'Wrong user stored');
+          assert.notEqual(userB._id, body.surveys[i].users[0], 'Wrong user stored');
 
           // Slug tests
           body.surveys[i].should.have.property('slug');
@@ -220,6 +281,62 @@ suite('Surveys', function () {
         parsed.survey.slug.should.be.a('string');
 
         done();
+      });
+    });
+
+  });
+
+  suite('PUT: ', function () {
+    var url = BASEURL + '/surveys';
+
+    var surveyId;
+
+    test('PUT JSON to /survey/:id', function (done) {
+      request.post({url: url, json: data_two}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          json: {'survey': surveyToChange}
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          body.survey.name.should.equal('new name');
+          done();
+        });
+      });
+    });
+
+    test('PUT JSON to /surveys/:id from an unauthorized user', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({url: url, json: data_one}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          json: {'survey': surveyToChange},
+          jar: userBJar
+        }, function (error, response, body) {
+          console.log(body);
+          should.not.exist(error);
+          response.statusCode.should.equal(401);
+
+          done();
+        });
+
       });
     });
 

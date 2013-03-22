@@ -57,13 +57,13 @@ function setup(app, db, idgen, collectionName) {
 
   // Get all surveys
   // GET http://localhost:3000/api/surveys
-  app.get('/api/surveys', users.ensureAuthenticated, function(req, response) {
+  app.get('/api/surveys', function(req, response) {
 
     var handleError = util.makeErrorHandler(response);
     getCollection(function(err, collection) {
 
       if (handleError(err)) { return; }
-      collection.find({users: { $in: [req.user._id]}}, function(err, cursor) {
+      collection.find({}, function(err, cursor) {
         if (handleError(err)) { return; }
         cursor.toArray(function(err, items) {
           if (handleError(err)) { return; }
@@ -89,7 +89,7 @@ function setup(app, db, idgen, collectionName) {
           if (handleError(err)) { return; }
 
           var survey = items[0];
-          var trimmedSurvey; 
+          var trimmedSurvey;
 
           // If there are no results, it's a 404
           if (items.length === 0) {
@@ -157,10 +157,9 @@ function setup(app, db, idgen, collectionName) {
     var handleError = util.makeErrorHandler(response);
 
     var surveys = req.body.surveys;
-    
+
     var total = surveys.length;
     var count = 0;
-
 
     getCollection(function(err, collection) {
 
@@ -195,6 +194,60 @@ function setup(app, db, idgen, collectionName) {
     });
   });
 
+  
+  // Update a survey
+  // PUT http://localhost:3000/api/surveys/:id
+  app.put('/api/surveys/:sid', users.ensureAuthenticated, function(req, response) {
+    var handleError = util.makeErrorHandler(response);
+    var surveyId = req.params.sid;
+    var survey = req.body.survey;
+
+    // Mongo won't let us save it with the _id
+    delete survey._id;
+
+    getCollection(function(err, collection) {
+      if (handleError(err)) { return; }
+
+      // Find the survey
+      collection.find({id: req.params.sid}, function(err, cursor) {
+        if (handleError(err)) { return; }
+        cursor.toArray(function(err, items) {
+          if (handleError(err)) { return; }
+
+          // If there are no results, it's a 404
+          if (items.length === 0) {
+            response.send(404);
+            return;
+          }
+
+          // If the current user doesn't own the survey, we can't save it.
+          if (items[0].users.indexOf(req.user._id) === -1) {
+            response.send(403);
+            return;
+          }
+
+          // Update the survey
+          // The new: true option returns the updated surve object
+          // (it doesn't mean upsert)
+          collection.findAndModify({'id': surveyId},
+                                   {_id: 1},
+                                   survey,
+                                   {new: true}, function(error, object) {
+            if(error) {
+              console.log(error);
+              response.send(500);
+            }else {
+              response.send({survey: object});
+            }
+          });
+        });
+      });
+
+
+    });
+  });
+
+
   // Delete a survey
   // DELETE http://localhost:5000/api/surveys/{SURVEY ID}
   // TODO: We should probably clean up the objects from other collections that
@@ -216,7 +269,6 @@ function setup(app, db, idgen, collectionName) {
   //     });
   //   });
   // });
-
 }
 
 module.exports = {
