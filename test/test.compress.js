@@ -2,7 +2,7 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../web.js');
+var server = require('../lib/server');
 var assert = require('assert');
 var util = require('util');
 var request = require('request');
