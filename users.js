@@ -50,7 +50,7 @@ function setup(app, db, idgen, collectionName) {
     if(user.password) {
       safeUser.hash = bcrypt.hashSync(user.password, 10);
     }
-    
+
     return safeUser;
   };
 

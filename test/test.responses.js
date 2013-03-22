@@ -16,6 +16,7 @@ var settings = require('../settings-test.js');
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Responses', function () {
+
   var data_one = {
     responses: [ {
       source: {
