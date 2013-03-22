@@ -12,6 +12,7 @@
 
 var mongo = require('mongodb');
 var makeSlug = require('slug');
+var util = require('../lib/util');
 
 var settings;
 if (process.argv.length > 2) {
@@ -87,6 +88,56 @@ function ensureStructure(db, callback) {
       chain([function indexCentroid(done) {
         // Ensure we have a geo index on the centroid field.
         collection.ensureIndex({'geo_info.centroid': '2d'}, done);
+      },
+      function ensureTiles(done) {
+        var zoom = 13;
+        function addTiles(item, next) {
+          if (item.geo_info === undefined || item.geo_info.points === undefined) {
+            return process.nextTick(function () {
+              next(addTiles, next);
+            });
+          }
+          if (!item.geo_info.hasOwnProperty('tiles')) {
+            item.geo_info.tiles = {};
+          }
+          var tiles = util.getTilesForBbox(zoom, util.getBbox(item.geo_info.points))
+          .map(function (tileCoords) {
+            return tileCoords.join('/');
+          });
+          if (tiles.length === 0) {
+            console.log(item.geo_info.points);
+            console.log(util.getBbox(item.geo_info.points));
+            throw {
+              name: 'NoTilesError',
+              message: 'Why no tiles??'
+            };
+          }
+          item.geo_info.tiles[zoom.toString()] = tiles;
+          collection.update({_id: item._id}, item, function (error, count) {
+            if (error) { return done(error); }
+            next(addTiles, next);
+          });
+        }
+
+        //collection.find({'geo_info.tiles': { $exists: false }}, function (error, cursor) {
+        collection.find({'geo_info.tiles.13': { $size: 0 }}, function (error, cursor) {
+          if (error) { return done(error); }
+          function getNext(worker, next) {
+            cursor.nextObject(function (error, item) {
+              if (error) { return done(error); }
+              if (item === null) {
+                return done();
+              }
+              worker(item, next);
+            });
+          }
+          getNext(addTiles, getNext);
+        });
+      },
+
+      function indexTiles(done) {
+        // Index the creation date, which we use to sort
+        collection.ensureIndex('geo_info.tiles.13', done);
       },
       function indexCreated(done) {
         // Index the creation date, which we use to sort
@@ -190,7 +241,14 @@ var db = new mongo.Db(settings.mongo_db,
 });
 
 db.open(function() {
-  function close() { db.close(); }
+  function close(error) {
+    if (error) {
+      console.log('ERROR: ' + error.name);
+      console.log(error.message);
+      console.log(error.stack);
+    }
+    db.close();
+  }
   if (settings.mongo_user !== undefined) {
     db.authenticate(settings.mongo_user, settings.mongo_password, function(err, result) {
       if (err) {
