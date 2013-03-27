@@ -10,9 +10,10 @@ var should = require('should');
 var util = require('util');
 
 // LocalData
-var server = require('../web.js');
+var server = require('../lib/server');
 var settings = require('../settings-test.js');
-var users = require('../users.js');
+var User = require('../lib/models/User');
+var users = require('../lib/controllers/users');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 var BASE_LOGOUT_URL = 'http://localhost:' + settings.port + '/logout';
@@ -25,7 +26,7 @@ suite('Users -', function () {
   var generateUser = function() {
     return {
       name: "Matt Hampel",
-      email: "matth@localdata.com",
+      email: settings.email.to,
       randomThing: "security problem!",
       password: "abc123"
     };
@@ -95,11 +96,12 @@ suite('Users -', function () {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
-        users.User.create(generateUser(), function(error, user){
+        var userData = generateUser();
+        User.create(userData, function (error, user) {
           user.should.have.property('_id');
           user.should.not.have.property('randomThing');
-          assert.equal(user.name, generateUser().name);
-          assert.equal(user.email, generateUser().email);
+          assert.equal(user.name, userData.name);
+          assert.equal(user.email, userData.email);
           done();
         });
       });
@@ -110,9 +112,9 @@ suite('Users -', function () {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
-        users.User.create({"name": "No Email", "password": "luggage"}, function(error, user){
+        (new User({"name": "No Email", "password": "luggage"})).save(function (error, user) {
           should.exist(error);
-          error.code.should.equal(400);
+          error.name.should.equal('ValidationError');
           done();
         });
       });
@@ -121,9 +123,9 @@ suite('Users -', function () {
     test('users must be created with a password', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
-        users.User.create({"name": "No Password", "email": "matth@localdata.com"}, function(error, user){
+        User.create({"name": "No Password", "email": "matth@localdata.com"}, function(error, user){
           should.exist(error);
-          error.code.should.equal(400);
+          error.name.should.equal('ValidationError');
           done();
         });
       });
@@ -132,9 +134,9 @@ suite('Users -', function () {
     test('user emails must be unique', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
-        users.User.create(generateUser(), function(error, userOne) {
+        User.create(generateUser(), function(error, userOne) {
           // console.log("First user ", userOne);
-          users.User.create(generateUser(), function(error, userTwo){
+          User.create(generateUser(), function(error, userTwo){
             // console.log("Second user ", userTwo);
             should.exist(error);
             done();
@@ -146,18 +148,18 @@ suite('Users -', function () {
     test('update a user name and email', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
-        users.User.create(generateUser(), function(error, user) {
+        User.create(generateUser(), function(error, user) {
           var tempId = user._id;
           user.name = "Prashant";
           user.email = "prashant@codeforamerica.org";
 
-          users.User.update(user, function(error){
+          user.save(function (error) {
             // console.log(tempId);
             console.log("first user" , user);
 
             should.not.exist(error);
 
-            users.User.findOne({"email": "prashant@codeforamerica.org"}, function(error, user){
+            User.findOne({"email": "prashant@codeforamerica.org"}, function (error, user) {
               // Make sure the old and the new have the same Id
               console.log("Found this user", user);
               assert.equal(String(tempId), String(user._id));
@@ -199,8 +201,9 @@ suite('Users -', function () {
 
           response.should.be.json;
 
-          body.should.have.property("email", "matth@localdata.com");
-          body.should.have.property("name", "Matt Hampel");
+          var userData = generateUser();
+          body.should.have.property("email", userData.email);
+          body.should.have.property("name", userData.name);
           body.should.not.have.property("randomThing");
           body.should.not.have.property("password");
           body.should.not.have.property("hash");
@@ -228,8 +231,9 @@ suite('Users -', function () {
 
             var parsed = JSON.parse(body);
 
-            parsed.should.have.property("email", "matth@localdata.com");
-            parsed.should.have.property("name", "Matt Hampel");
+            var userData = generateUser();
+            parsed.should.have.property("email", userData.email);
+            parsed.should.have.property("name", userData.name);
             parsed.should.not.have.property("randomThing");
             parsed.should.not.have.property("password");
             parsed.should.not.have.property("hash");
@@ -256,6 +260,10 @@ suite('Users -', function () {
     });
 
     test('Reset a user password', function (done) {
+      // There are a lot of things happening in the test and on the server, so
+      // we need some more time for this test.
+      this.timeout(3000);
+
       setupTest(function(error, response) {
         var user = generateUser();
         // Set a reset token
@@ -263,22 +271,21 @@ suite('Users -', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          // Get the reset token
-          // (uses an internal API; by default, this is emailed to the user)
-          user = users.User.findOne({ email: user.email }, function(error, user) {
+          // FIXME: this is a hack
+          // Set the hashed reset token, so we know what it is.
+          var token = 'THISISAFAKETOKEN';
+          User.findOneAndUpdate({ email: user.email }, { $set: { 'reset.hashedToken': User.hashToken(token) } }, function (error, doc) {
+            var resetString = users.serializeResetInfo(doc.email, token);
 
             // Change the password using the token
             var newPassword = 'placebased';
+            var resetInfo = users.deserializeResetInfo(resetString);
             var resetObj = {
               'reset': {
-                token: user.reset.token,
+                email: resetInfo.email,
+                token: resetInfo.token,
                 password: newPassword
               }
-            };
-
-            // Override the token hash function to just pass the value through
-            users.User.hashToken = function(token) {
-              return token;
             };
 
             // Reset the password
@@ -287,19 +294,27 @@ suite('Users -', function () {
               should.not.exist(error);
               response.statusCode.should.equal(302);
 
-              // Check to see that we changed the password successfully
-              user.password = newPassword;
-              request.post({url: LOGIN_URL, json: user}, function(error, response, body) {
+              // Logout, since the reset action logs us in
+              request.get({url: BASE_LOGOUT_URL}, function (error, response, body) {
                 should.not.exist(error);
-                response.statusCode.should.equal(302);
+                response.statusCode.should.equal(200);
 
-                // Make sure that the token doesn't work twice
-                request.post({url: RESET_URL, json: resetObj}, function(error, response, body) {
+                // Check to see that we changed the password successfully
+                user.password = newPassword;
+                request.post({url: LOGIN_URL, json: user}, function(error, response, body) {
                   should.not.exist(error);
-                  response.statusCode.should.equal(400);
-                  done();
+                  response.statusCode.should.equal(302);
+
+                  // Make sure that the token doesn't work twice
+                  request.post({url: RESET_URL, json: resetObj}, function(error, response, body) {
+                    should.not.exist(error);
+                    response.statusCode.should.equal(400);
+                    done();
+                  });
                 });
+
               });
+
             });
           });
         });

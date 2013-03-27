@@ -2,7 +2,7 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../web.js');
+var server = require('../lib/server.js');
 var util = require('util');
 var request = require('request');
 var should = require('should');
@@ -98,7 +98,7 @@ suite('Forms', function () {
 
     test('Get forms by parcel ID', function (done) {
       var parcelId = '03001529.';
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/parcels/' + parcelId + '/forms'},
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/forms?parcel=' + parcelId},
                   function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
@@ -178,47 +178,47 @@ suite('Forms', function () {
     });
   });
 
-  suite('DEL', function () {
-    var id;
-    setup(function (done) {
-      request.post({url: BASEURL + '/surveys/' + surveyId + '/forms', json: data_paper},
-                   function (error, response, body) {
-        if (error) { return done(error); }
-        id = body.forms[0].id;
-        done();
-      });
-    });
+  // suite('DEL', function () {
+  //   var id;
+  //   setup(function (done) {
+  //     request.post({url: BASEURL + '/surveys/' + surveyId + '/forms', json: data_paper},
+  //                  function (error, response, body) {
+  //       if (error) { return done(error); }
+  //       id = body.forms[0].id;
+  //       done();
+  //     });
+  //   });
 
-    test('Delete a form by ID', function (done) {
-      request.del({url: BASEURL + '/surveys/' + surveyId + '/forms/' + id},
-                  function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(200);
-        response.should.be.json;
+  //   test('Delete a form by ID', function (done) {
+  //     request.del({url: BASEURL + '/surveys/' + surveyId + '/forms/' + id},
+  //                 function (error, response, body) {
+  //       should.not.exist(error);
+  //       response.statusCode.should.equal(200);
+  //       response.should.be.json;
 
-        var parsed = JSON.parse(body);
-        parsed.should.have.property('count');
-        parsed.count.should.equal(1);
+  //       var parsed = JSON.parse(body);
+  //       parsed.should.have.property('count');
+  //       parsed.count.should.equal(1);
 
-        done();
-      });
-    });
+  //       done();
+  //     });
+  //   });
 
-    test('Delete all forms for a survey', function (done) {
-      request.del({url: BASEURL + '/surveys/' + surveyId + '/forms'},
-                  function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(200);
-        response.should.be.json;
+  //   test('Delete all forms for a survey', function (done) {
+  //     request.del({url: BASEURL + '/surveys/' + surveyId + '/forms'},
+  //                 function (error, response, body) {
+  //       should.not.exist(error);
+  //       response.statusCode.should.equal(200);
+  //       response.should.be.json;
 
-        var parsed = JSON.parse(body);
-        parsed.should.have.property('count');
-        parsed.count.should.be.above(0);
+  //       var parsed = JSON.parse(body);
+  //       parsed.should.have.property('count');
+  //       parsed.count.should.be.above(0);
 
-        done();
-      });
-    });
-  });
+  //       done();
+  //     });
+  //   });
+  // });
 
   suite('PUT', function () {
     var id;
