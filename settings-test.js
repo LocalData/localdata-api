@@ -7,10 +7,13 @@
 
 var settings = module.exports;
 
+// Are we in debug mode?
+settings.secret = process.env.SECRET;
+
 // Email settings
 settings.email = {};
 settings.email.from = 'LocalData <support@localdata.com>';
-settings.email.to = 'matth@localdata.com'; // Send test emails to your address!
+settings.email.to = process.env.TEST_EMAIL || 'matth@localdata.com'; // Send test emails to your address!
 
 // MongoDB
 settings.mongo_host = 'localhost';
@@ -37,6 +40,8 @@ settings.psqlPass = process.env.PSQL_PASS;
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
+
+settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
 // Web server
 settings.port = 3030;

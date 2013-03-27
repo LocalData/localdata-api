@@ -2,16 +2,15 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../web.js');
+var server = require('../lib/server.js');
+var util = require('util');
 
-var fs = require('fs');
 var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
 var util = require('util');
 
 var settings = require('../settings-test.js');
-var users = require('../users.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
