@@ -11,15 +11,9 @@ To set environment variables:
     
 Run with
 
-    $ node web.js
+    $ node lib/server.js
 
 To test the API, use:
 
     $ make test
 
-Our previous test setup: 
-
-    $ node testclient.js seedforms
-    $ node testclient.js getform FORMID
-
-(See the testclient.js code for more.)
