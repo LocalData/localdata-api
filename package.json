@@ -21,7 +21,8 @@
     "mongoose": "~3.5.6",
     "ejs" : "~0.8.3",
     "nodemailer" : "~0.3.42",
-    "lodash" : "~1.0.1"
+    "lodash" : "~1.0.1",
+    "nodefly": "stable"
   },
   "devDependencies": {
     "mongodb": ">= 1.2.8",
