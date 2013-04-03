@@ -62,6 +62,7 @@ suite('Surveys', function () {
   var data_one = {
     "surveys" : [ {
       "name": "Just a survey",
+      "location": "Detroit",
       "users": ["A", "B"],
       "paperinfo": {
         "dpi": 150,
@@ -78,6 +79,7 @@ suite('Surveys', function () {
   var data_two = {
     "surveys" : [ {
       "name": "Test survey 1",
+      "location": "Detroit",
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -199,6 +201,7 @@ suite('Surveys', function () {
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
+          assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
 
