@@ -7,6 +7,7 @@
     "npm": "1.1.x"
   },
   "dependencies": {
+    "async": ">=0.2",
     "bcrypt": ">= 0.5",
     "connect-s3": "git://github.com/prashtx/connect-s3.git",
     "ejs" : "~0.8.3",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "mocha": "https://github.com/visionmedia/mocha/tarball/master",
     "mongodb": ">= 1.2.8",
+    "node-form-data": ">=0.0.7",
     "should": "https://github.com/visionmedia/should.js/tarball/master"
   }
 }
