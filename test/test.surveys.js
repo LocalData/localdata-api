@@ -39,6 +39,7 @@ suite('Surveys', function () {
         }
 
         // Remove all the things!
+        console.log("Clearing survey collection");
         collection.remove({}, function(error, response){
           done(error, response);
         });
@@ -173,7 +174,7 @@ suite('Surveys', function () {
   //suite("Utilities:", function() {
   //  test('Filter sensitive data from a survey', function (done) {
   //    var filteredSurvey = surveys.filterSurvey(sampleSurvey);
-  //    
+  //
   //    filteredSurvey.should.have.property('name');
   //    filteredSurvey.should.have.property('slug');
   //    filteredSurvey.should.have.property('id');
@@ -221,7 +222,7 @@ suite('Surveys', function () {
       });
     });
 
-    test('Posting bad survey JSON', function (done) { 
+    test('Posting bad survey JSON', function (done) {
       request.post({ url: url, json: data_bad }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(400);
@@ -280,6 +281,26 @@ suite('Surveys', function () {
         done();
       });
     });
+
+    test('Other user should not see surveys', function (done) {
+      request.get({
+        url: BASEURL + '/surveys',
+        jar: userBJar
+      }, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
+
+        var parsed = JSON.parse(body);
+
+        assert.notEqual(parsed.surveys, null, 'Parsed response body should contain a property called "surveys".');
+        assert.ok(util.isArray(parsed.surveys), 'Response should contain an array');
+        parsed.surveys.length.should.equal(0);
+
+
+        done();
+      });
+    });
+
 
     test('Getting a survey', function (done) {
       request.get({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
@@ -374,11 +395,11 @@ suite('Surveys', function () {
     //   request.del({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
     //     assert.ifError(error);
     //     response.statusCode.should.equal(200);
-// 
+//
     //     var parsed = JSON.parse(body);
-// 
+//
     //     assert.equal(parsed.count, 1, 'We should have deleted 1 item.');
-// 
+//
     //     done();
     //   });
     // });
