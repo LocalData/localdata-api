@@ -81,6 +81,8 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Test survey 1",
       "location": "Detroit",
+      "type": "parcel",
+      "errantStuff": "foo",
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -93,6 +95,8 @@ suite('Surveys', function () {
     }, {
       "name": "Test survey 2",
       "users": ["2"],
+      "type": "pointandparcel",
+      "errantStuff": 12345,
       "paperinfo": {
         "dpi": 150,
         "regmarks": [
@@ -203,6 +207,8 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
+          assert.equal(data_two.surveys[i].type, body.surveys[i].type);
+          assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
 
