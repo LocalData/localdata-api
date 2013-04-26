@@ -336,31 +336,11 @@ suite('Surveys', function () {
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
         assert.deepEqual(data_two.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
 
-        parsed.survey.should.have.property('slug');
-        parsed.survey.slug.should.be.a('string');
-
-        done();
-      });
-    });
-
-    test('Getting details for a survey', function (done) {
-      request.get({url: BASEURL + '/surveys/' + id + '/?details=true'}, function (error, response, body) {
-        assert.ifError(error);
-        assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
-
-        var parsed = JSON.parse(body);
-
-        assert.ok(parsed.survey, 'Parsed response body should have a property called "survey".');
-
-        assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
-        assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
-        assert.deepEqual(data_two.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
-
-        parsed.survey.should.have.property('slug');
-        parsed.survey.slug.should.be.a('string');
-
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
+
+        parsed.survey.should.have.property('slug');
+        parsed.survey.slug.should.be.a('string');
 
         done();
       });
