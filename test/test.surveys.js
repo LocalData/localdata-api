@@ -303,13 +303,13 @@ suite('Surveys', function () {
 
 
 
-    test('Logged out users should get a 400', function (done) {
+    test('Logged out users should get a 401', function (done) {
         request.get({
           url: BASEURL + '/surveys',
           jar: false
         }, function (error, response, body) {
           assert.ifError(error);
-          assert.equal(response.statusCode, 401, 'Status should be 400. Status is ' + response.statusCode);
+          assert.equal(response.statusCode, 401, 'Status should be 401. Status is ' + response.statusCode);
 
           done();
         });
