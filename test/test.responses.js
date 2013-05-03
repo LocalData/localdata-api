@@ -4,6 +4,7 @@
 
 var server = require('../lib/server.js');
 var assert = require('assert');
+var fs = require('fs');
 var util = require('util');
 var request = require('request');
 var should = require('should');
@@ -12,8 +13,8 @@ var settings = require('../settings-test.js');
 // We don't use filtering right now, so we'll skip testing it
 // var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
 
-
 var BASEURL = 'http://localhost:' + settings.port + '/api';
+var FILENAME = 'data/map.png';
 
 suite('Responses', function () {
 
@@ -205,6 +206,54 @@ suite('Responses', function () {
                        'Response does not indicate the correct survey: ' +
                        body.responses[i].survey + ' vs ' + surveyId);
           assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+        }
+
+        done();
+      });
+    });
+
+
+    test('Posting a file to /surveys/' + surveyId + '/responses', function (done) {
+      var form = new FormData();
+      form.append('my_file', fs.open(FILENAME));
+      var dataAsString = JSON.toString({"responses": [data_one]});
+      form.append('responses', dataAsString);
+
+      request.post({url: url, data: form}, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+
+        var i;
+        for (i = 0; i < data_one.responses.length; i += 1) {
+          // Source
+          assert.deepEqual(data_one.responses[i].source, body.responses[i].source, 'Response differs from posted data');
+          // Centroid
+          assert.deepEqual(data_one.responses[i].geo_info.centroid,
+                           body.responses[i].geo_info.centroid,
+                           'Response centroid differs from posted data');
+          // Parcel ID in geo_info
+          data_one.responses[i].geo_info.parcel_id.should.equal(body.responses[i].geo_info.parcel_id);
+          // Geometry
+          assert.deepEqual(data_one.responses[i].geo_info.geometry,
+                           body.responses[i].geo_info.geometry,
+                           'Response geometry differs from posted data');
+          // Human-readable name
+          data_one.responses[i].geo_info.humanReadableName.should.equal(body.responses[i].geo_info.humanReadableName);
+
+          // Object ID
+          assert.deepEqual(data_one.responses[i].parcel_id, body.responses[i].parcel_id, 'Response differs from posted data');
+          assert.deepEqual(data_one.responses[i].object_id, body.responses[i].object_id, 'Response differs from posted data');
+          // Answers
+          assert.deepEqual(data_one.responses[i].responses, body.responses[i].responses, 'Response differs from posted data');
+
+          assert.notEqual(body.responses[i].id, null, 'Response does not have an ID.');
+          assert.equal(body.responses[i].survey, surveyId,
+                       'Response does not indicate the correct survey: ' +
+                       body.responses[i].survey + ' vs ' + surveyId);
+          assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+
+          // Files
+          assert(false);
         }
 
         done();
