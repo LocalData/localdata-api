@@ -27,7 +27,7 @@
   "devDependencies": {
     "mocha": "https://github.com/visionmedia/mocha/tarball/master",
     "mongodb": ">= 1.2.8",
-    "node-form-data": ">=0.0.7",
+    "form-data": ">=0.0.7",
     "should": "https://github.com/visionmedia/should.js/tarball/master"
   }
 }
