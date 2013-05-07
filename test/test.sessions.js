@@ -82,6 +82,7 @@ suite('Sessions', function () {
         // Restart the server
         server.run(settings, function(){
           // Get the current user
+          // Should still be logged in, even though the server has restarted.
           request.get({url: USER_URL}, function (error, response, body) {
             var userData = generateUser();
             body = JSON.parse(body);
