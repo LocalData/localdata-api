@@ -336,6 +336,9 @@ suite('Surveys', function () {
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
         assert.deepEqual(data_two.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
 
+        parsed.survey.should.have.property('responseCount');
+        parsed.survey.responseCount.should.be.a('number');
+
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
 
