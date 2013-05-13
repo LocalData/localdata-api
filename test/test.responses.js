@@ -269,34 +269,33 @@ suite('Responses', function () {
     });
   });
 
-  //suite('DEL', function () {
-  //  var surveyId = '123';
-  //  var id;
+  suite('DEL', function () {
+    var surveyId = '123';
+    var id;
 
-  //  setup(function (done) {
-  //    request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo()},
-  //                 function (error, response, body) {
-  //      if (error) { done(error); }
-  //      id = body.responses[0].id;
-  //      done();
-  //    });
-  //  });
+    setup(function (done) {
+      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo()},
+                   function (error, response, body) {
+        if (error) { done(error); }
+        id = body.responses[0].id;
+        done();
+      });
+    });
 
-  //  test('Deleting a response', function (done) {
-  //    request.del({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id}, function (error, response, body) {
-  //      should.not.exist(error);
-  //      should.exist(response);
-  //      response.statusCode.should.equal(200);
-  //      response.should.be.json;
+    test('Deleting a response', function (done) {
+      request.del({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id}, function (error, response, body) {
+        should.not.exist(error);
+        should.exist(response);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
 
-  //      var parsed = JSON.parse(body);
-  //      parsed.should.have.property('count').equal(1);
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('count').equal(1);
 
-  //      done();
-  //    });
-  //  });
-
-  //});
+        done();
+      });
+    });
+  });
 
   suite('GET', function () {
     var surveyId = '123';
