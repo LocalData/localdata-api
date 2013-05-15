@@ -181,25 +181,27 @@ suite('Surveys', function () {
     test('Check if survey is owned by a user', function (done) {
       var url = BASEURL + '/surveys';
       var surveyId;
+      var userId = '123';
 
       // If a survey doesn't exist, it shouldn't be found
       Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
         error.should.equal(404);
       });
 
+      // Create a user and add a survey
       fixtures.setupUser(function(error, jar, userId){
         request.post({url: url, json: data_two, jar: jar}, function (error, response, body) {
           surveyId = body.surveys[0]._id;
 
-          // The survey should be found
+          // Try to find the survey
           Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
             s.id.shoud.equal(surveyId);
 
             // Try with a non-logged-in user
-            Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
+            Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, s) {
               error.should.equal(403);
             });
-          }
+          });
         });
       });
     });
