@@ -4,6 +4,7 @@
 
 var server = require('../lib/server.js');
 var assert = require('assert');
+var fixtures = require('./data/fixtures.js');
 var fs = require('fs');
 var util = require('util');
 var request = require('request');
@@ -270,30 +271,66 @@ suite('Responses', function () {
   });
 
   suite('DEL', function () {
-    var surveyId = '123';
-    var id;
+    var surveyId;
+    var id, id2;
+    var jar;
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo()},
-                   function (error, response, body) {
-        if (error) { done(error); }
-        id = body.responses[0].id;
-        done();
+      // Create an account...
+      fixtures.setupUser(function(error, jar) {
+        should.exist(jar);
+
+        // Create a test survey owned by this user.
+        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: jar}, function (error, response, body) {
+          should.not.exist(error);
+          should.exist(body);
+          surveyId = body.surveys[0].id;
+
+          // Add a response
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo(), jar: jar},
+            function (error, response, body) {
+            should.not.exist(error);
+            should.exist(body);
+            id = body.responses[0].id;
+            id2 = body.responses[1].id;
+            console.log(body.responses[0]);
+            done();
+          });
+        });
       });
     });
 
     test('Deleting a response', function (done) {
-      request.del({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id}, function (error, response, body) {
-        should.not.exist(error);
-        should.exist(response);
-        response.statusCode.should.equal(200);
-        response.should.be.json;
+      // Delete the response.
+      console.log(BASEURL + '/surveys/' + surveyId + '/responses/' + id);
+      request.del({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: jar
+        },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(204);
 
-        var parsed = JSON.parse(body);
-        parsed.should.have.property('count').equal(1);
+          // Try to get the response
+          request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
+                      function (error, response) {
+            should.not.exist(error);
+            response.statusCode.should.equal(404);
+            done();
+          });
+        }
+      );
+    });
 
-        done();
-      });
+    test('Deleting a response we do not have permission for', function (done) {
+      request.del({ url: BASEURL + '/surveys/' + surveyId + '/responses/' + id },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(403);
+        }
+      );
     });
   });
 

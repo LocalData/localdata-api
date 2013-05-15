@@ -5,14 +5,16 @@
 var server = require('../lib/server.js');
 
 var assert = require('assert');
+var fixtures = require('./data/fixtures.js');
 var mongo = require('mongodb');
+var passport = require('passport');
 var request = require('request');
+var settings = require('../settings-test.js');
+var Survey = require('../lib/models/Survey.js');
 var should = require('should');
 var util = require('util');
 
-var settings = require('../settings-test.js');
 
-var passport = require('passport');
 
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
@@ -175,19 +177,33 @@ suite('Surveys', function () {
     server.stop();
   });
 
-  //suite("Utilities:", function() {
-  //  test('Filter sensitive data from a survey', function (done) {
-  //    var filteredSurvey = surveys.filterSurvey(sampleSurvey);
-  //
-  //    filteredSurvey.should.have.property('name');
-  //    filteredSurvey.should.have.property('slug');
-  //    filteredSurvey.should.have.property('id');
+  suite("Utilities:", function() {
+    test('Check if survey is owned by a user', function (done) {
+      var url = BASEURL + '/surveys';
+      var surveyId;
 
-  //    filteredSurvey.should.not.have.property('users');
+      // If a survey doesn't exist, it shouldn't be found
+      Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
+        error.should.equal(404);
+      });
 
-  //    done();
-  //  });
-  //});
+      fixtures.setupUser(function(error, jar, userId){
+        request.post({url: url, json: data_two, jar: jar}, function (error, response, body) {
+          surveyId = body.surveys[0]._id;
+
+          // The survey should be found
+          Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
+            s.id.shoud.equal(surveyId);
+
+            // Try with a non-logged-in user
+            Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
+              error.should.equal(403);
+            });
+          }
+        });
+      });
+    });
+  });
 
   suite('POST', function () {
     var url = BASEURL + '/surveys';
