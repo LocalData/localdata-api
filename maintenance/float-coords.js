@@ -33,8 +33,10 @@ function fixGeometries(done) {
   function process(query, work, done) {
     var count = 1000;
     function processChunk(start) {
-      Response.find(query).select(select)
+      Response.find(query).select(select).sort('_id')
       .lean().skip(start).limit(count).exec(function (error, docs) {
+        if (error) { return done(error); }
+        console.log('Got chunk of ' + docs.length);
         async.eachLimit(docs, 10, work, function (error) {
           if (error) { return done(error); }
           if (docs.length === 0) {
@@ -55,14 +57,17 @@ function fixGeometries(done) {
       'geo_info.geometry.coordinates.0.0.0': {$type: 2}
     };
     process(query, function (doc, next) {
-      var points = doc.geo_info.geometry.coordinates[0];
+      var coordinates = doc.geo_info.geometry.coordinates;
+      var points = coordinates[0];
       var i;
       var len = points.length;
+      var point;
       for (i = 0; i < len; i += 1) {
-        points[0] = parseFloat(points[0]);
-        points[1] = parseFloat(points[1]);
+        point = points[i];
+        point[0] = parseFloat(point[0]);
+        point[1] = parseFloat(point[1]);
       }
-      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': points } }).exec(next);
+      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': coordinates } }).exec(next);
       polygonCount += 1;
     }, done);
   }
@@ -74,14 +79,17 @@ function fixGeometries(done) {
       'geo_info.geometry.coordinates.0.0.0.0': {$type: 2}
     };
     process(query, function (doc, next) {
-      var points = doc.geo_info.geometry.coordinates[0][0];
+      var coordinates = doc.geo_info.geometry.coordinates;
+      var points = coordinates[0][0];
       var i;
       var len = points.length;
+      var point;
       for (i = 0; i < len; i += 1) {
-        points[0] = parseFloat(points[0]);
-        points[1] = parseFloat(points[1]);
+        point = points[i];
+        point[0] = parseFloat(point[0]);
+        point[1] = parseFloat(point[1]);
       }
-      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': points } }).exec(next);
+      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': coordinates } }).exec(next);
       multiPolygonCount += 1;
     }, done);
   }
