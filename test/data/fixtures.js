@@ -67,11 +67,11 @@ fixtures.setupUser = function(callback) {
       },
       function (error, response, body) {
         if(error) {
-          console.log(error);
+          // console.log(error);
           callback(error, null);
         }
-        console.log("RETURNED USER", body, jar);
-        callback(null, jar, body.id);
+        // console.log("RETURNED USER", body, jar);
+        callback(null, jar, body._id);
       }
     );
   });

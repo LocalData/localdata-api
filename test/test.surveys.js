@@ -190,15 +190,19 @@ suite('Surveys', function () {
 
       // Create a user and add a survey
       fixtures.setupUser(function(error, jar, userId){
+        console.log("USERID", userId);
         request.post({url: url, json: data_two, jar: jar}, function (error, response, body) {
-          surveyId = body.surveys[0]._id;
+          surveyId = body.surveys[0].id;
 
+          console.log("SID", surveyId);
+          console.log("UID", userId);
           // Try to find the survey
-          Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
-            s.id.shoud.equal(surveyId);
+          Survey.findIfOwnedByUser(surveyId, userId, function(error, survey) {
+            should.not.exist(error);
+            survey.id.shoud.equal(surveyId);
 
             // Try with a non-logged-in user
-            Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, s) {
+            Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, survey) {
               error.should.equal(403);
             });
           });
