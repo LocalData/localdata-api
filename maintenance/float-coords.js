@@ -16,6 +16,7 @@
 'use strict';
 
 var mongoose = require('mongoose');
+var async = require('async');
 
 var Response = require('../lib/models/Response');
 
@@ -29,15 +30,22 @@ if (process.argv.length > 2) {
 function fixGeometries(done) {
   var select = 'geo_info.geometry.coordinates';
 
-  function processStream(stream, work, done) {
-    stream
-    .on('data', function (doc) {
-      work(doc);
-    })
-    .on('error', done)
-    .on('close', function () {
-      done(null);
-    });
+  function process(query, work, done) {
+    var count = 1000;
+    function processChunk(start) {
+      Response.find(query).select(select)
+      .lean().skip(start).limit(count).exec(function (error, docs) {
+        async.eachLimit(docs, 10, work, function (error) {
+          if (error) { return done(error); }
+          if (docs.length === 0) {
+            return done(null);
+          }
+          processChunk(start + count);
+        });
+
+      });
+    }
+    processChunk(0);
   }
 
   var polygonCount = 0;
@@ -46,7 +54,7 @@ function fixGeometries(done) {
     var query = {
       'geo_info.geometry.coordinates.0.0.0': {$type: 2}
     };
-    processStream(Response.find(query).select(select).lean().stream(), function (doc) {
+    process(query, function (doc, next) {
       var points = doc.geo_info.geometry.coordinates[0];
       var i;
       var len = points.length;
@@ -54,17 +62,18 @@ function fixGeometries(done) {
         points[0] = parseFloat(points[0]);
         points[1] = parseFloat(points[1]);
       }
-      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': points } }).exec();
+      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': points } }).exec(next);
       polygonCount += 1;
     }, done);
   }
 
   var multiPolygonCount = 0;
   function multiPolygon(done) {
+    console.log('Fixing multi-polygons');
     var query = {
       'geo_info.geometry.coordinates.0.0.0.0': {$type: 2}
     };
-    processStream(Response.find(query).select(select).lean().stream(), function (doc) {
+    process(query, function (doc, next) {
       var points = doc.geo_info.geometry.coordinates[0][0];
       var i;
       var len = points.length;
@@ -72,7 +81,7 @@ function fixGeometries(done) {
         points[0] = parseFloat(points[0]);
         points[1] = parseFloat(points[1]);
       }
-      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': points } }).exec();
+      Response.update({ _id: doc._id }, { $set: { 'geo_info.geometry.coordinates': points } }).exec(next);
       multiPolygonCount += 1;
     }, done);
   }
@@ -84,6 +93,9 @@ function fixGeometries(done) {
       return;
     }
     multiPolygon(function (error) {
+      if (error) {
+        console.log(error);
+      }
       console.log('Fixed ' + multiPolygonCount + ' MultiPolygon geometries.');
       done(error);
     });
