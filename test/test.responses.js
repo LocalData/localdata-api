@@ -277,8 +277,9 @@ suite('Responses', function () {
 
     setup(function (done) {
       // Create an account...
-      fixtures.setupUser(function(error, jar) {
-        should.exist(jar);
+      fixtures.setupUser(function(error, newJar) {
+        jar = newJar;
+        should.exist(newJar);
 
         // Create a test survey owned by this user.
         request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: jar}, function (error, response, body) {
@@ -293,7 +294,6 @@ suite('Responses', function () {
             should.exist(body);
             id = body.responses[0].id;
             id2 = body.responses[1].id;
-            console.log(body.responses[0]);
             done();
           });
         });
@@ -301,6 +301,7 @@ suite('Responses', function () {
     });
 
     test('Deleting a response', function (done) {
+
       // Delete the response.
       console.log(BASEURL + '/surveys/' + surveyId + '/responses/' + id);
       request.del({
@@ -329,6 +330,7 @@ suite('Responses', function () {
           should.not.exist(error);
           should.exist(response);
           response.statusCode.should.equal(403);
+          done();
         }
       );
     });
