@@ -303,7 +303,6 @@ suite('Responses', function () {
     test('Deleting a response', function (done) {
 
       // Delete the response.
-      console.log(BASEURL + '/surveys/' + surveyId + '/responses/' + id);
       request.del({
           url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
           jar: jar
@@ -317,7 +316,6 @@ suite('Responses', function () {
           request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
                       function (error, response) {
             should.not.exist(error);
-            console.log("IS IT GONE?", response.body);
             response.statusCode.should.equal(404);
             done();
           });
