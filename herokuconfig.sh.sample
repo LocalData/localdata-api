@@ -1,31 +1,29 @@
 #!/bin/sh
 
-if [ "prod" = "$1" ]; then
-  heroku config:add NODE_ENV="production"
-  heroku config:add MONGO_HOST="somename.somemongohost.com"
-  heroku config:add MONGO_PORT="27017"
-  heroku config:add MONGO_USER="someuser"
-  heroku config:add MONGO_PASSWORD="supersecret"
-  heroku config:add MONGO_DB="dbName"
-  heroku config:add S3_KEY="S3KEYblah"
-  heroku config:add S3_SECRET="S3SECRETblah"
-  heroku config:add PSQL_HOST='my.postgresql-host.com'
-  heroku config:add PSQL_NAME='parceldb'
-  heroku config:add PSQL_USER='dbuser'
-  heroku config:add PSQL_PASS='dbpass'
-elif [ "dev" = "$1" ]; then
-  heroku config:add NODE_ENV="development"
-  heroku config:add MONGO_HOST="localhost"
-  heroku config:add MONGO_PORT="27018"
-  heroku config:add MONGO_USER="someuser"
-  heroku config:add MONGO_PASSWORD=""
-  heroku config:add MONGO_DB="dbNameDev"
-  heroku config:add S3_KEY="S3KEYblah"
-  heroku config:add S3_SECRET="S3SECRETblah"
-  heroku config:add PSQL_HOST='my.postgresql-host.com'
-  heroku config:add PSQL_NAME='parceldb'
-  heroku config:add PSQL_USER='dbuser'
-  heroku config:add PSQL_PASS='dbpass'
-else
-  echo "Usage: ./herokuconfig.sh prod/dev"
-fi
+# This is a sample script for configuring Heroku environment variables.
+
+APP="my-dev-app"
+
+heroku config:add \
+  MONGO_HOST="somename.somemongohost.com" \
+  MONGO_PORT="27017" \
+  MONGO_DB="dbName" \
+  MONGO_USER="someuser" \
+  MONGO_PASSWORD="supersecret" \
+  PSQL_HOST="my.postgresql-host.com" \
+  PSQL_NAME="parceldb" \
+  PSQL_PASS="dbuser" \
+  PSQL_USER="dbpass" \
+  CONVERTER_BASE='http://ogr-conv.herokuapp.com/inversion/geojson2shp' \
+  REMOTE_ADMIN_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/dashboard" \
+  REMOTE_MOBILE_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/mobile" \
+  S3_KEY="S3KEYblah" \
+  S3_SECRET="S3SECRETblah" \
+  S3_BUCKET="upload-bucket" \
+  S3_UPLOAD_DIR="upload-path" \
+  SECRET="APPSECRETblah" \
+  SESSION_SECRET="SESSIONSECRETblah" \
+  EXPRESS_LOGGER=':method :url HTTP/:http-version :status :res[content-length] :response-time ms - :remote-addr ":referrer" ":user-agent"' \
+  NODEFLY_KEY="NODEFLY-APP-KEY" \
+  NODEFLY_LOC="my-dev-app" \
+  --app $APP
