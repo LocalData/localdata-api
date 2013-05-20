@@ -14,6 +14,7 @@ heroku config:add \
   PSQL_NAME="parceldb" \
   PSQL_PASS="dbuser" \
   PSQL_USER="dbpass" \
+  CONVERTER_BASE='http://ogr-conv.herokuapp.com/inversion/geojson2shp' \
   REMOTE_ADMIN_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/dashboard" \
   REMOTE_MOBILE_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/mobile" \
   S3_KEY="S3KEYblah" \
