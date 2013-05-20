@@ -44,5 +44,8 @@ settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
 
 settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
+// Shapefile conversion service
+settings.converterBase = process.env.CONVERTER_BASE;
+
 // Web server
 settings.port = process.env.PORT || 3000;
