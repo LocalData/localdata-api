@@ -42,7 +42,7 @@ fixtures.users = [{
 ];
 
 fixtures.clearUsers = function(callback) {
-  User.collection.remove(function(error, result){
+  User.remove({}, function(error, result){
     if(error) {
       console.log(error);
     }
