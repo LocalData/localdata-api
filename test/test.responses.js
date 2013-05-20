@@ -317,6 +317,7 @@ suite('Responses', function () {
           request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
                       function (error, response) {
             should.not.exist(error);
+            console.log("IS IT GONE?", response.body);
             response.statusCode.should.equal(404);
             done();
           });
