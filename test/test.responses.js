@@ -344,6 +344,7 @@ suite('Responses', function () {
                    function (error, response, body) {
         if (error) { done(error); }
         id = body.responses[0].id;
+
         done();
       });
     });
@@ -370,13 +371,6 @@ suite('Responses', function () {
         done();
       });
     });
-
-    // test('Filtering of results', function (done) {
-    //   var results = dataTwo().responses;
-    //   var sanitizedResults = filterToRemoveResults(results);
-    //   results[0].should.not.have.property('responses');
-    //   done();
-    // });
 
 
     test('Get all responses for a specific parcel', function (done) {
