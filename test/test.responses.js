@@ -273,22 +273,25 @@ suite('Responses', function () {
   suite('DEL', function () {
     var surveyId;
     var id, id2;
-    var jar;
+    var ownerJar, strangerJar;
 
-    setup(function (done) {
+    suiteSetup(function (done) {
       // Create an account...
-      fixtures.setupUser(function(error, newJar) {
-        jar = newJar;
-        should.exist(newJar);
+      fixtures.setupUser(function(error, jar1, jar2) {
+        should.exist(jar1);
+        should.exist(jar2);
+
+        ownerJar = jar1;
+        strangerJar = jar2;
 
         // Create a test survey owned by this user.
-        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: jar}, function (error, response, body) {
+        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: ownerJar}, function (error, response, body) {
           should.not.exist(error);
           should.exist(body);
           surveyId = body.surveys[0].id;
 
           // Add a response
-          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo(), jar: jar},
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo(), jar: ownerJar},
             function (error, response, body) {
             should.not.exist(error);
             should.exist(body);
@@ -305,7 +308,7 @@ suite('Responses', function () {
       // Delete the response.
       request.del({
           url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
-          jar: jar
+          jar: ownerJar
         },
         function(error, response) {
           should.not.exist(error);
@@ -313,8 +316,10 @@ suite('Responses', function () {
           response.statusCode.should.equal(204);
 
           // Try to get the response
-          request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
-                      function (error, response) {
+          request.get({
+            url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+            jar: ownerJar
+          }, function (error, response) {
             should.not.exist(error);
             response.statusCode.should.equal(404);
             done();
@@ -323,8 +328,25 @@ suite('Responses', function () {
       );
     });
 
-    test('Deleting a response we do not have permission for', function (done) {
-      request.del({ url: BASEURL + '/surveys/' + surveyId + '/responses/' + id },
+    test('Deleting a response we if we\'re not logged in', function (done) {
+      request.del({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        jar: request.jar()
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(401);
+          done();
+        }
+      );
+    });
+
+    test('Deleting a response not owned by this user', function (done) {
+      request.del({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        jar: strangerJar
+      },
         function(error, response) {
           should.not.exist(error);
           should.exist(response);

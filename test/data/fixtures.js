@@ -53,25 +53,42 @@ fixtures.clearUsers = function(callback) {
 /**
  * Clear all users and create a new user.
  * Callback is given a request.jar cookie jar.
- * @param  {Function} callback Params (error, jar, userId)
+ * @param  {Function} callback Params (error, jarA, jarB, userIdA, userIdB)
  */
 fixtures.setupUser = function(callback) {
 
-  var jar = request.jar();
+  var jarA = request.jar();
+  var jarB = request.jar();
+  var idA;
 
   fixtures.clearUsers(function(){
+
+    // Create one user
     request.post({
         url: USER_URL,
         json: fixtures.users[0],
-        jar: jar
+        jar: jarA
       },
       function (error, response, body) {
         if(error) {
-          // console.log(error);
           callback(error, null);
         }
-        // console.log("RETURNED USER", body, jar);
-        callback(null, jar, body._id);
+
+        idA = body._id;
+
+        // Create a second user
+        request.post({
+            url: USER_URL,
+            json: fixtures.users[1],
+            jar: jarB
+          },
+          function (error, response, body) {
+            if(error) {
+              callback(error, null);
+            }
+            callback(null, jarA, jarB, idA, body._id);
+          }
+        );
       }
     );
   });

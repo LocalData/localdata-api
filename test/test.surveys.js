@@ -185,11 +185,11 @@ suite('Surveys', function () {
 
       // If a survey doesn't exist, it shouldn't be found
       Survey.findIfOwnedByUser(surveyId, userId, function(error, s) {
-        error.should.equal(404);
+        error.code.should.equal(404);
       });
 
       // Create a user and add a survey
-      fixtures.setupUser(function(error, jar, userId){
+      fixtures.setupUser(function(error, jar, jar2, userId){
         request.post({url: url, json: data_two, jar: jar}, function (error, response, body) {
           surveyId = body.surveys[0].id;
 
