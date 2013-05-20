@@ -203,7 +203,7 @@ suite('Surveys', function () {
 
             // Try with a non-logged-in user
             Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, survey) {
-              error.should.equal(403);
+              error.code.should.equal(403);
               done();
             });
           });
