@@ -9,6 +9,7 @@
   "dependencies": {
     "async": ">=0.2",
     "bcrypt": ">= 0.5",
+    "connect-mongo": "~0.3.2",
     "connect-s3": "git://github.com/prashtx/connect-s3.git",
     "ejs" : "~0.8.3",
     "express": "3.0.x",
