@@ -6,6 +6,7 @@ var request = require('request');
 var settings = require('../../settings-test.js');
 var User = require('../../lib/models/User');
 var Org = require('../../lib/models/Org');
+var makeSlug = require('slugs');
 
 var fixtures = {};
 module.exports = fixtures;
@@ -48,6 +49,34 @@ fixtures.clearUsers = function(callback) {
       console.log(error);
     }
     callback();
+  });
+};
+
+fixtures.makeUser = function makeUser(name) {
+  var slug = makeSlug(name);
+  return {
+    name: name,
+    email: slug + '@localdata.com',
+    password: 'pw' + slug
+  };
+};
+
+/**
+ * Add a single user to the system
+ * done is given a request cookie jar, user ID, and user data (including password).
+ * @param {Function} callback Params (error, jar, userId, user)
+ */
+fixtures.addUser = function addUser(name, done) {
+  var data = fixtures.makeUser(name);
+  var jar = request.jar();
+  request.post({
+    url: USER_URL,
+    json: data,
+    jar: jar
+  }, function (error, response, user) {
+    if (error) { return done(error); }
+    user.password = data.password;
+    done(null, jar, user._id, user);
   });
 };
 
@@ -103,13 +132,13 @@ fixtures.clearOrgs = function clearOrgs(done) {
 };
 
 /**
- * Creates a new org.
+ * Adds a new org to the system.
  * Callback is given an org ID.
  * @param  {String} name The name of the org
  * @param  {Object} jar The request cookie jar, containing a logged in state
  * @param  {Function} callback Params (error, id)
  */
-fixtures.createOrg = function createOrg(name, jar, done) {
+fixtures.addOrg = function addOrg(name, jar, done) {
   request.post({
     url: BASEURL + '/orgs',
     jar: jar,

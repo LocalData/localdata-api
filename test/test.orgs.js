@@ -21,24 +21,37 @@ var RESET_URL = BASEURL + '/user/reset';
 suite('Orgs', function () {
   var authorizedUser;
   var authorizedJar;
+  var otherUser;
+  var otherJar;
   var strangerUser;
   var strangerJar;
 
   suiteSetup(function (done) {
+    // Curry the function for user with async.series
+    function makeAdder(name) {
+      return function (next) { fixtures.addUser(name, next); };
+    }
+
     async.series([
-      function (next) {
+      function startServer(next) {
         // Start the server.
         server.run(settings, next);
       },
-      function (next) {
+      function setupUsers(next) {
         // Create a couple of users.
-        fixtures.setupUser(function (error, jar1, jar2, user1, user2) {
+        async.series([
+          fixtures.clearUsers,
+          makeAdder('User A'),
+          makeAdder('User B'),
+          makeAdder('User C')
+        ], function (error, results) {
           if (error) { return done(error); }
-          authorizedUser = user1;
-          authorizedJar = jar1;
-          strangerUser = user2;
-          strangerJar = jar2;
-
+          authorizedJar = results[1][0];
+          authorizedUser = results[1][1];
+          otherJar = results[2][0];
+          otherUser = results[2][1];
+          strangerJar = results[3][0];
+          strangerUser = results[3][1];
           next();
         });
       }
@@ -96,7 +109,7 @@ suite('Orgs', function () {
       async.series([
         fixtures.clearOrgs,
         function (next) {
-          fixtures.createOrg('Funk Township', authorizedJar, next);
+          fixtures.addOrg('Funk Township', authorizedJar, next);
         }
       ], function (error, results) {
         if (error) { return done(error); }
@@ -144,21 +157,25 @@ suite('Orgs', function () {
     var created;
 
     suiteSetup(function (done) {
-      // Clear the orgs and create two fresh ones.
-      fixtures.clearOrgs(function (error) {
+      function addOrg(name, jar) {
+        return function (next) { fixtures.addOrg(name, jar, next); };
+      }
+
+      // Clear the orgs, create 2 for authorizedUser and 1 for otherUser.
+      async.series([
+        fixtures.clearOrgs,
+        addOrg('FancyCorp', authorizedJar),
+        addOrg('Grass Roots Gang', authorizedJar),
+        addOrg('WhatevsCorp', otherJar)
+      ], function (error, results) {
         if (error) { return done(error); }
-        async.map(['FancyCorp', 'Grass Roots Gang'], function (name, next) {
-          fixtures.createOrg(name, authorizedJar, next);
-        }, function (error, results) {
-          if (error) { return done(error); }
-          created = results;
-          done();
-        });
+        created = results.slice(1);
+        done();
       });
     });
 
     test('list all orgs anonymously', function (done) {
-      // We should get back the two orgs we created.
+      // We should get back the three orgs we created.
       request.get({
         url: BASEURL + '/orgs'
       }, function (error, response, body) {
@@ -167,7 +184,7 @@ suite('Orgs', function () {
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('orgs');
-        parsed.orgs.length.should.equal(2);
+        parsed.orgs.length.should.equal(3);
 
         var i;
         for (i = 0; i < parsed.orgs.length; i += 1) {
@@ -242,6 +259,44 @@ suite('Orgs', function () {
       // We should receive 401 Unauthorized.
       request.get({
         url: BASEURL + '/users/' + authorizedUser + '/orgs'
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(401);
+        done();
+      });
+    });
+
+    test('list the current user\'s orgs', function (done) {
+      // We should get the user's two orgs.
+      request.get({
+        url: BASEURL + '/user/orgs',
+        jar: authorizedJar
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('orgs');
+        parsed.orgs.length.should.equal(2);
+
+        var i;
+        for (i = 0; i < parsed.orgs.length; i += 1) {
+          var returned = parsed.orgs[i];
+          returned.name.should.equal(created[i].name);
+          returned.should.have.property('id');
+          returned.should.have.property('users');
+          returned.users.should.include(authorizedUser);
+        }
+
+        done();
+      });
+    });
+
+    test('list the current user\'s orgs anonymously', function (done) {
+      // Not logged in, requesting orgs of current user.
+      // We should receive 401 Unauthorized.
+      request.get({
+        url: BASEURL + '/user/orgs'
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(401);
