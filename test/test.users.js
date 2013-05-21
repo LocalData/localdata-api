@@ -91,7 +91,7 @@ suite('Users -', function () {
   });
 
   suite('finding, creating and editing without the API:', function () {
-    
+
     test('create a user', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
@@ -108,7 +108,7 @@ suite('Users -', function () {
     });
 
 
-    test('users must have an email', function (done) { 
+    test('users must have an email', function (done) {
       clearCollection('usersCollection', function(error, response){
         should.not.exist(error);
 
