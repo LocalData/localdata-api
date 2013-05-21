@@ -5,6 +5,7 @@
 var request = require('request');
 var settings = require('../../settings-test.js');
 var User = require('../../lib/models/User');
+var Org = require('../../lib/models/Org');
 
 var fixtures = {};
 module.exports = fixtures;
@@ -91,5 +92,30 @@ fixtures.setupUser = function(callback) {
         );
       }
     );
+  });
+};
+
+/**
+ * Clear all orgs.
+ */
+fixtures.clearOrgs = function clearOrgs(done) {
+  Org.remove({}).exec(done);
+};
+
+/**
+ * Creates a new org.
+ * Callback is given an org ID.
+ * @param  {String} name The name of the org
+ * @param  {Object} jar The request cookie jar, containing a logged in state
+ * @param  {Function} callback Params (error, id)
+ */
+fixtures.createOrg = function createOrg(name, jar, done) {
+  request.post({
+    url: BASEURL + '/orgs',
+    jar: jar,
+    json: { orgs: [{ name: name }] }
+  }, function (error, respone, body) {
+    if (error) { return done(error); }
+    done(null, body.orgs[0]);
   });
 };
