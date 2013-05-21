@@ -4,6 +4,7 @@
 
 var server = require('../lib/server.js');
 var assert = require('assert');
+var fixtures = require('./data/fixtures.js');
 var fs = require('fs');
 var util = require('util');
 var request = require('request');
@@ -269,34 +270,92 @@ suite('Responses', function () {
     });
   });
 
-  //suite('DEL', function () {
-  //  var surveyId = '123';
-  //  var id;
+  suite('DEL', function () {
+    var surveyId;
+    var id, id2;
+    var ownerJar, strangerJar;
 
-  //  setup(function (done) {
-  //    request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo()},
-  //                 function (error, response, body) {
-  //      if (error) { done(error); }
-  //      id = body.responses[0].id;
-  //      done();
-  //    });
-  //  });
+    suiteSetup(function (done) {
+      // Create an account...
+      fixtures.setupUser(function(error, jar1, jar2) {
+        should.exist(jar1);
+        should.exist(jar2);
 
-  //  test('Deleting a response', function (done) {
-  //    request.del({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id}, function (error, response, body) {
-  //      should.not.exist(error);
-  //      should.exist(response);
-  //      response.statusCode.should.equal(200);
-  //      response.should.be.json;
+        ownerJar = jar1;
+        strangerJar = jar2;
 
-  //      var parsed = JSON.parse(body);
-  //      parsed.should.have.property('count').equal(1);
+        // Create a test survey owned by this user.
+        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: ownerJar}, function (error, response, body) {
+          should.not.exist(error);
+          should.exist(body);
+          surveyId = body.surveys[0].id;
 
-  //      done();
-  //    });
-  //  });
+          // Add a response
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo(), jar: ownerJar},
+            function (error, response, body) {
+            should.not.exist(error);
+            should.exist(body);
+            id = body.responses[0].id;
+            id2 = body.responses[1].id;
+            done();
+          });
+        });
+      });
+    });
 
-  //});
+    test('Deleting a response', function (done) {
+
+      // Delete the response.
+      request.del({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: ownerJar
+        },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(204);
+
+          // Try to get the response
+          request.get({
+            url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+            jar: ownerJar
+          }, function (error, response) {
+            should.not.exist(error);
+            response.statusCode.should.equal(404);
+            done();
+          });
+        }
+      );
+    });
+
+    test('Deleting a response we if we\'re not logged in', function (done) {
+      request.del({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        jar: request.jar()
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(401);
+          done();
+        }
+      );
+    });
+
+    test('Deleting a response not owned by this user', function (done) {
+      request.del({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        jar: strangerJar
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(403);
+          done();
+        }
+      );
+    });
+  });
 
   suite('GET', function () {
     var surveyId = '123';
@@ -307,6 +366,7 @@ suite('Responses', function () {
                    function (error, response, body) {
         if (error) { done(error); }
         id = body.responses[0].id;
+
         done();
       });
     });
@@ -333,13 +393,6 @@ suite('Responses', function () {
         done();
       });
     });
-
-    // test('Filtering of results', function (done) {
-    //   var results = dataTwo().responses;
-    //   var sanitizedResults = filterToRemoveResults(results);
-    //   results[0].should.not.have.property('responses');
-    //   done();
-    // });
 
 
     test('Get all responses for a specific parcel', function (done) {
