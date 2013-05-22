@@ -23,7 +23,7 @@
     "passport": "0.1.15",
     "passport-local": "0.1.6",
     "pg": "0.14.x",
-    "request": "2.9.x",
+    "request": "2.21.x",
     "slugs" : "0.1.2"
   },
   "devDependencies": {
