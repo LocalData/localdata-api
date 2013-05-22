@@ -75,6 +75,9 @@ fixtures.addUser = function addUser(name, done) {
     jar: jar
   }, function (error, response, user) {
     if (error) { return done(error); }
+    if (response.statusCode !== 200) {
+      return done(new Error('Received an incorrect status from the API'));
+    }
     user.password = data.password;
     done(null, jar, user._id, user);
   });
