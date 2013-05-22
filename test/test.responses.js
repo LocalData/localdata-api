@@ -10,12 +10,14 @@ var util = require('util');
 var request = require('request');
 var should = require('should');
 
+var Response = require('../lib/models/Response');
+
 var settings = require('../settings-test.js');
 // We don't use filtering right now, so we'll skip testing it
 // var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
-var FILENAME = 'data/map.png';
+var FILENAME = __dirname + '/data/scan.jpeg';
 
 suite('Responses', function () {
 
@@ -164,7 +166,13 @@ suite('Responses', function () {
   }());
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(settings, function (error) {
+      if (error) { return done(error); }
+      // We need the geo index to be in place, but we don't automatically
+      // create indexes to avoid ill-timed index creation on production
+      // systems.
+      Response.ensureIndexes(done);
+    });
   });
 
   suiteTeardown(function () {
@@ -215,14 +223,12 @@ suite('Responses', function () {
 
 
     test('Posting a file to /surveys/' + surveyId + '/responses', function (done) {
-      var form = new FormData();
-      form.append('my_file', fs.open(FILENAME));
-      var dataAsString = JSON.toString({"responses": [data_one]});
-      form.append('responses', dataAsString);
-
-      request.post({url: url, data: form}, function (error, response, body) {
+      this.timeout(5000);
+      var req = request.post({url: url}, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+
+        body = JSON.parse(body);
 
         var i;
         for (i = 0; i < data_one.responses.length; i += 1) {
@@ -254,11 +260,18 @@ suite('Responses', function () {
           assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
 
           // Files
-          assert(false);
+          body.responses[i].should.have.property('files');
+          body.responses[i].files.length.should.equal(1);
         }
 
         done();
       });
+
+      var form = req.form();
+
+      form.append('my_file', fs.createReadStream(FILENAME));
+      var dataAsString = JSON.stringify(data_one);
+      form.append('data', dataAsString);
     });
 
     test('Posting bad data /surveys/' + surveyId + '/responses', function (done) {
