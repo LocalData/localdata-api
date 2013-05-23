@@ -7,6 +7,7 @@ var should = require('should');
 var async = require('async');
 
 var server = require('../lib/server');
+var Org = require('../lib/models/Org');
 var settings = require('../settings-test');
 
 var fixtures = require('./data/fixtures');
@@ -36,6 +37,10 @@ suite('Orgs', function () {
       function startServer(next) {
         // Start the server.
         server.run(settings, next);
+      },
+      // We need the index to enforce uniqueness.
+      function ensureIndexes(next) {
+        Org.ensureIndexes(next);
       },
       function setupUsers(next) {
         // Create a couple of users.
@@ -98,6 +103,32 @@ suite('Orgs', function () {
         should.not.exist(error);
         response.statusCode.should.equal(401);
         done();
+      });
+    });
+
+    // Create two orgs with the same name.
+    // We should not be allowed.
+    test('do not allow duplicate org names', function (done) {
+      var name = 'Michiganderton';
+      request.post({
+        url: BASEURL + '/orgs',
+        jar: authorizedJar,
+        json: { orgs: [{ name: name }] }
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        // Second org, same name.
+        request.post({
+          url: BASEURL + '/orgs',
+          jar: authorizedJar,
+          json: { orgs: [{ name: name }] }
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(400);
+          done();
+        });
+
       });
     });
   }); // end of POST suite
