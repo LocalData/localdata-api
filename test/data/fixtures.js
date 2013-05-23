@@ -151,3 +151,46 @@ fixtures.addOrg = function addOrg(name, jar, done) {
     done(null, body.orgs[0]);
   });
 };
+
+// Generate some fake response data.
+fixtures.makeResponses = function makeResponses(count) {
+  function makeResponse(parcelId, streetNumber) {
+    return {
+      source: {
+        type: 'mobile',
+        collector: 'Name'
+      },
+      geo_info: {
+        geometry: {
+          type: 'MultiPolygon',
+          coordinates: [ [ [
+            [-122.43469523018862, 37.771087088400655],
+            [-122.43477071284453, 37.77146083403105],
+            [-122.4346853083731, 37.77147170307505],
+            [-122.43460982859321, 37.771097964560134],
+            [-122.43463544873167, 37.77109470163426],
+            [-122.43469523018862, 37.771087088400655]
+          ] ] ]
+        },
+        centroid: [-122.43469027023522, 37.77127939798119],
+        humanReadableName: streetNumber + ' HAIGHT ST',
+        parcel_id: parcelId
+      },
+      parcel_id: parcelId,
+      object_id: parcelId,
+      responses: {
+        'use-count': '1',
+        collector: 'Some Name',
+        site: 'parking-lot',
+        'condition-1': 'demolish'
+      }
+    };
+  }
+  var data = { responses: [] };
+  var parcelBase = 123456;
+  var i;
+  for (i = 0; i < count; i += 1) {
+    data.responses.push(makeResponse((parcelBase + i).toString(), Math.ceil(1000*Math.random())));
+  }
+  return data;
+};

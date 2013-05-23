@@ -20,150 +20,11 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 var FILENAME = __dirname + '/data/scan.jpeg';
 
 suite('Responses', function () {
+  var data_one = fixtures.makeResponses(1);
 
-  var data_one = {
-    responses: [ {
-      source: {
-        type: 'mobile',
-        collector: 'Name'
-      },
-      geo_info: {
-        geometry: {
-          type: 'MultiPolygon',
-          coordinates: [ [ [
-            [-122.43481265888725, 37.77107213299167],
-            [-122.43488814355871, 37.77144589024014],
-            [-122.43477071284453, 37.77146083403105],
-            [-122.43469523018862, 37.771087088400655],
-            [-122.43471231026837, 37.77108491280468],
-            [-122.43479771296865, 37.77107403655235],
-            [-122.43481265888725, 37.77107213299167]
-          ] ] ]
-        },
-        centroid: [-122.43479168663654, 37.771266486242666],
-        humanReadableName: '765 HAIGHT ST',
-        parcel_id: '0862022A'
-      },
-      parcel_id: '0862022A',
-      object_id: '0862022A',
-      responses: {
-        'use-count': '1',
-        collector: 'Some Name',
-        site: 'parking-lot',
-        'condition-1': 'demolish'
-      }
-    } ]
-  };
+  var data_two = fixtures.makeResponses(2);
 
-  var dataTwo = function(){
-    return {
-      responses: [
-        {
-          source: {
-            type: 'mobile',
-            collector: 'Name'
-          },
-          geo_info: {
-            geometry: {
-              type: 'MultiPolygon',
-              coordinates: [ [ [
-                [-122.43481265888725, 37.77107213299167],
-                [-122.43488814355871, 37.77144589024014],
-                [-122.43477071284453, 37.77146083403105],
-                [-122.43469523018862, 37.771087088400655],
-                [-122.43471231026837, 37.77108491280468],
-                [-122.43479771296865, 37.77107403655235],
-                [-122.43481265888725, 37.77107213299167]
-              ] ] ]
-            },
-            centroid: [-122.43479168663654, 37.771266486242666],
-            humanReadableName: '765 HAIGHT ST',
-            parcel_id: '0862022A'
-          },
-          parcel_id: '0862022A',
-          object_id: '0862022A',
-          responses: {
-            'use-count': '1',
-            collector: 'Some Name',
-            site: 'parking-lot',
-            'condition-1': 'demolish'
-          }
-        },
-        {
-          source: {
-            type: 'mobile',
-            collector: 'Name'
-          },
-          geo_info: {
-            geometry: {
-              type: 'MultiPolygon',
-              coordinates: [ [ [
-                [-122.43469523018862, 37.771087088400655],
-                [-122.43477071284453, 37.77146083403105],
-                [-122.4346853083731, 37.77147170307505],
-                [-122.43460982859321, 37.771097964560134],
-                [-122.43463544873167, 37.77109470163426],
-                [-122.43469523018862, 37.771087088400655]
-              ] ] ]
-            },
-            centroid: [-122.43469027023522, 37.77127939798119],
-            humanReadableName: '763 HAIGHT ST',
-            parcel_id: '0862023'
-          },
-          parcel_id: '0862023',
-          object_id: '0862023',
-          responses: {
-            'use-count': '1',
-            collector: 'Some Name',
-            site: 'parking-lot',
-            'condition-1': 'demolish'
-          }
-        }
-      ]
-    };
-  };
-
-  var data_twenty = (function () {
-    function makeResponse(parcelId) {
-      return {
-        source: {
-          type: 'mobile',
-          collector: 'Name'
-        },
-        geo_info: {
-          geometry: {
-            type: 'MultiPolygon',
-            coordinates: [ [ [
-              [-122.43469523018862, 37.771087088400655],
-              [-122.43477071284453, 37.77146083403105],
-              [-122.4346853083731, 37.77147170307505],
-              [-122.43460982859321, 37.771097964560134],
-              [-122.43463544873167, 37.77109470163426],
-              [-122.43469523018862, 37.771087088400655]
-            ] ] ]
-          },
-          centroid: [-122.43469027023522, 37.77127939798119],
-          humanReadableName: '763 HAIGHT ST',
-          parcel_id: parcelId
-        },
-        parcel_id: parcelId,
-        object_id: parcelId,
-        responses: {
-          'use-count': '1',
-          collector: 'Some Name',
-          site: 'parking-lot',
-          'condition-1': 'demolish'
-        }
-      };
-    }
-    var data = { responses: [] };
-    var parcelBase = 123456;
-    var i;
-    for (i = 0; i < 20; i += 1) {
-      data.responses.push(makeResponse((parcelBase + i).toString()));
-    }
-    return data;
-  }());
+  var data_twenty = fixtures.makeResponses(20);
 
   suiteSetup(function (done) {
     server.run(settings, function (error) {
@@ -304,7 +165,7 @@ suite('Responses', function () {
           surveyId = body.surveys[0].id;
 
           // Add a response
-          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: dataTwo(), jar: ownerJar},
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_two, jar: ownerJar},
             function (error, response, body) {
             should.not.exist(error);
             should.exist(body);
