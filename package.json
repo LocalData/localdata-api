@@ -27,9 +27,8 @@
     "slugs" : "0.1.2"
   },
   "devDependencies": {
-    "mocha": "https://github.com/visionmedia/mocha/tarball/master",
+    "mocha": "~1.10.0",
     "mongodb": ">= 1.2.8",
-    "form-data": ">=0.0.7",
-    "should": "https://github.com/visionmedia/should.js/tarball/master"
+    "should": "~1.2.2"
   }
 }
