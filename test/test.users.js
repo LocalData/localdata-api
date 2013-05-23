@@ -83,7 +83,13 @@ suite('Users -', function () {
   };
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(settings, function (error) {
+      if (error) { return done(error); }
+      // We need the email index to be in place, so we can enforce uniqueness
+      // constraints, but we don't automatically create indexes to avoid
+      // ill-timed index creation on production systems.
+      User.ensureIndexes(done);
+    });
   });
 
   suiteTeardown(function () {
