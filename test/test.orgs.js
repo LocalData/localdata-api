@@ -79,6 +79,7 @@ suite('Orgs', function () {
         body.orgs.should.have.length(1);
 
         body.orgs[0].should.have.property('id');
+        body.orgs[0].should.not.have.property('_id');
         body.orgs[0].name.should.equal(name);
         body.orgs[0].users.should.include(authorizedUser);
 
@@ -131,6 +132,7 @@ suite('Orgs', function () {
 
         body.org.name.should.equal(org.name);
         body.org.id.should.equal(org.id);
+        body.org.should.not.have.property('_id');
         body.org.users.should.include(authorizedUser);
         body.org.users.should.include(strangerUser);
 
@@ -191,6 +193,7 @@ suite('Orgs', function () {
           var returned = parsed.orgs[i];
           returned.name.should.equal(created[i].name);
           returned.should.have.property('id');
+          returned.should.not.have.property('_id');
           returned.should.not.have.property('users');
         }
 
@@ -216,6 +219,7 @@ suite('Orgs', function () {
           var returned = parsed.orgs[i];
           returned.name.should.equal(created[i].name);
           returned.should.have.property('id');
+          returned.should.not.have.property('_id');
           returned.should.have.property('users');
           returned.users.should.include(authorizedUser);
         }
@@ -284,6 +288,7 @@ suite('Orgs', function () {
           var returned = parsed.orgs[i];
           returned.name.should.equal(created[i].name);
           returned.should.have.property('id');
+          returned.should.not.have.property('_id');
           returned.should.have.property('users');
           returned.users.should.include(authorizedUser);
         }
