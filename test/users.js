@@ -8,19 +8,30 @@ var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
 var util = require('util');
+var async = require('async');
 
 // LocalData
-var server = require('../lib/server');
+var server = require('./lib/router');
 var settings = require('../settings-test.js');
 var User = require('../lib/models/User');
 var users = require('../lib/controllers/users');
 
+var fixtures = require('./data/fixtures');
+
 var BASEURL = 'http://localhost:' + settings.port + '/api';
+var BASE_HTTPS = 'https://localhost:' + settings.testSecurePort + '/api';
 var BASE_LOGOUT_URL = 'http://localhost:' + settings.port + '/logout';
-var USER_URL = BASEURL + '/user';
-var LOGIN_URL = BASEURL + '/login';
+var USER_URL = BASE_HTTPS + '/user';
+var HTTP_USER_URL = BASEURL + '/user';
+var LOGIN_URL = BASE_HTTPS + '/login';
+var HTTP_LOGIN_URL = BASEURL + '/login';
 var FORGOT_URL = BASEURL + '/user/forgot';
-var RESET_URL = BASEURL + '/user/reset';
+var RESET_URL = BASE_HTTPS + '/user/reset';
+var HTTP_RESET_URL = BASEURL + '/user/reset';
+
+request = request.defaults({
+  strictSSL: false
+});
 
 suite('Users -', function () {
   var generateUser = function() {
@@ -219,36 +230,121 @@ suite('Users -', function () {
       });
     });
 
-    test('Log in a user via the API', function (done) {
+    test('should reject HTTP user creation', function (done) {
+      request.post({
+        url: HTTP_USER_URL,
+        json: fixtures.makeUser('Test User')
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
+        done();
+      });
+    });
 
-      // First, let's log out
-      // Just so we don't unfairly pass this test :-)
-      request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
-
-        // Then, let's log in.
-        request.post({url: LOGIN_URL, json: generateUser()}, function (error, response, body) {
+    test('should reject HTTP logins', function (done) {
+      request.get({ url: BASE_LOGOUT_URL }, function (error, response, body) {
+        if (error) { return done(error); }
+        request.post({ url: HTTP_LOGIN_URL, json: generateUser() }, function (error, response, body) {
           should.not.exist(error);
-          response.statusCode.should.equal(302);
+          response.statusCode.should.equal(400);
+          done();
+        });
+      });
+    });
 
-          request.get({url: USER_URL}, function (error, response, body){
+    test('should reject HTTP user reset', function (done) {
+      // There are a lot of things happening in the test and on the server, so
+      // we need some more time for this test.
+      this.timeout(3000);
+
+      fixtures.clearUsers(function (error) {
+        if (error) { return done(error); }
+        fixtures.addUser('HTTP Reset Test User', function (error, jar, userId, user) {
+          should.not.exist(error);
+          console.log('!!! user:', user); // XXX
+          request.post({
+            url: FORGOT_URL,
+            json: { user: { email: user.email } }
+          }, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(200);
-            response.should.be.json;
 
-            var parsed = JSON.parse(body);
+            // FIXME: this is a hack
+            // Set the hashed reset token, so we know what it is.
+            var token = 'THISISAFAKETOKEN';
+            User.findOneAndUpdate({ email: user.email }, { $set: { 'reset.hashedToken': User.hashToken(token) } }, function (error, doc) {
+              var resetString = users.serializeResetInfo(doc.email, token);
 
-            var userData = generateUser();
-            parsed.should.have.property("email", userData.email);
-            parsed.should.have.property("name", userData.name);
-            parsed.should.not.have.property("randomThing");
-            parsed.should.not.have.property("password");
-            parsed.should.not.have.property("hash");
+              // Change the password using the token
+              var newPassword = 'placebased';
+              var resetInfo = users.deserializeResetInfo(resetString);
 
-            done();
+              // Try to reset the password over HTTP
+              request.post({
+                url: HTTP_RESET_URL,
+                json: {
+                  reset: {
+                    email: resetInfo.email,
+                    token: resetInfo.token,
+                    password: newPassword
+                  }
+                }
+              }, function(error, response, body) {
+                should.not.exist(error);
+                response.statusCode.should.equal(400);
+                done();
+              });
+            });
           });
         });
-
       });
+    });
+
+    test('Log in a user via the API', function (done) {
+      var user;
+      async.series([
+        // Clear users
+        fixtures.clearUsers,
+        // Add a new user
+        function (next) {
+          fixtures.addUser('API Login Tester', function (error, newJar, newId, newUser) {
+            if (error) { return next(error); }
+            user = newUser;
+            next();
+          });
+        },
+        // Logout, just to be sure
+        function (next) {
+          request.get({ url: BASE_LOGOUT_URL }, next);
+        },
+        // Try logging in
+        function (next) {
+          // Then, let's log in.
+          request.post({url: LOGIN_URL, json: user}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(302);
+
+            request.get({url: HTTP_USER_URL}, function (error, response, body){
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+
+              parsed.should.have.property('email', user.email);
+              parsed.should.have.property('name', user.name);
+              parsed.should.not.have.property('randomThing');
+              parsed.should.not.have.property('password');
+              parsed.should.not.have.property('hash');
+
+              next();
+            });
+          });
+        }
+      ], function (error) {
+        done(error);
+      });
+
     });
 
     test('Log in a user with the wrong password', function (done) {
@@ -332,7 +428,7 @@ suite('Users -', function () {
       clearCollection('usersCollection', function(error, response){
         // First, let's log out
         request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
-          request.get({url: USER_URL}, function(error, response, body) {
+          request.get({url: HTTP_USER_URL}, function(error, response, body) {
             response.statusCode.should.equal(401);
             done();
           });

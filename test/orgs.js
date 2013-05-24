@@ -6,7 +6,7 @@ var request = require('request');
 var should = require('should');
 var async = require('async');
 
-var server = require('../lib/server');
+var server = require('./lib/router');
 var Org = require('../lib/models/Org');
 var settings = require('../settings-test');
 
