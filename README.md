@@ -21,3 +21,7 @@ To test the API, use:
 
     $ make test
 
+You can also pass options to mocha with the `OPTS` variable or specify a test file with the `FILE` variable:
+
+    $ make test OPTS="--grep 'Surveys'" FILE=test/surveys.js
+
