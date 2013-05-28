@@ -131,20 +131,6 @@ var generator = function(feature, survey) {
 };
 
 /**
- * Save some responses
- */
-function save(responses, done) {
-  Response.create(responses, function (error) {
-    if (error) {
-      console.log('Error inserting documents', error);
-    } else {
-      console.log('Inserted ' + (arguments.length - 1) + ' documents');
-    }
-    done(error);
-  });
-}
-
-/**
  * Generate the responses
  * @param  {Int}    number Number of responses to create
  * @param  {String} survey ID of the survey
@@ -161,29 +147,24 @@ function build(number, survey, done) {
     var features = JSON.parse(data).features;
     console.log('Done loading ' + features.length + ' geojson features');
 
+    var parallelLimit = 20;
 
-    var chunk = 500;
-    var pieces = Math.floor(number / chunk);
-    var remainder = number - chunk * pieces;
-    console.log('chunk size: ' + chunk + '. # of pieces: ' + pieces + '. # remaining: ' + remainder + '.');
-
-    async.series([
-      function (next) {
-        async.timesSeries(pieces, function (i, nextSave) {
-          console.log('Generating ' + chunk + ' responses.');
-          var responses = _.times(chunk, function (j) {
-            return generator(features[i * chunk + j], survey);
-          });
-          save(responses, nextSave);
-        }, next);
-      },
-      function (next) {
-        console.log('Generating ' + remainder + ' responses.');
-        save(_.times(remainder, function (j) {
-          return generator(features[pieces * chunk + j], survey);
-        }), next);
+    var count = 0;
+    function printProgress(next, error) {
+      count += 1;
+      if (count === parallelLimit) {
+        process.stdout.write('.');
+        count = 0;
       }
-    ], done);
+      next(error);
+    }
+
+    async.eachLimit(_.first(features, number), parallelLimit, function (feature, next) {
+      Response.create(generator(feature, survey), _.partial(printProgress, next));
+    }, function (error) {
+      process.stdout.write('\n');
+      done(error);
+    });
 
   });
 }
@@ -196,7 +177,7 @@ function build(number, survey, done) {
  * @param  {String} surveyId 
  */
 function clear(surveyId, done) {
-  console.log("Getting read to clear responses");
+  console.log("Getting ready to clear responses");
   Response.remove({ survey: surveyId }, function (error) {
     console.log('Done clearing the survey responses');
     done(error);
