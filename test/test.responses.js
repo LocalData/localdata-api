@@ -88,8 +88,8 @@ suite('Responses', function () {
       delete data.responses[0].responses;
 
       request.post({url: url, json: data}, function (error, response, body) {
-        should.exist(error);
-        error.should.equal(400);
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
 
         done();
       });
@@ -149,10 +149,8 @@ suite('Responses', function () {
 
     test('Posting bad data to /surveys/' + surveyId + '/responses', function (done) {
       request.post({url: url, json: {respnoses: {}}}, function (error, response, body) {
-        should.exist(error);
-        error.should.equal(400);
-        // should.not.exist(error);
-        // response.statusCode.should.equal(400);
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
         done();
       });
     });
