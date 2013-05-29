@@ -82,6 +82,35 @@ suite('Responses', function () {
       });
     });
 
+    test('Posting JSON to /surveys/' + surveyId + '/responses with object_id and no parcel_id', function (done) {
+
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].parcel_id;
+
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        body.responses[0].should.have.property('object_id');
+        body.responses[0].should.have.property('parcel_id');
+        body.responses[0].object_id.should.equal(data.responses[0].object_id);
+        body.responses[0].parcel_id.should.equal(data.responses[0].object_id);
+
+        done();
+      });
+    });
+
+    test('Posting JSON to /surveys/' + surveyId + '/responses without a responses object', function (done) {
+
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].responses;
+
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
+
+        done();
+      });
+    });
 
     test('Posting a file to /surveys/' + surveyId + '/responses', function (done) {
       this.timeout(5000);
@@ -135,7 +164,7 @@ suite('Responses', function () {
       form.append('data', dataAsString);
     });
 
-    test('Posting bad data /surveys/' + surveyId + '/responses', function (done) {
+    test('Posting bad data to /surveys/' + surveyId + '/responses', function (done) {
       request.post({url: url, json: {respnoses: {}}}, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(400);
