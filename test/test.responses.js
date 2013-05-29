@@ -82,6 +82,23 @@ suite('Responses', function () {
       });
     });
 
+    test('Posting JSON to /surveys/' + surveyId + '/responses with object_id and no parcel_id', function (done) {
+
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].parcel_id;
+
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        body.responses[0].should.have.property('object_id');
+        body.responses[0].should.have.property('parcel_id');
+        body.responses[0].object_id.should.equal(data.responses[0].object_id);
+        body.responses[0].parcel_id.should.equal(data.responses[0].object_id);
+
+        done();
+      });
+    });
+
     test('Posting JSON to /surveys/' + surveyId + '/responses without a responses object', function (done) {
 
       var data = fixtures.makeResponses(1);
