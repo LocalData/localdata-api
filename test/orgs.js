@@ -5,6 +5,7 @@
 var request = require('request');
 var should = require('should');
 var async = require('async');
+var _ = require('lodash');
 
 var server = require('./lib/router');
 var Org = require('../lib/models/Org');
@@ -245,10 +246,13 @@ suite('Orgs', function () {
         parsed.should.have.property('orgs');
         parsed.orgs.length.should.equal(2);
 
+        parsed.orgs = _.sortBy(parsed.orgs, 'name');
+        var orig = _.sortBy(created.slice(0,2), 'name');
+
         var i;
         for (i = 0; i < parsed.orgs.length; i += 1) {
           var returned = parsed.orgs[i];
-          returned.name.should.equal(created[i].name);
+          returned.name.should.equal(orig[i].name);
           returned.should.have.property('id');
           returned.should.not.have.property('_id');
           returned.should.have.property('users');
@@ -314,10 +318,13 @@ suite('Orgs', function () {
         parsed.should.have.property('orgs');
         parsed.orgs.length.should.equal(2);
 
+        parsed.orgs = _.sortBy(parsed.orgs, 'name');
+        var orig = _.sortBy(created.slice(0,2), 'name');
+
         var i;
         for (i = 0; i < parsed.orgs.length; i += 1) {
           var returned = parsed.orgs[i];
-          returned.name.should.equal(created[i].name);
+          returned.name.should.equal(orig[i].name);
           returned.should.have.property('id');
           returned.should.not.have.property('_id');
           returned.should.have.property('users');
