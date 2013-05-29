@@ -2,7 +2,7 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../lib/server.js');
+var server = require('./lib/router');
 var util = require('util');
 var request = require('request');
 var should = require('should');
