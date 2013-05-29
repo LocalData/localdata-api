@@ -48,3 +48,4 @@ settings.converterBase = process.env.CONVERTER_BASE;
 
 // Web server
 settings.port = 3030;
+settings.testSecurePort = 3838;

@@ -12,8 +12,13 @@ var fixtures = {};
 module.exports = fixtures;
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
+var BASE_HTTPS = 'https://localhost:' + settings.testSecurePort + '/api';
 var BASE_LOGOUT_URL = 'http://localhost:' + settings.port + '/logout';
-var USER_URL = BASEURL + '/user';
+var USER_URL = BASE_HTTPS + '/user';
+
+request = request.defaults({
+  strictSSL: false
+});
 
 fixtures.surveys = {
   "surveys" : [ {

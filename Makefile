@@ -1,6 +1,11 @@
 MOCHA = "./node_modules/.bin/mocha"
 
+MOCHA_FLAGS = --ui tdd --reporter spec
+ifdef OPTS
+	MOCHA_FLAGS += $(OPTS)
+endif
+
 test:
-	@$(MOCHA) --ui tdd --reporter spec
+	@$(MOCHA) $(MOCHA_FLAGS) $(FILE)
 
 .PHONY: test

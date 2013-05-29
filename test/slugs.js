@@ -2,15 +2,17 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../lib/server.js');
+var server = require('./lib/router');
 var util = require('util');
 
 var mongo = require('mongodb');
 var request = require('request');
 var should = require('should');
 var util = require('util');
+var async = require('async');
 
 var settings = require('../settings-test.js');
+var fixtures = require('./data/fixtures');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
@@ -39,55 +41,37 @@ suite('Slugs', function () {
     server.stop();
   });
 
+  var jar;
   var id;
   var slug;
 
-  var userA = {
-    'name': 'User A',
-    'email': 'a@localdata.com',
-    'password': 'password'
-  };
-
-  /**
-   * Remove all results from a collection
-   * @param  {String}   collection Name of the collection
-   * @param  {Function} done       Callback, accepts error, response
-   */
-  var clearCollection = function(collectionName, done) {
-    var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
-                                                          settings.mongo_port,
-                                                          {}), { w: 1, safe: true });
-
-    db.open(function() {
-      db.collection(collectionName, function(error, collection) {
-        if(error) {
-          console.log("BIG ERROR");
-          console.log(error);
-          assert(false);
-          done(error);
-        }
-
-        // Remove all the things!
-        collection.remove({}, function(error, response){
-          done(error, response);
-        });
-      });
-
-    });
-  };
-
   setup(function (done) {
-    var url = BASEURL + '/user';
-    clearCollection('usersCollection', function(error, response){
-      request.post({url: url, json: userA}, function (error, response, body) {
-        request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
-          if (error) { done(error); }
-          console.log(body);
+    async.series([
+      // Clear users
+      fixtures.clearUsers,
+      // Create a new user
+      function (next) {
+        fixtures.addUser('User A', function (error, jarA, idA, userA) {
+          if (error) { return next(error); }
+          jar = jarA;
+          next();
+        });
+      },
+      function (next) {
+        // Create a survey
+        request.post({
+          url: BASEURL + '/surveys',
+          jar: jar,
+          json: data_one
+        }, function(error, response, body) {
+          if (error) { next(error); }
           id = body.surveys[0].id;
           slug = body.surveys[0].slug;
-          done();
+          next();
         });
-      });
+      }
+    ], function (error) {
+      done(error);
     });
   });
 
@@ -108,7 +92,11 @@ suite('Slugs', function () {
   });
 
   test('Add two surveys with the same name', function (done) {
-    request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
+    request.post({
+      url: BASEURL + '/surveys',
+      jar: jar,
+      json: data_one
+    }, function(error, response, body) {
       should.not.exist(error);
       response.statusCode.should.equal(201);
       response.should.be.json;
