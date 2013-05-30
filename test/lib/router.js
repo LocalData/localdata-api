@@ -19,7 +19,7 @@ var proxy = new httpProxy.HttpProxy({
   }
 });
 
-var router = 
+var router;
 module.exports = {
   run: function start(settings, done) {
     // Start the real server.
