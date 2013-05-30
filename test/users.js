@@ -20,7 +20,7 @@ var fixtures = require('./data/fixtures');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 var BASE_HTTPS = 'https://localhost:' + settings.testSecurePort + '/api';
-var BASE_LOGOUT_URL = 'http://localhost:' + settings.port + '/logout';
+var BASE_LOGOUT_URL = 'https://localhost:' + settings.testSecurePort + '/logout';
 var USER_URL = BASE_HTTPS + '/user';
 var HTTP_USER_URL = BASEURL + '/user';
 var LOGIN_URL = BASE_HTTPS + '/login';
@@ -261,7 +261,6 @@ suite('Users -', function () {
         if (error) { return done(error); }
         fixtures.addUser('HTTP Reset Test User', function (error, jar, userId, user) {
           should.not.exist(error);
-          console.log('!!! user:', user); // XXX
           request.post({
             url: FORGOT_URL,
             json: { user: { email: user.email } }
