@@ -10,7 +10,7 @@
     "async": ">=0.2",
     "bcrypt": ">= 0.5",
     "connect-mongo": "~0.3.2",
-    "connect-s3": "git://github.com/prashtx/connect-s3.git",
+    "connect-s3": "~0.1.0",
     "ejs" : "~0.8.3",
     "express": "3.0.x",
     "knox": "~0.6.0",
