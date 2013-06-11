@@ -1,5 +1,5 @@
-SURVEY API
-==========
+LocalData Survey API
+====================
 
 Install
 -------
@@ -7,7 +7,6 @@ Install
 To install dependencies
 
     $ npm install
-
 
 Run
 ---
@@ -28,8 +27,6 @@ environment variables and supervisor for restarting the app after changes. With
 environment variables in a `local.env` file, you can use
 
     $ foreman start -f Procfile_supervisor -e local.env -p 3000
-
-
 
 Simulate a deployment with HTTPS (recommended)
 ----------------------------------------------
@@ -52,7 +49,6 @@ the server:
 
     $ PORT=3443 bin/fakeroku 3000
 
-
 Testing
 --------
 
@@ -60,11 +56,13 @@ To test the API, use:
 
     $ make test
 
-You will need a self-signed certificate for the HTTPS tests. You can generate those using `openssl`:
+You will need a self-signed certificate for the HTTPS tests. You can generate
+those using `openssl`:
 
     $ openssl req -x509 -nodes -days 730 -newkey rsa:1024 -keyout tests/data/test-key.pem -out tests/data/test-cert.pem
 
-You can also pass options to mocha with the `OPTS` variable or specify a test file with the `FILE` variable:
+You can also pass options to mocha with the `OPTS` variable or specify a test
+file with the `FILE` variable:
 
     $ make test OPTS="--grep 'Surveys'" FILE=test/surveys.js
 
