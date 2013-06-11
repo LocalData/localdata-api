@@ -2,7 +2,7 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../lib/server.js');
+var server = require('./lib/router');
 var request = require('request');
 var should = require('should');
 var async = require('async');
@@ -10,16 +10,11 @@ var async = require('async');
 var User = require('../lib/models/User.js');
 
 var settings = require('../settings-test.js');
+var fixtures = require('./data/fixtures');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Shapefile', function () {
-
-  var user = {
-    name: 'Test Testson',
-    email: 'test@fakedomain.com',
-    password: 'abc123'
-  };
 
   var data_survey = {
     name: 'Test Survey',
@@ -80,36 +75,37 @@ suite('Shapefile', function () {
   suite('GET', function () {
     var surveyId;
     var id;
-    var jar = request.jar();
+    var jar;
 
     suiteSetup(function (done) {
       async.waterfall([
+        fixtures.clearUsers,
         function (next) {
-        // Clear users.
-        User.remove({}, next);
-      }, function (count, next) {
-        // Create a user.
-        request.post({
-          url: BASEURL + '/user',
-          json: user,
-          jar: jar
-        }, next);
-      }, function (response, body, next) {
-        // Create a survey.
-        request.post({
-          url: BASEURL + '/surveys',
-          json: { surveys: data_survey },
-          jar: jar
-        }, next);
-      }, function (response, body, next) {
-        surveyId = body.surveys[0].id;
-        // Add some responses.
-        request.post({
-          url: BASEURL + '/surveys/' + surveyId + '/responses',
-          json: data_twenty,
-          jar: jar
-        }, next);
-      }], done);
+          // Create a user.
+          fixtures.addUser('Test Testson', function (error, authJar, userId) {
+            if (error) { return next(error); }
+            jar = authJar;
+            next();
+          });
+        },
+        function (next) {
+          // Create a survey.
+          request.post({
+            url: BASEURL + '/surveys',
+            json: { surveys: data_survey },
+            jar: jar
+          }, next);
+        },
+        function (response, body, next) {
+          surveyId = body.surveys[0].id;
+          // Add some responses.
+          request.post({
+            url: BASEURL + '/surveys/' + surveyId + '/responses',
+            json: data_twenty,
+            jar: jar
+          }, next);
+        }
+      ], done);
     });
 
 

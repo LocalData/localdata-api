@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+/*jslint node: true */
+'use strict';
+
+/*
+ * Fakeroku
+ * Very roughly simulates the Heroku router, which handles HTTPS on behalf of
+ * the actual app.
+ *
+ * Usage:
+ *   PORT=3443 bin/fakeroku 3000
+ * Listens on port 3443 for HTTPS requests and forwards them to port 3000 over HTTP.
+ */
+
+var https = require('https');
+var fs = require('fs');
+var httpProxy = require('http-proxy');
+
+var server = require('../lib/server');
+
+var port = process.env.PORT || 3443;
+var target = 3000;
+if (process.argv[2]) {
+  target = parseInt(process.argv[2], 10);
+}
+
+var key = fs.readFileSync(process.env.HOME + '/.ssh/localdata-key.pem', 'utf8');
+var cert = fs.readFileSync(process.env.HOME + '/.ssh/localdata-cert.pem', 'utf8');
+
+var proxy = new httpProxy.HttpProxy({
+  target: {
+    host: 'localhost', 
+    port: target
+  }
+});
+
+// Start the HTTPS router.
+https.createServer({
+  key: key,
+  cert: cert
+}, function (req, res) {
+  proxy.proxyRequest(req, res);
+}).listen(port, function (error) {
+  if (error) { console.log(error); throw error; }
+  console.log('Routing to target at port ' + target);
+  console.log('Listening for HTTPS on ' + port);
+});

@@ -2,17 +2,17 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../lib/server.js');
-
 var assert = require('assert');
-var fixtures = require('./data/fixtures.js');
-var mongo = require('mongodb');
-var passport = require('passport');
 var request = require('request');
-var settings = require('../settings-test.js');
-var Survey = require('../lib/models/Survey.js');
 var should = require('should');
 var util = require('util');
+var async = require('async');
+
+var Survey = require('../lib/models/Survey');
+
+var server = require('./lib/router');
+var fixtures = require('./data/fixtures');
+var settings = require('../settings-test');
 
 
 
@@ -20,47 +20,8 @@ var util = require('util');
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
-
-  /**
-   * Remove all results from a collection
-   * @param  {String}   collection Name of the collection
-   * @param  {Function} done       Callback, accepts error, response
-   */
-  var clearCollection = function(collectionName, done) {
-    var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
-                                                          settings.mongo_port,
-                                                          {}), { w: 1, safe: true });
-
-    db.open(function() {
-      db.collection(collectionName, function(error, collection) {
-        if(error) {
-          console.log("BIG ERROR");
-          console.log(error);
-          assert(false);
-          done(error);
-        }
-
-        // Remove all the things!
-        console.log("Clearing survey collection");
-        collection.remove({}, function(error, response){
-          done(error, response);
-        });
-      });
-
-    });
-  };
-
-  var userA = {
-    'name': 'User A',
-    'email': 'a@localdata.com',
-    'password': 'password'
-  };
-
-  var userB = {
-    'name': 'User B',
-    'email': 'b@localdata.com',
-    'password': 'drowssap'
-  };
+  var userA;
+  var userB;
 
   var data_one = {
     "surveys" : [ {
@@ -134,8 +95,8 @@ suite('Surveys', function () {
     } ]
   };
 
-  var userAJar = request.jar();
-  var userBJar = request.jar();
+  var userAJar;
+  var userBJar;
 
   var data_slug = {
     "surveys" : [ {
@@ -154,23 +115,28 @@ suite('Surveys', function () {
   };
 
   suiteSetup(function (done) {
-    server.run(settings, function(){
-      var url = BASEURL + '/user';
-      clearCollection('usersCollection', function(error, response){
-        request.post({url: url, json: userA, jar: userAJar}, function (error, response, body) {
-          console.log("RETURNED USER", body, userAJar);
-          userA._id = body._id;
-
-          request.post({url: url, json: userB, jar: userBJar}, function (error, response, body) {
-            userB._id = body._id;
-
-            done();
-          });
+    async.series([
+      function (next) {
+        server.run(settings, next);
+      },
+      fixtures.clearUsers,
+      function (next) {
+        fixtures.addUser('User A', function (error, jar, id, user) {
+          if (error) { return next(error); }
+          userAJar = jar;
+          userA = user;
+          next();
         });
-
-        request = request.defaults({jar: userAJar});
-      });
-    });
+      },
+      function (next) {
+        fixtures.addUser('User B', function (error, jar, id, user) {
+          if (error) { return next(error); }
+          userBJar = jar;
+          userB = user;
+          next();
+        });
+      }
+    ], done);
   });
 
   suiteTeardown(function () {
@@ -218,7 +184,11 @@ suite('Surveys', function () {
     var surveyId;
 
     test('Posting JSON to /surveys', function (done) {
-      request.post({url: url, json: data_two}, function (error, response, body) {
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
 
@@ -252,7 +222,11 @@ suite('Surveys', function () {
     });
 
     test('Posting bad survey JSON', function (done) {
-      request.post({ url: url, json: data_bad }, function (error, response, body) {
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_bad
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(400);
 
@@ -261,7 +235,11 @@ suite('Surveys', function () {
     });
 
     test('Posting a survey with funny characters', function (done) {
-      request.post({ url: url, json: data_slug }, function (error, response, body) {
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_slug
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
         body.surveys.length.should.equal(1);
@@ -283,7 +261,11 @@ suite('Surveys', function () {
     var surveyTwo;
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys', json: data_two}, function(error, response, body) {
+      request.post({
+        url: BASEURL + '/surveys',
+        jar: userAJar,
+        json: data_two
+      }, function(error, response, body) {
         if (error) { done(error); }
         id = body.surveys[0].id;
         surveyTwo = body.surveys[1];
@@ -292,7 +274,10 @@ suite('Surveys', function () {
     });
 
     test('Getting all surveys for this user', function (done) {
-      request.get({url: BASEURL + '/surveys'}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys',
+        jar: userAJar
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
 
@@ -377,7 +362,11 @@ suite('Surveys', function () {
     var surveyId;
 
     test('PUT JSON to /survey/:id', function (done) {
-      request.post({url: url, json: data_two}, function (error, response, body) {
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
 
@@ -387,6 +376,7 @@ suite('Surveys', function () {
         url = BASEURL + '/surveys/' + surveyToChange.id;
         request.put({
           url: url,
+          jar: userAJar,
           json: {'survey': surveyToChange}
         }, function (error, response, body) {
           should.not.exist(error);
@@ -401,7 +391,11 @@ suite('Surveys', function () {
     test('PUT JSON to /surveys/:id from an unauthorized user', function (done) {
       var url = BASEURL + '/surveys';
 
-      request.post({url: url, json: data_one}, function (error, response, body) {
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
 
@@ -431,7 +425,11 @@ suite('Surveys', function () {
     var id;
 
     setup(function (done) {
-      request.post({url: BASEURL + '/surveys', json: data_one}, function(error, response, body) {
+      request.post({
+        url: BASEURL + '/surveys',
+        jar: userAJar,
+        json: data_one
+      }, function(error, response, body) {
         if (error) { done(error); }
         id = body.surveys[0].id;
         done();

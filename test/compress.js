@@ -2,7 +2,7 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../lib/server');
+var server = require('./lib/router');
 var assert = require('assert');
 var util = require('util');
 var request = require('request');
@@ -11,10 +11,12 @@ var should = require('should');
 var settings = require('../settings-test.js');
 var User = require('../lib/models/User');
 
+var fixtures = require('./data/fixtures');
+
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Compress', function () {
-  var jar = request.jar();
+  var jar;
 
   suiteSetup(function (done) {
     server.run(settings, done);
@@ -25,18 +27,10 @@ suite('Compress', function () {
   });
 
   setup(function (done) {
-    var userA = {
-      'name': 'User A',
-      'email': 'a@localdata.com',
-      'password': 'password'
-    };
-
-    // Remove the users.
-    User.remove({}, function (error) {
-      // Create a user.
-      request.post({url: BASEURL + '/user', json: userA, jar: jar}, function (error, response, body) {
-        done(error);
-      });
+    fixtures.setupUser(function (error, jarA, jarB, idA, idB) {
+      if (error) { return done(error); }
+      jar = jarA;
+      done();
     });
   });
 

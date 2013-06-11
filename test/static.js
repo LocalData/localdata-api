@@ -2,14 +2,20 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
-var server = require('../lib/server.js');
+var server = require('./lib/router');
 var request = require('request');
 var should = require('should');
 var crypto = require('crypto');
 
 var settings = require('../settings-test.js');
 
-var BASEURL = 'http://localhost:' + settings.port;
+var BASEURL = 'https://localhost:' + settings.testSecurePort;
+var BASE_HTTP = 'http://localhost:' + settings.port;
+
+request = request.defaults({
+  strictSSL: false
+});
+
 
 suite('Static', function () {
   suiteSetup(function (done) {
@@ -86,7 +92,7 @@ suite('Static', function () {
     });
   });
 
-  suite('Admin app', function () {
+  suite('Dashboard app', function () {
     var digest;
 
     suiteSetup(function (done) {
@@ -150,5 +156,30 @@ suite('Static', function () {
         done();
       });
     });
+
+    test('HTTP request for / redirects to HTTPS', function (done) {
+      request({
+        url: BASE_HTTP + '/',
+        followRedirect: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(302);
+        response.headers.location.slice(0,6).should.equal('https:');
+        done();
+      });
+    });
+
+    test('HTTP request for /index.html redirects to HTTPS', function (done) {
+      request({
+        url: BASE_HTTP + '/index.html',
+        followRedirect: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(302);
+        response.headers.location.slice(0,6).should.equal('https:');
+        done();
+      });
+    });
+
   });
 });
