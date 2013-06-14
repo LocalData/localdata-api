@@ -15,6 +15,7 @@ heroku config:add \
   PSQL_PASS="dbuser" \
   PSQL_USER="dbpass" \
   CONVERTER_BASE='http://ogr-conv.herokuapp.com/inversion/geojson2shp' \
+  TILESERVER_BASE='http://MY-TILE-SERVER.herokuapp.com' \
   REMOTE_ADMIN_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/dashboard" \
   REMOTE_MOBILE_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/mobile" \
   S3_KEY="S3KEYblah" \
