@@ -41,6 +41,9 @@ settings.psqlPass = process.env.PSQL_PASS;
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
 
+// Tiles
+settings.tileBase = process.env.TILESERVER_BASE;
+
 settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
 // Shapefile conversion service
