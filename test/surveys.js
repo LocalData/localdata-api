@@ -15,8 +15,6 @@ var fixtures = require('./data/fixtures');
 var settings = require('../settings-test');
 
 
-
-
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
@@ -119,6 +117,7 @@ suite('Surveys', function () {
       function (next) {
         server.run(settings, next);
       },
+      fixtures.clearSurveys,
       fixtures.clearUsers,
       function (next) {
         fixtures.addUser('User A', function (error, jar, id, user) {
@@ -316,7 +315,6 @@ suite('Surveys', function () {
     });
 
 
-
     test('Logged out users should get a 401', function (done) {
         request.get({
           url: BASEURL + '/surveys',
@@ -328,7 +326,6 @@ suite('Surveys', function () {
           done();
         });
     });
-
 
 
     test('Getting a survey', function (done) {
@@ -354,6 +351,32 @@ suite('Surveys', function () {
       });
     });
 
+
+    test('Getting stats for a survey', function (done) {
+      // First, we need to add some responses
+      var responses = fixtures.makeResponses(5);
+
+      var url = BASEURL + '/surveys/' + id + '/responses';
+
+      request.post({url: url, json: responses}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        // Ok, now we can calculate the stats.
+        url = BASEURL + '/surveys/' + id + '/stats';
+        request.get({url: url}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          response = JSON.parse(body);
+
+          should.exist(response.stats);
+          response.stats.site['parking-lot'].should.equal(5);
+
+          done();
+        });
+      });
+    });
   });
 
   suite('PUT: ', function () {

@@ -2,11 +2,16 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
+// Libraries
 var request = require('request');
-var settings = require('../../settings-test.js');
-var User = require('../../lib/models/User');
-var Org = require('../../lib/models/Org');
 var makeSlug = require('slugs');
+
+var settings = require('../../settings-test.js');
+
+// Models
+var Org = require('../../lib/models/Org');
+var Survey = require('../../lib/models/Survey');
+var User = require('../../lib/models/User');
 
 var fixtures = {};
 module.exports = fixtures;
@@ -35,6 +40,15 @@ fixtures.surveys = {
       "barcode": {"bbox": [1055, 20, 1255, 220]}
     }
   } ]
+};
+
+fixtures.clearSurveys = function(callback) {
+  Survey.remove({}, function(error, result){
+    if(error) {
+      console.log(error);
+    }
+    callback();
+  });
 };
 
 fixtures.users = [{
