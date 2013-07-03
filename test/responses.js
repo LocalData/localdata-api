@@ -452,6 +452,22 @@ suite('Responses', function () {
       });
     });
 
+    test('Get response data as CSV with latest parameter', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.csv?latest'},
+                  function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+
+        response.headers.should.have.property('content-type');
+        response.headers['content-type'].should.equal('text/csv');
+
+        response.headers.should.have.property('content-disposition');
+        response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.csv');
+
+        done();
+      });
+    });
+
     test('Get response data as KML', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.kml'},
                   function (error, response, body) {
