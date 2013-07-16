@@ -16,7 +16,6 @@
     "knox": "~0.6.0",
     "lodash" : "~1.0.1",
     "lru-cache": "2.2.2",
-    "moment": "~1.0",
     "mongoose": "3.6.x",
     "nodefly": "stable",
     "nodemailer": "~0.3.42",
