@@ -22,6 +22,10 @@ if (process.env.MONGO_NATIVE_PARSER !== undefined && process.env.MONGO_NATIVE_PA
   settings.mongo_native_parser = true;
 }
 
+// AWS
+settings.aws_key = process.env.AWS_KEY;
+settings.aws_secret = process.env.AWS_SECRET;
+
 // S3
 settings.s3_key = process.env.S3_KEY;
 settings.s3_secret = process.env.S3_SECRET;
