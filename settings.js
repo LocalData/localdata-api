@@ -3,10 +3,6 @@
 
 var settings = module.exports;
 
-// Email settings
-settings.email = {};
-settings.email.from = 'LocalData <support@localdata.com>';
-
 // Are we in debug mode?
 settings.secret = process.env.SECRET;
 
@@ -21,10 +17,6 @@ settings.mongo_native_parser = false;
 if (process.env.MONGO_NATIVE_PARSER !== undefined && process.env.MONGO_NATIVE_PARSER.toLowerCase() === 'true') {
   settings.mongo_native_parser = true;
 }
-
-// AWS
-settings.aws_key = process.env.AWS_KEY;
-settings.aws_secret = process.env.AWS_SECRET;
 
 // S3
 settings.s3_key = process.env.S3_KEY;
@@ -41,12 +33,14 @@ settings.psqlPass = process.env.PSQL_PASS;
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
-settings.tileBase = process.env.TILESERVER_BASE;
 
 settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
 // Shapefile conversion service
 settings.converterBase = process.env.CONVERTER_BASE;
+
+// Tile rendering service
+settings.tileBase = process.env.TILESERVER_BASE;
 
 // Web server
 settings.port = process.env.PORT || 3000;
