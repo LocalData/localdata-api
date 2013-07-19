@@ -41,7 +41,7 @@ settings.psqlPass = process.env.PSQL_PASS;
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
-settings.bikePrefix = process.env.REMOTE_BIKE_PREFIX;
+settings.appPrefix = process.env.REMOTE_APP_PREFIX || '';
 settings.tileBase = process.env.TILESERVER_BASE;
 
 settings.SESSION_SECRET = process.env.SESSION_SECRET;
