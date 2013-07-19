@@ -259,8 +259,10 @@ suite('Surveys', function () {
   suite('GET', function () {
     var id;
     var surveyTwo;
+    var dataTwenty;
 
     setup(function (done) {
+      // Create a survey.
       request.post({
         url: BASEURL + '/surveys',
         jar: userAJar,
@@ -269,7 +271,15 @@ suite('Surveys', function () {
         if (error) { done(error); }
         id = body.surveys[0].id;
         surveyTwo = body.surveys[1];
-        done();
+
+        // Create some entries for the survey.
+        dataTwenty = fixtures.makeResponses(20);
+        request.post({url: BASEURL + '/surveys/' + id + '/responses', json: dataTwenty},
+                     function (error, response, body) {
+          if (error) { done(error); }
+
+          done();
+        });
       });
     });
 
@@ -349,6 +359,26 @@ suite('Surveys', function () {
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
+
+        parsed.survey.should.have.property('responseCount');
+        parsed.survey.responseCount.should.equal(20);
+
+        // calculate bounds manually on the input data.
+        var bounds = [
+          [dataTwenty.responses[0].geo_info.centroid[0], dataTwenty.responses[0].geo_info.centroid[1]],
+          [dataTwenty.responses[0].geo_info.centroid[0], dataTwenty.responses[0].geo_info.centroid[1]]
+        ];
+        dataTwenty.responses.forEach(function (item) {
+          bounds[0][0] = Math.min(item.geo_info.centroid[0], bounds[0][0]);
+          bounds[0][1] = Math.min(item.geo_info.centroid[1], bounds[0][1]);
+          bounds[1][0] = Math.max(item.geo_info.centroid[0], bounds[1][0]);
+          bounds[1][1] = Math.max(item.geo_info.centroid[1], bounds[1][1]);
+        });
+        parsed.survey.should.have.property('responseBounds');
+        parsed.survey.responseBounds[0][0].should.equal(bounds[0][0]);
+        parsed.survey.responseBounds[0][1].should.equal(bounds[0][1]);
+        parsed.survey.responseBounds[1][0].should.equal(bounds[1][0]);
+        parsed.survey.responseBounds[1][1].should.equal(bounds[1][1]);
 
         done();
       });
