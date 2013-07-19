@@ -261,6 +261,7 @@ suite('Surveys', function () {
     var surveyTwo;
 
     setup(function (done) {
+      // Create a survey.
       request.post({
         url: BASEURL + '/surveys',
         jar: userAJar,
@@ -269,7 +270,15 @@ suite('Surveys', function () {
         if (error) { done(error); }
         id = body.surveys[0].id;
         surveyTwo = body.surveys[1];
-        done();
+
+        // Create some entries for the survey.
+        var data_twenty = fixtures.makeResponses(20);
+        request.post({url: BASEURL + '/surveys/' + id + '/responses', json: data_twenty},
+                     function (error, response, body) {
+          if (error) { done(error); }
+
+          done();
+        });
       });
     });
 
@@ -349,6 +358,9 @@ suite('Surveys', function () {
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
+
+        parsed.survey.should.have.property('responseCount');
+        parsed.survey.responseCount.should.equal(20);
 
         done();
       });
