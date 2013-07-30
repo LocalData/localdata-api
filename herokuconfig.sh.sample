@@ -10,10 +10,7 @@ heroku config:add \
   MONGO_DB="dbName" \
   MONGO_USER="someuser" \
   MONGO_PASSWORD="supersecret" \
-  PSQL_HOST="my.postgresql-host.com" \
-  PSQL_NAME="parceldb" \
-  PSQL_PASS="dbuser" \
-  PSQL_USER="dbpass" \
+  DATABASE_URL="postgres://dbuser:dbpass@my.postgresqp-host.com:1234/parceldb" \
   CONVERTER_BASE='http://ogr-conv.herokuapp.com/inversion/geojson2shp' \
   TILESERVER_BASE='http://MY-TILE-SERVER.herokuapp.com' \
   REMOTE_ADMIN_PREFIX="http://BUCKET.s3-website-us-east-1.amazonaws.com/path/dashboard" \
