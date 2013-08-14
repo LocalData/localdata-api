@@ -326,22 +326,45 @@ suite('Surveys', function () {
     });
 
 
-
     test('Logged out users should get a 401', function (done) {
-        request.get({
-          url: BASEURL + '/surveys',
-          jar: false
-        }, function (error, response, body) {
-          assert.ifError(error);
-          assert.equal(response.statusCode, 401, 'Status should be 401. Status is ' + response.statusCode);
+      request.get({
+        url: BASEURL + '/surveys',
+        jar: false
+      }, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 401, 'Status should be 401. Status is ' + response.statusCode);
 
-          done();
-        });
+        done();
+      });
     });
 
 
+    test('Getting a survey with no responses', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
 
-    test('Getting a survey', function (done) {
+        var parsed = JSON.parse(body);
+
+        assert.ok(parsed.survey, 'Parsed response body should have a property called "survey".');
+
+        assert.equal(parsed.survey.id, surveyTwo.id, 'The returned survey should match the requested ID.');
+        assert.equal(data_two.surveys[1].name, parsed.survey.name, 'Response differs from posted data');
+        assert.deepEqual(data_two.surveys[1].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
+
+        parsed.survey.should.have.property('responseCount');
+        parsed.survey.responseCount.should.be.a('number');
+        parsed.survey.responseCount.should.equal(0);
+
+        parsed.survey.should.have.property('slug');
+        parsed.survey.slug.should.be.a('string');
+
+        done();
+      });
+    });
+
+
+    test('Getting a survey with responses', function (done) {
       request.get({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
@@ -356,12 +379,10 @@ suite('Surveys', function () {
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
+        parsed.survey.responseCount.should.equal(20);
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
-
-        parsed.survey.should.have.property('responseCount');
-        parsed.survey.responseCount.should.equal(20);
 
         // calculate bounds manually on the input data.
         var bounds = [
