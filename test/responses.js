@@ -452,6 +452,41 @@ suite('Responses', function () {
       });
     });
 
+    test('Get response data as CSV with latest parameter', function (done) {
+      var url = BASEURL + '/surveys/' + surveyId + '/responses';
+      var data = fixtures.makeResponses(10);
+      request.post({url: url, json: data}, function (error, response, body) {
+
+        var data = fixtures.makeResponses(2);
+        request.post({url: url, json: data}, function (error, response, body) {
+
+          request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.csv'},
+                      function (error, response, bodyAll) {
+
+            request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.csv?latest=true'},
+                        function (error, response, bodyFiltered) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+
+              var lengthAll = bodyAll.split('\n').length;
+              var lengthFiltered = bodyFiltered.split('\n').length;
+              console.log(lengthAll);
+              console.log(lengthFiltered);
+              lengthFiltered.should.be.below(lengthAll);
+
+              response.headers.should.have.property('content-type');
+              response.headers['content-type'].should.equal('text/csv');
+
+              response.headers.should.have.property('content-disposition');
+              response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.csv');
+
+              done();
+            });
+          });
+        });
+      });
+    });
+
     test('Get response data as KML', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.kml'},
                   function (error, response, body) {

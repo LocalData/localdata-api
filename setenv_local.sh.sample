@@ -1,0 +1,29 @@
+export DEBUG="true"
+export SECRET=""
+export PORT="3000"
+
+unset MONGO_USER
+unset MONGO_PASSWORD
+export MONGO_HOST="localhost"
+export MONGO_PORT="27017"
+export MONGO_DB="localdata"
+
+export AWS_KEY="";
+export AWS_SECRET="";
+
+export S3_KEY="";
+export S3_SECRET="";
+export S3_BUCKET="";
+export S3_UPLOAD_DIR="";
+
+export PSQL_HOST="";
+export PSQL_NAME="";
+export PSQL_USER="";
+export PSQL_PASS="";
+
+export REMOTE_MOBILE_PREFIX="http://localhost:8888/mobile";
+export REMOTE_ADMIN_PREFIX="http://localhost:8888/client";
+export REMOTE_APP_PREFIX="http://localhost:8888/apps";
+export TILESERVER_BASE="http://localhost:3001"
+
+export SESSION_SECRET="";
