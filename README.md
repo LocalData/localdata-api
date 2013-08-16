@@ -4,14 +4,20 @@ SURVEY API
 To install dependencies
 
     $ npm install
-    
+
 To set environment variables:
 
     $ source ./sentenv_local.sh
-    
+
+(you will need to customize this file from `setenv_local.sh.sample`)
+
 Run with
 
     $ node lib/server.js
+
+To use the web interfaces, you'll need host copies of the dashboard and mobile
+app. Change `REMOTE_MOBILE_PREFIX` and `REMOTE_ADMIN_PREFIX` to point to your
+installs of those apps.
 
 For active development, it's handy to use Foreman for reading a set of environment variables and supervisor for restarting the app after changes. With environment variables in a `local.env` file, you can use
 
