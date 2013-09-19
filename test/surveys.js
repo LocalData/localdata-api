@@ -259,8 +259,10 @@ suite('Surveys', function () {
   suite('GET', function () {
     var id;
     var surveyTwo;
+    var dataTwenty;
 
     setup(function (done) {
+      // Create a survey.
       request.post({
         url: BASEURL + '/surveys',
         jar: userAJar,
@@ -269,7 +271,15 @@ suite('Surveys', function () {
         if (error) { done(error); }
         id = body.surveys[0].id;
         surveyTwo = body.surveys[1];
-        done();
+
+        // Create some entries for the survey.
+        dataTwenty = fixtures.makeResponses(20);
+        request.post({url: BASEURL + '/surveys/' + id + '/responses', json: dataTwenty},
+                     function (error, response, body) {
+          if (error) { done(error); }
+
+          done();
+        });
       });
     });
 
@@ -316,22 +326,45 @@ suite('Surveys', function () {
     });
 
 
-
     test('Logged out users should get a 401', function (done) {
-        request.get({
-          url: BASEURL + '/surveys',
-          jar: false
-        }, function (error, response, body) {
-          assert.ifError(error);
-          assert.equal(response.statusCode, 401, 'Status should be 401. Status is ' + response.statusCode);
+      request.get({
+        url: BASEURL + '/surveys',
+        jar: false
+      }, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 401, 'Status should be 401. Status is ' + response.statusCode);
 
-          done();
-        });
+        done();
+      });
     });
 
 
+    test('Getting a survey with no responses', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
 
-    test('Getting a survey', function (done) {
+        var parsed = JSON.parse(body);
+
+        assert.ok(parsed.survey, 'Parsed response body should have a property called "survey".');
+
+        assert.equal(parsed.survey.id, surveyTwo.id, 'The returned survey should match the requested ID.');
+        assert.equal(data_two.surveys[1].name, parsed.survey.name, 'Response differs from posted data');
+        assert.deepEqual(data_two.surveys[1].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
+
+        parsed.survey.should.have.property('responseCount');
+        parsed.survey.responseCount.should.be.a('number');
+        parsed.survey.responseCount.should.equal(0);
+
+        parsed.survey.should.have.property('slug');
+        parsed.survey.slug.should.be.a('string');
+
+        done();
+      });
+    });
+
+
+    test('Getting a survey with responses', function (done) {
       request.get({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
@@ -346,9 +379,27 @@ suite('Surveys', function () {
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
+        parsed.survey.responseCount.should.equal(20);
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
+
+        // calculate bounds manually on the input data.
+        var bounds = [
+          [dataTwenty.responses[0].geo_info.centroid[0], dataTwenty.responses[0].geo_info.centroid[1]],
+          [dataTwenty.responses[0].geo_info.centroid[0], dataTwenty.responses[0].geo_info.centroid[1]]
+        ];
+        dataTwenty.responses.forEach(function (item) {
+          bounds[0][0] = Math.min(item.geo_info.centroid[0], bounds[0][0]);
+          bounds[0][1] = Math.min(item.geo_info.centroid[1], bounds[0][1]);
+          bounds[1][0] = Math.max(item.geo_info.centroid[0], bounds[1][0]);
+          bounds[1][1] = Math.max(item.geo_info.centroid[1], bounds[1][1]);
+        });
+        parsed.survey.should.have.property('responseBounds');
+        parsed.survey.responseBounds[0][0].should.equal(bounds[0][0]);
+        parsed.survey.responseBounds[0][1].should.equal(bounds[0][1]);
+        parsed.survey.responseBounds[1][0].should.equal(bounds[1][0]);
+        parsed.survey.responseBounds[1][1].should.equal(bounds[1][1]);
 
         done();
       });
