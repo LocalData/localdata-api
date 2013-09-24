@@ -3,12 +3,12 @@
 
 var settings = module.exports;
 
+// Are we in debug mode?
+settings.secret = process.env.SECRET;
+
 // Email settings
 settings.email = {};
 settings.email.from = 'LocalData <support@localdata.com>';
-
-// Are we in debug mode?
-settings.secret = process.env.SECRET;
 
 // MongoDB
 settings.mongo_host = process.env.MONGO_HOST || 'localhost';
@@ -49,6 +49,9 @@ settings.SESSION_SECRET = process.env.SESSION_SECRET;
 
 // Shapefile conversion service
 settings.converterBase = process.env.CONVERTER_BASE;
+
+// Tile rendering service
+settings.tileBase = process.env.TILESERVER_BASE;
 
 // Web server
 settings.port = process.env.PORT || 3000;
