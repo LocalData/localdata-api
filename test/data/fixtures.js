@@ -45,7 +45,8 @@ fixtures.surveys = {
 fixtures.clearSurveys = function(callback) {
   Survey.remove({}, function(error, result){
     if(error) {
-      console.log(error);
+      callback(error);
+      return;
     }
     callback();
   });
