@@ -425,6 +425,7 @@ suite('Surveys', function () {
 
           should.exist(response.stats);
           response.stats.site['parking-lot'].should.equal(5);
+          response.stats.site['condition-1']['no answer'].should.be.above(0);
 
           done();
         });
