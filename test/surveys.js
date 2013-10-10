@@ -408,28 +408,31 @@ suite('Surveys', function () {
     test('Getting stats for a survey', function (done) {
       // First, we need to add some responses
       var responses = fixtures.makeResponses(5);
+      fixtures.clearResponses(function() {
+        var url = BASEURL + '/surveys/' + id + '/responses';
 
-      var url = BASEURL + '/surveys/' + id + '/responses';
-
-      request.post({url: url, json: responses}, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(201);
-
-        // Ok, now we can calculate the stats.
-        url = BASEURL + '/surveys/' + id + '/stats';
-        request.get({url: url}, function (error, response, body) {
+        request.post({url: url, json: responses}, function (error, response, body) {
           should.not.exist(error);
-          response.statusCode.should.equal(200);
+          response.statusCode.should.equal(201);
 
-          response = JSON.parse(body);
+          // Ok, now we can calculate the stats.
+          url = BASEURL + '/surveys/' + id + '/stats';
+          console.log(url);
+          request.get({url: url}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
 
-          should.exist(response.stats);
-          response.stats.site['parking-lot'].should.equal(5);
-          response.stats.site['condition-1']['no answer'].should.be.above(0);
+            response = JSON.parse(body);
 
-          done();
+            should.exist(response.stats);
+            response.stats.site['parking-lot'].should.equal(5);
+            response.stats['condition-1']['no response'].should.be.above(0);
+
+            done();
+          });
         });
       });
+
     });
   });
 

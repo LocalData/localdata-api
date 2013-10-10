@@ -12,6 +12,8 @@ var settings = require('../../settings-test.js');
 var Org = require('../../lib/models/Org');
 var Survey = require('../../lib/models/Survey');
 var User = require('../../lib/models/User');
+var Response = require('../../lib/models/Response');
+
 
 var fixtures = {};
 module.exports = fixtures;
@@ -42,8 +44,8 @@ fixtures.surveys = {
   } ]
 };
 
-fixtures.clearSurveys = function(callback) {
-  Survey.remove({}, function(error, result){
+fixtures.clearResponses = function(callback) {
+  Response.remove({}, function(error, result){
     if(error) {
       callback(error);
       return;
@@ -51,6 +53,17 @@ fixtures.clearSurveys = function(callback) {
     callback();
   });
 };
+
+fixtures.clearSurveys = function(callback) {
+  Survey.remove({}, function(error, result){
+    if(error) {
+      callback(error);
+      return;
+    }
+    fixtures.clearResponses(callback);
+  });
+};
+
 
 fixtures.users = [{
     'name': 'User A',
