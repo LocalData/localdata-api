@@ -6,7 +6,7 @@ var https = require('https');
 var fs = require('fs');
 var httpProxy = require('http-proxy');
 
-var settings = require('../../settings-test');
+var settings = require('../../settings');
 var server = require('../../lib/server');
 
 var key = fs.readFileSync(__dirname + '/../data/test-key.pem', 'utf8');
@@ -21,9 +21,9 @@ var proxy = new httpProxy.HttpProxy({
 
 var router;
 module.exports = {
-  run: function start(settings, done) {
+  run: function start(done) {
     // Start the real server.
-    server.run(settings, function (error) {
+    server.run(function (error) {
       if (error) { return done(error); }
 
       // Start the HTTPS router.

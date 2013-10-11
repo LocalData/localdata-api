@@ -3,7 +3,7 @@
 'use strict';
 
 var request = require('request');
-var settings = require('../../settings-test.js');
+var settings = require('../../settings.js');
 var User = require('../../lib/models/User');
 var Org = require('../../lib/models/Org');
 var makeSlug = require('slugs');
