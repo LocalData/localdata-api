@@ -8,7 +8,7 @@ var request = require('request');
 var should = require('should');
 var fs = require('fs');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
@@ -25,7 +25,7 @@ suite('Forms', function () {
       fs.readFile('test/data/form_mobile.json', function (err, raw) {
         if (err) { return done(err); }
         data_all.forms.push(JSON.parse(raw));
-        server.run(settings, done);
+        server.run(done);
       });    
     });
   });

@@ -12,7 +12,7 @@ var Survey = require('../lib/models/Survey');
 
 var server = require('./lib/router');
 var fixtures = require('./data/fixtures');
-var settings = require('../settings-test');
+var settings = require('../settings');
 
 
 
@@ -117,7 +117,7 @@ suite('Surveys', function () {
   suiteSetup(function (done) {
     async.series([
       function (next) {
-        server.run(settings, next);
+        server.run(next);
       },
       fixtures.clearUsers,
       function (next) {

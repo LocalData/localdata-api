@@ -9,7 +9,7 @@ var async = require('async');
 
 var User = require('../lib/models/User.js');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 var fixtures = require('./data/fixtures');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
@@ -64,7 +64,7 @@ suite('Shapefile', function () {
   }());
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(done);
   });
 
   suiteTeardown(function () {
