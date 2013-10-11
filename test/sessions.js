@@ -11,7 +11,7 @@ var util = require('util');
 var async = require('async');
 
 // LocalData
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 var User = require('../lib/models/User');
 var users = require('../lib/controllers/users');
 
@@ -25,7 +25,7 @@ var USER_URL = BASEURL + '/user';
 suite('Sessions', function () {
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(done);
   });
 
   suiteTeardown(function () {
@@ -49,7 +49,7 @@ suite('Sessions', function () {
         server.stop(next);
       },
       function (next) {
-        server.run(settings, next);
+        server.run(next);
       },
       function (next) {
         // Get the current user

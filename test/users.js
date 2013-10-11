@@ -12,7 +12,7 @@ var async = require('async');
 
 // LocalData
 var server = require('./lib/router');
-var settings = require('../settings-test.js');
+var settings = require('../settings');
 var User = require('../lib/models/User');
 var users = require('../lib/controllers/users');
 
@@ -94,7 +94,7 @@ suite('Users -', function () {
   };
 
   suiteSetup(function (done) {
-    server.run(settings, function (error) {
+    server.run(function (error) {
       if (error) { return done(error); }
       // We need the email index to be in place, so we can enforce uniqueness
       // constraints, but we don't automatically create indexes to avoid
@@ -115,6 +115,7 @@ suite('Users -', function () {
 
         var userData = generateUser();
         User.create(userData, function (error, user) {
+          should.not.exist(error);
           user.should.have.property('_id');
           user.should.not.have.property('randomThing');
           assert.equal(user.name, userData.name);

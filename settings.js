@@ -9,6 +9,7 @@ settings.secret = process.env.SECRET;
 // Email settings
 settings.email = {};
 settings.email.from = 'LocalData <support@localdata.com>';
+settings.email.to = process.env.TEST_EMAIL || 'LocalData <support@localdata.com>'; // Send test emails to your address!
 
 // MongoDB
 settings.mongo_host = process.env.MONGO_HOST || 'localhost';
@@ -56,3 +57,4 @@ settings.tileBase = process.env.TILESERVER_BASE;
 
 // Web server
 settings.port = process.env.PORT || 3000;
+settings.testSecurePort = 3838;
