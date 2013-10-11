@@ -39,9 +39,13 @@ settings.psqlName = process.env.PSQL_NAME;
 settings.psqlUser = process.env.PSQL_USER;
 settings.psqlPass = process.env.PSQL_PASS;
 
+// Tiles
+settings.tileBase = process.env.TILESERVER_BASE;
+
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
+settings.appPrefix = process.env.REMOTE_APP_PREFIX || '';
 
 settings.SESSION_SECRET = process.env.SESSION_SECRET;
 

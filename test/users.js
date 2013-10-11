@@ -220,7 +220,7 @@ suite('Users -', function () {
           response.should.be.json;
 
           var userData = generateUser();
-          body.should.have.property("email", userData.email);
+          body.should.have.property("email", userData.email.toLowerCase());
           body.should.have.property("name", userData.name);
           body.should.not.have.property("randomThing");
           body.should.not.have.property("password");
@@ -331,12 +331,61 @@ suite('Users -', function () {
 
               var parsed = JSON.parse(body);
 
-              parsed.should.have.property('email', user.email);
+              parsed.should.have.property('email', user.email.toLowerCase());
               parsed.should.have.property('name', user.name);
               parsed.should.not.have.property('randomThing');
               parsed.should.not.have.property('password');
               parsed.should.not.have.property('hash');
 
+              next();
+            });
+          });
+        }
+      ], function (error) {
+        done(error);
+      });
+
+    });
+
+
+    test('Email should be case-insensitive', function (done) {
+      var user;
+      async.series([
+
+        // Clear users
+        fixtures.clearUsers,
+
+        // Add a new user
+        function (next) {
+          fixtures.addUser('API Login Tester', function (error, newJar, newId, newUser) {
+            if (error) { return next(error); }
+            user = newUser;
+            next();
+          });
+        },
+
+        // Logout, just to be sure
+        function (next) {
+          request.get({ url: BASE_LOGOUT_URL }, next);
+        },
+
+        function (next) {
+
+          // Change the email to uppercase to throw things off
+          user.email = user.email.toUpperCase();
+
+          // Try logging in
+          request.post({url: LOGIN_URL, json: user}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(302);
+
+            request.get({url: HTTP_USER_URL}, function (error, response, body){
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('email', user.email.toLowerCase());
               next();
             });
           });
