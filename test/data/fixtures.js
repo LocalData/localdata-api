@@ -14,7 +14,6 @@ var Survey = require('../../lib/models/Survey');
 var User = require('../../lib/models/User');
 var Response = require('../../lib/models/Response');
 
-
 var fixtures = {};
 module.exports = fixtures;
 
