@@ -27,6 +27,7 @@
     "slugs" : "0.1.2"
   },
   "devDependencies": {
+    "envrun": "~0.0.2",
     "mocha": "~1.10.0",
     "mongodb": ">= 1.2.8",
     "should": "~1.2.2",
