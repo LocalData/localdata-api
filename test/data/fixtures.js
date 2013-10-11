@@ -218,7 +218,7 @@ fixtures.makeResponses = function makeResponses(count) {
       }
     };
 
-    // Randomly delete the condition to simulate no-answer
+    // Randomly delete the condition to simulate no response
     var x = Math.round(Math.random());
     if (x)  {
       delete response.responses['condition-1'];
@@ -234,7 +234,7 @@ fixtures.makeResponses = function makeResponses(count) {
     data.responses.push(makeResponse((parcelBase + i).toString(), Math.ceil(1000*Math.random())));
   }
 
-  // Delete the first condition so that there's always one with no answer for that
+  // Delete the first condition so that there's always one with no response for that
   // question
   delete data.responses[0].responses['condition-1'];
 
