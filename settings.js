@@ -34,10 +34,8 @@ settings.s3_bucket = process.env.S3_BUCKET;
 settings.s3_dir = process.env.S3_UPLOAD_DIR;
 
 // Postgresql parcel server
-settings.psqlHost = process.env.PSQL_HOST;
-settings.psqlName = process.env.PSQL_NAME;
-settings.psqlUser = process.env.PSQL_USER;
-settings.psqlPass = process.env.PSQL_PASS;
+// Use Heroku-style primary postgresql database environment variable
+settings.psqlConnectionString = process.env.DATABASE_URL;
 
 // Tiles
 settings.tileBase = process.env.TILESERVER_BASE;
