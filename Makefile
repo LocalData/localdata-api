@@ -6,6 +6,6 @@ ifdef OPTS
 endif
 
 test:
-	@$(MOCHA) $(MOCHA_FLAGS) $(FILE)
+	@./node_modules/.bin/envrun -p 3456 -e test.env --path -- $(MOCHA) $(MOCHA_FLAGS) $(FILE)
 
 .PHONY: test

@@ -8,7 +8,7 @@ var util = require('util');
 var request = require('request');
 var should = require('should');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
@@ -62,7 +62,7 @@ function shouldBeFeatureCollection(item) {
 
 suite('Parcels', function () {
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(done);
   });
 
   suiteTeardown(function () {

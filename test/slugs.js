@@ -11,7 +11,7 @@ var should = require('should');
 var util = require('util');
 var async = require('async');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 var fixtures = require('./data/fixtures');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
@@ -34,7 +34,7 @@ suite('Slugs', function () {
   };
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(done);
   });
 
   suiteTeardown(function () {
