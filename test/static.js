@@ -7,7 +7,7 @@ var request = require('request');
 var should = require('should');
 var crypto = require('crypto');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 
 var BASEURL = 'https://localhost:' + settings.testSecurePort;
 var BASE_HTTP = 'http://localhost:' + settings.port;
@@ -19,7 +19,7 @@ request = request.defaults({
 
 suite('Static', function () {
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(done);
   });
 
   suiteTeardown(function () {

@@ -5,23 +5,22 @@ To install dependencies
 
     $ npm install
 
-To set environment variables:
+Configure environment variables in a `.env` file. See `sample.env` for an example. Then run locally with
 
-    $ source ./sentenv_local.sh
+    $ node_modules/.bin/envrun node lib/server.js
 
-(you will need to customize this file from `setenv_local.sh.sample`)
+Or you can create a separate environment files. For example, to use a `remote-db.env` file, you can run
 
-Run with
+    $ node_modules/.bin/envrun -e remote-db.env node lib/server.js
 
-    $ node lib/server.js
 
 To use the web interfaces, you'll need host copies of the dashboard and mobile
 app. Change `REMOTE_MOBILE_PREFIX` and `REMOTE_ADMIN_PREFIX` to point to your
 installs of those apps.
 
-For active development, it's handy to use Foreman for reading a set of environment variables and supervisor for restarting the app after changes. With environment variables in a `local.env` file, you can use
+For active development, it's handy to use envrun for reading a set of environment variables and supervisor for restarting the app after changes. With environment variables in a `local.env` file, you can use
 
-    $ foreman start -f Procfile_supervisor -e local.env -p 3000
+    $ node_modules/.bin/envrun --path -e local.env supervisor -n error -- lib/server.js
 
 To simulate a live deployment, you can use the `bin/fakeroku` script to handle HTTPS and forward requests to the actual LocalData API:
 

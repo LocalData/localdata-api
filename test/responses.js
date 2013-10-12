@@ -12,7 +12,7 @@ var should = require('should');
 
 var Response = require('../lib/models/Response');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 // We don't use filtering right now, so we'll skip testing it
 // var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
 
@@ -27,7 +27,7 @@ suite('Responses', function () {
   var data_twenty = fixtures.makeResponses(20);
 
   suiteSetup(function (done) {
-    server.run(settings, function (error) {
+    server.run(function (error) {
       if (error) { return done(error); }
       // We need the geo index to be in place, but we don't automatically
       // create indexes to avoid ill-timed index creation on production
