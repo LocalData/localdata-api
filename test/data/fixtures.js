@@ -6,7 +6,7 @@
 var request = require('request');
 var makeSlug = require('slugs');
 
-var settings = require('../../settings-test.js');
+var settings = require('../../settings');
 
 // Models
 var Org = require('../../lib/models/Org');
@@ -240,3 +240,20 @@ fixtures.makeResponses = function makeResponses(count) {
 
   return data;
 };
+
+fixtures.clearResponses = function clearResponses(survey, done) {
+  var query = {};
+  if (done === undefined) {
+    done = survey;
+  } else {
+    query.survey = survey;
+  }
+
+  Response.remove(query, function (error, result) {
+    if (error) {
+      done(error);
+      return;
+    }
+    done();
+  });
+}

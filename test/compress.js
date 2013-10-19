@@ -8,7 +8,7 @@ var util = require('util');
 var request = require('request');
 var should = require('should');
 
-var settings = require('../settings-test.js');
+var settings = require('../settings.js');
 var User = require('../lib/models/User');
 
 var fixtures = require('./data/fixtures');
@@ -19,7 +19,7 @@ suite('Compress', function () {
   var jar;
 
   suiteSetup(function (done) {
-    server.run(settings, done);
+    server.run(done);
   });
 
   suiteTeardown(function () {

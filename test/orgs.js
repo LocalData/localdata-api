@@ -9,7 +9,7 @@ var _ = require('lodash');
 
 var server = require('./lib/router');
 var Org = require('../lib/models/Org');
-var settings = require('../settings-test');
+var settings = require('../settings');
 
 var fixtures = require('./data/fixtures');
 
@@ -37,7 +37,7 @@ suite('Orgs', function () {
     async.series([
       function startServer(next) {
         // Start the server.
-        server.run(settings, next);
+        server.run(next);
       },
       // We need the index to enforce uniqueness.
       function ensureIndexes(next) {

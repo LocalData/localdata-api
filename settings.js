@@ -9,6 +9,7 @@ settings.secret = process.env.SECRET;
 // Email settings
 settings.email = {};
 settings.email.from = 'LocalData <support@localdata.com>';
+settings.email.to = process.env.TEST_EMAIL || 'LocalData <support@localdata.com>'; // Send test emails to your address!
 
 // MongoDB
 settings.mongo_host = process.env.MONGO_HOST || 'localhost';
@@ -33,10 +34,8 @@ settings.s3_bucket = process.env.S3_BUCKET;
 settings.s3_dir = process.env.S3_UPLOAD_DIR;
 
 // Postgresql parcel server
-settings.psqlHost = process.env.PSQL_HOST;
-settings.psqlName = process.env.PSQL_NAME;
-settings.psqlUser = process.env.PSQL_USER;
-settings.psqlPass = process.env.PSQL_PASS;
+// Use Heroku-style primary postgresql database environment variable
+settings.psqlConnectionString = process.env.DATABASE_URL;
 
 // Tiles
 settings.tileBase = process.env.TILESERVER_BASE;
@@ -56,3 +55,4 @@ settings.tileBase = process.env.TILESERVER_BASE;
 
 // Web server
 settings.port = process.env.PORT || 3000;
+settings.testSecurePort = 3838;

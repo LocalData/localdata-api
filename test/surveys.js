@@ -12,7 +12,7 @@ var Survey = require('../lib/models/Survey');
 
 var server = require('./lib/router');
 var fixtures = require('./data/fixtures');
-var settings = require('../settings-test');
+var settings = require('../settings');
 
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
@@ -115,7 +115,7 @@ suite('Surveys', function () {
   suiteSetup(function (done) {
     async.series([
       function (next) {
-        server.run(settings, next);
+        server.run(next);
       },
       fixtures.clearSurveys,
       fixtures.clearUsers,
@@ -406,14 +406,28 @@ suite('Surveys', function () {
 
 
     test('Getting stats for a survey', function (done) {
-      // First, we need to add some responses
-      var responses = fixtures.makeResponses(5);
-      fixtures.clearResponses(function() {
-        var url = BASEURL + '/surveys/' + id + '/responses';
+      async.waterfall([
+        function (next) {
+          // First, clear the responses for this survey.
+          fixtures.clearResponses(id, next);
+        },
+        function (next) {
+          // Then, add some responses.
+          var responses = fixtures.makeResponses(5);
+          var url = BASEURL + '/surveys/' + id + '/responses';
 
-        request.post({url: url, json: responses}, function (error, response, body) {
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        }
+      ], function () {
+        // Ok, now we can calculate the stats.
+        var url = BASEURL + '/surveys/' + id + '/stats';
+        request.get({url: url}, function (error, response, body) {
           should.not.exist(error);
-          response.statusCode.should.equal(201);
+          response.statusCode.should.equal(200);
 
           // Ok, now we can calculate the stats.
           url = BASEURL + '/surveys/' + id + '/stats';
@@ -434,6 +448,7 @@ suite('Surveys', function () {
       });
 
     });
+
   });
 
   suite('PUT: ', function () {
