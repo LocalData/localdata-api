@@ -5,6 +5,7 @@ setenv*.sh
 herokuconfig*.sh
 nohup.out
 local.env
+test.env
 
 *.geojson
 
