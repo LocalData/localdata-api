@@ -109,7 +109,7 @@ suite('Shapefile', function () {
     });
 
 
-    test('shapfile for a survey', function (done) {
+    test('shapefile for a survey', function (done) {
       // Initial request for processing.
       request.get({
         url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
