@@ -209,7 +209,7 @@ suite('Parcels', function () {
       // bounding box -122.431640625,37.77288579232438,-122.42889404296875,37.77505678240507
       // is in San Francisco, so we should find parcels, and the second request
       // should receive a status code 304 response
-      var url = BASEURL + '/parcels?bbox=-122.431640625,37.77288579232438,-122.42889404296875,37.77505678240507';
+      var url = BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34';
       request({
         url: url
       }, function (error, response, body) {
