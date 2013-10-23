@@ -43,8 +43,8 @@ fixtures.surveys = {
   } ]
 };
 
-fixtures.clearSurveys = function(callback) {
-  Survey.remove({}, function(error, result){
+fixtures.clearResponses = function(callback) {
+  Response.remove({}, function(error, result){
     if(error) {
       callback(error);
       return;
@@ -52,6 +52,17 @@ fixtures.clearSurveys = function(callback) {
     callback();
   });
 };
+
+fixtures.clearSurveys = function(callback) {
+  Survey.remove({}, function(error, result){
+    if(error) {
+      callback(error);
+      return;
+    }
+    fixtures.clearResponses(callback);
+  });
+};
+
 
 fixtures.users = [{
     'name': 'User A',
@@ -176,7 +187,7 @@ fixtures.addOrg = function addOrg(name, jar, done) {
 // Generate some fake response data.
 fixtures.makeResponses = function makeResponses(count) {
   function makeResponse(parcelId, streetNumber) {
-    return {
+    var response = {
       source: {
         type: 'mobile',
         collector: 'Name'
@@ -206,13 +217,27 @@ fixtures.makeResponses = function makeResponses(count) {
         'condition-1': 'demolish'
       }
     };
+
+    // Randomly delete the condition to simulate no response
+    var x = Math.round(Math.random());
+    if (x)  {
+      delete response.responses['condition-1'];
+    }
+
+    return response;
   }
+
   var data = { responses: [] };
   var parcelBase = 123456;
   var i;
   for (i = 0; i < count; i += 1) {
     data.responses.push(makeResponse((parcelBase + i).toString(), Math.ceil(1000*Math.random())));
   }
+
+  // Delete the first condition so that there's always one with no response for that
+  // question
+  delete data.responses[0].responses['condition-1'];
+
   return data;
 };
 

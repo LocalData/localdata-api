@@ -429,14 +429,24 @@ suite('Surveys', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          response = JSON.parse(body);
+          // Ok, now we can calculate the stats.
+          url = BASEURL + '/surveys/' + id + '/stats';
+          console.log(url);
+          request.get({url: url}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
 
-          should.exist(response.stats);
-          response.stats.site['parking-lot'].should.equal(5);
+            response = JSON.parse(body);
 
-          done();
+            should.exist(response.stats);
+            response.stats.site['parking-lot'].should.equal(5);
+            response.stats['condition-1']['no response'].should.be.above(0);
+
+            done();
+          });
         });
       });
+
     });
 
   });
