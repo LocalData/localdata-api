@@ -87,9 +87,9 @@ function shouldBeFeatureCollection(item) {
 function checkStandardProperties(feature) {
   feature.properties.should.have.property('source');
   feature.properties.should.have.property('type');
+  feature.properties.should.have.property('shortName');
+  feature.properties.should.have.property('longName');
   feature.properties.should.have.property('info');
-  feature.properties.info.should.have.property('shortName');
-  feature.properties.info.should.have.property('longName');
 }
 
 function checkParcels(data) {
@@ -140,6 +140,9 @@ suite('Features', function () {
     getJSON('/features?type=parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
       parsed.features.length.should.be.above(40);
+      parsed.features.forEach(function (feature) {
+        feature.properties.type.should.equal('parcels');
+      });
 
       done();
     });
@@ -150,7 +153,10 @@ suite('Features', function () {
     // upper-right longitude, upper-right latitude
     getJSON('/features?type=lighting&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkPoints(parsed);
-      parsed.features.length.should.be.above(40);
+      parsed.features.length.should.be.above(5);
+      parsed.features.forEach(function (feature) {
+        feature.properties.type.should.equal('lighting');
+      });
 
       done();
     });
@@ -162,17 +168,25 @@ suite('Features', function () {
     getJSON('/features?source=detroit-parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
       parsed.features.length.should.be.above(40);
+      parsed.features.forEach(function (feature) {
+        feature.properties.type.should.equal('parcels');
+        feature.properties.source.should.equal('detroit-parcels');
+      });
 
       done();
     });
   });
 
-  test('Get source=detroit-original-lighting points inside a bounding box', function (done) {
+  test('Get source=detroit-streetlights points inside a bounding box', function (done) {
     // lower-left longitude, lower-left latitude,
     // upper-right longitude, upper-right latitude
-    getJSON('/features?source=detroit-lighting&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
+    getJSON('/features?source=detroit-streetlights&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkPoints(parsed);
-      parsed.features.length.should.be.above(40);
+      parsed.features.length.should.be.above(5);
+      parsed.features.forEach(function (feature) {
+        feature.properties.type.should.equal('lighting');
+        feature.properties.source.should.equal('detroit-streetlights');
+      });
 
       done();
     });
@@ -190,7 +204,7 @@ suite('Features', function () {
           next();
         });
       }, function (next) {
-        request({url: BASEURL + '/features?source=detroit-lighting'}, function (error, response, body) {
+        request({url: BASEURL + '/features?source=detroit-streetlights'}, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(413);
 
@@ -203,7 +217,7 @@ suite('Features', function () {
   test('Get parcels at a point', function (done) {
     getJSON('/features?type=parcels&lon=-83.08076&lat=42.338', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(1);
+      parsed.features.length.should.be.above(0);
 
       done();
     });
