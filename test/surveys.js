@@ -416,6 +416,24 @@ suite('Surveys', function () {
           var responses = fixtures.makeResponses(5);
           var url = BASEURL + '/surveys/' + id + '/responses';
 
+          // Set the object_id of a response so we can keep an eye on it
+          responses.responses[0].object_id = 'myhouse';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        },
+        function (next) {
+          // Add another response that's more recent.
+          var responses = fixtures.makeResponses(1);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          // Set the object_id of a response so we can keep an eye on it
+          responses.responses[0].object_id = 'myhouse';
+          responses.responses[0].responses['new-stat'] = 'yes';
+
           request.post({url: url, json: responses}, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(201);
@@ -439,8 +457,10 @@ suite('Surveys', function () {
             response = JSON.parse(body);
 
             should.exist(response.stats);
+            console.log(response.stats);
             response.stats.site['parking-lot'].should.equal(5);
             response.stats['condition-1']['no response'].should.be.above(0);
+            response.stats['new-stat']['yes'].should.equal(1);
 
             done();
           });
