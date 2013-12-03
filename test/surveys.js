@@ -430,7 +430,7 @@ suite('Surveys', function () {
           var responses = fixtures.makeResponses(1);
           var url = BASEURL + '/surveys/' + id + '/responses';
 
-          // Set the object_id of a response so we can keep an eye on it
+          // Set the object_id of the response so we can keep an eye on it
           responses.responses[0].object_id = 'myhouse';
           responses.responses[0].responses['new-stat'] = 'yes';
 
@@ -457,7 +457,6 @@ suite('Surveys', function () {
             response = JSON.parse(body);
 
             should.exist(response.stats);
-            console.log(response.stats);
             response.stats.site['parking-lot'].should.equal(5);
             response.stats['condition-1']['no response'].should.be.above(0);
             response.stats['new-stat']['yes'].should.equal(1);
