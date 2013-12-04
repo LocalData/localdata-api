@@ -8,6 +8,7 @@ var templates = module.exports;
 
 templates.sample = 'email/sample.ejs';
 templates.passwordReset = 'email/forgotPassword.ejs';
+templates.newSurvey = 'email/newSurvey.ejs';
 
 /**
  * Render a template
@@ -21,5 +22,5 @@ templates.render = function(templateKey, options, callback) {
 	fs.readFile(path, 'utf8', function(error, template){
     callback(error, ejs.render(template, options));
   });
-  
+
 };
