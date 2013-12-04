@@ -417,15 +417,20 @@ suite('Users -', function () {
 
       setupTest(function(error, response) {
         var user = generateUser();
+        var email = user.email.toLowerCase();
         // Set a reset token
-        request.post({url: FORGOT_URL, json: {user: {email: user.email}}}, function(error, response, body) {
+        request.post({
+          url: FORGOT_URL,
+          json: { user: {email: email}}
+        }, function(error, response, body) {
+
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
           // FIXME: this is a hack
           // Set the hashed reset token, so we know what it is.
           var token = 'THISISAFAKETOKEN';
-          User.findOneAndUpdate({ email: user.email }, { $set: { 'reset.hashedToken': User.hashToken(token) } }, function (error, doc) {
+          User.findOneAndUpdate({ email: email }, { $set: { 'reset.hashedToken': User.hashToken(token) } }, function (error, doc) {
             var resetString = users.serializeResetInfo(doc.email, token);
 
             // Change the password using the token
@@ -470,6 +475,7 @@ suite('Users -', function () {
           });
         });
       });
+
     });
 
 
