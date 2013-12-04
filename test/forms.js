@@ -23,8 +23,6 @@ suite('Forms', function () {
   var userAJar;
   var userBJar;
 
-
-
   suiteSetup(function (done) {
 
     async.series([
@@ -185,6 +183,7 @@ suite('Forms', function () {
   });
 
   suite('POST', function () {
+
     test('Add form to survey', function (done) {
       request.post({
         url: BASEURL + '/surveys/' + surveyId + '/forms',
