@@ -66,7 +66,6 @@ suite('Responses', function () {
           data_one.responses[i].geo_info.humanReadableName.should.equal(body.responses[i].geo_info.humanReadableName);
 
           // Object ID
-          assert.deepEqual(data_one.responses[i].parcel_id, body.responses[i].parcel_id, 'Response differs from posted data');
           assert.deepEqual(data_one.responses[i].object_id, body.responses[i].object_id, 'Response differs from posted data');
           // Answers
           assert.deepEqual(data_one.responses[i].responses, body.responses[i].responses, 'Response differs from posted data');
@@ -128,8 +127,6 @@ suite('Responses', function () {
           assert.deepEqual(data_one.responses[i].geo_info.centroid,
                            body.responses[i].geo_info.centroid,
                            'Response centroid differs from posted data');
-          // Parcel ID in geo_info
-          data_one.responses[i].geo_info.parcel_id.should.equal(body.responses[i].geo_info.parcel_id);
           // Geometry
           assert.deepEqual(data_one.responses[i].geo_info.geometry,
                            body.responses[i].geo_info.geometry,
@@ -308,7 +305,7 @@ suite('Responses', function () {
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
         parsed.responses.length.should.be.above(0);
-        parsed.responses[0].parcel_id.should.equal(data_twenty.responses[1].parcel_id);
+        parsed.responses[0].object_id.should.equal(data_twenty.responses[1].object_id);
         parsed.responses[0].survey.should.equal(surveyId);
 
         var i;
@@ -321,6 +318,23 @@ suite('Responses', function () {
           created.should.not.be.above(prevTime);
           prevTime = created;
         }
+
+        done();
+      });
+    });
+
+    test('Get all responses for a specific collector', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&collector=' + data_twenty.responses[1].source.collector },
+       function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.equal(20);
+        parsed.responses[0].source.collector.should.equal(data_twenty.responses[1].source.collector);
+        parsed.responses[0].survey.should.equal(surveyId);
 
         done();
       });
@@ -339,7 +353,7 @@ suite('Responses', function () {
         should.deepEqual(parsed.response.source, data_twenty.responses[0].source);
         should.deepEqual(parsed.response.geo_info, data_twenty.responses[0].geo_info);
         should.deepEqual(parsed.response.responses, data_twenty.responses[0].responses);
-        parsed.response.parcel_id.should.equal(data_twenty.responses[0].parcel_id);
+        parsed.response.object_id.should.equal(data_twenty.responses[0].object_id);
         parsed.response.survey.should.equal(surveyId);
 
         done();
