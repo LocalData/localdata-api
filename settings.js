@@ -45,8 +45,6 @@ settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
 settings.appPrefix = process.env.REMOTE_APP_PREFIX || '';
 
-settings.SESSION_SECRET = process.env.SESSION_SECRET;
-
 // Shapefile conversion service
 settings.converterBase = process.env.CONVERTER_BASE;
 
