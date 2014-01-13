@@ -357,6 +357,7 @@ suite('Surveys', function () {
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
+        parsed.survey.should.have.property('tileBase');
 
         done();
       });
@@ -382,6 +383,7 @@ suite('Surveys', function () {
 
         parsed.survey.should.have.property('slug');
         parsed.survey.slug.should.be.a('string');
+        parsed.survey.should.have.property('tileBase');
 
         // calculate bounds manually on the input data.
         var bounds = [
