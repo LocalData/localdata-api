@@ -14,6 +14,8 @@
  * The file is stored in the bucket as something like /heroku-pg/2013-11-15T01:27:53.000Z-comment.dump
  */
 
+var http = require('http');
+
 var knox = require('knox');
 var request = require('request');
 
@@ -40,9 +42,7 @@ var client = knox.createClient({
 
 // Request the dump data from Heroku's temporary URL (an S3 URL with temporary
 // authorization through query string parameters)
-var herokuRequest = request.get(herokuUrl);
-
-herokuRequest.on('response', function (response) {
+http.request(herokuUrl, function (response) {
   // Grab the timestamp of the dump from the Last-Modified header.
   var ts = (new Date(response.headers['last-modified'])).toISOString();
 
@@ -53,7 +53,7 @@ herokuRequest.on('response', function (response) {
   name += '.dump';
 
   // Stream the data to our S3 bucket
-  var uploadRequest = client.putStream(herokuRequest, name, {
+  var uploadRequest = client.putStream(response, name, {
     'Content-Length': response.headers['content-length'],
     'Content-Type': response.headers['content-type']
   }, function (error, res) {
@@ -68,6 +68,5 @@ herokuRequest.on('response', function (response) {
     res.pipe(process.stdout);
   });
 
-  herokuRequest.pipe(uploadRequest);
 });
 
