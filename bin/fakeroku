@@ -16,8 +16,6 @@ var https = require('https');
 var fs = require('fs');
 var httpProxy = require('http-proxy');
 
-var server = require('../lib/server');
-
 var port = process.env.PORT || 3443;
 var target = 3000;
 if (process.argv[2]) {
