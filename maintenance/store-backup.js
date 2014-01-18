@@ -38,6 +38,8 @@ var client = knox.createClient({
   bucket: bucket
 });
 
+console.log('Transferring Heroku postgresql backup from: ' + herokuUrl);
+
 // Request the dump data from Heroku's temporary URL (an S3 URL with temporary
 // authorization through query string parameters)
 var herokuRequest = request.get(herokuUrl);
@@ -51,6 +53,7 @@ herokuRequest.on('response', function (response) {
   }
   name += '.dump';
 
+  console.log('Transferring to bucket: ' + bucket + ', path: ' + name);
   // Stream the data to our S3 bucket
   var uploadRequest = client.putStream(response, name, {
     'Content-Length': response.headers['content-length'],
