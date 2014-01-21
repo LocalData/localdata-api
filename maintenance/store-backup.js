@@ -6,10 +6,10 @@
  * Store Heroku Postgresql backups to our S3 account, so we can keep them
  * forever and ever.
  * Run as a one-off dyno on Heroku:
- *   heroku run maintenance/store-backup.js BUCKET OPTIONAL-FILENAME-FRIENDLY-COMMENT `heroku pgbackups:url b005`
+ *   heroku run maintenance/store-backup.js BUCKET OPTIONAL-FILENAME-FRIENDLY-COMMENT \"`heroku pgbackups:url b005`\"
  *
- *   heroku run maintenance/store-backup.js localdata-backup lighting-experimentation-prashant `heroku pgbackups:url b001`
- *   heroku run maintenance/store-backup.js localdata-backup `heroku pgbackups:url b001`
+ *   heroku run maintenance/store-backup.js localdata-backup lighting-experimentation-prashant \"`heroku pgbackups:url b001`\"
+ *   heroku run maintenance/store-backup.js localdata-backup \"`heroku pgbackups:url b001 --app localdata-beta`\" --app ld-prashant-dev
  *
  * The file is stored in the bucket as something like /heroku-pg/2013-11-15T01:27:53.000Z-comment.dump
  */
