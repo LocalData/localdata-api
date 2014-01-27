@@ -534,8 +534,88 @@ suite('Surveys', function () {
 
       });
     });
+  });
+
+
+  suite('SHARE: ', function () {
+    var url = BASEURL + '/surveys';
+
+    var surveyId;
+
+    test('Share a survey with valid info', function (done) {
+      assert(false);
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          jar: userAJar,
+          json: {'survey': surveyToChange}
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          body.survey.name.should.equal('new name');
+          done();
+        });
+      });
+    });
+
+    test('Attempt to share without proper authorization', function (done) {
+      assert(false);
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          json: {'survey': surveyToChange},
+          jar: userBJar
+        }, function (error, response, body) {
+          console.log(body);
+          should.not.exist(error);
+          response.statusCode.should.equal(403);
+
+          done();
+        });
+
+      });
+    });
+
+    test('Attempt to with a user that does not eixst', function (done) {
+      assert(false);
+    });
+
+    test('Attempt to share when not logged in', function (done) {
+      assert(false);
+    });
+
+    test('Attempt to share without a username', function (done) {
+      assert(false);
+    });
 
   });
+
 
   suite('DEL', function () {
     var id;
