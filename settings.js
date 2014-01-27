@@ -38,20 +38,15 @@ settings.s3_dir = process.env.S3_UPLOAD_DIR;
 settings.psqlConnectionString = process.env.DATABASE_URL;
 
 // Tiles
-settings.tileBase = process.env.TILESERVER_BASE;
+settings.tilePrefix = process.env.TILESERVER_BASE;
 
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
 settings.appPrefix = process.env.REMOTE_APP_PREFIX || '';
 
-settings.SESSION_SECRET = process.env.SESSION_SECRET;
-
 // Shapefile conversion service
 settings.converterBase = process.env.CONVERTER_BASE;
-
-// Tile rendering service
-settings.tileBase = process.env.TILESERVER_BASE;
 
 // Web server
 settings.port = process.env.PORT || 3000;

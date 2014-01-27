@@ -25,5 +25,3 @@ export REMOTE_MOBILE_PREFIX="http://localhost:8888/mobile";
 export REMOTE_ADMIN_PREFIX="http://localhost:8888/client";
 export REMOTE_APP_PREFIX="http://localhost:8888/apps";
 export TILESERVER_BASE="http://localhost:3001"
-
-export SESSION_SECRET="";

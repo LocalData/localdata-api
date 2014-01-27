@@ -20,7 +20,6 @@ heroku config:add \
   S3_BUCKET="upload-bucket" \
   S3_UPLOAD_DIR="upload-path" \
   SECRET="APPSECRETblah" \
-  SESSION_SECRET="SESSIONSECRETblah" \
   EXPRESS_LOGGER=':method :url HTTP/:http-version :status :res[content-length] :response-time ms - :remote-addr ":referrer" ":user-agent"' \
   NODEFLY_KEY="NODEFLY-APP-KEY" \
   NODEFLY_LOC="my-dev-app" \
