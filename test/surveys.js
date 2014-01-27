@@ -457,8 +457,8 @@ suite('Surveys', function () {
             response = JSON.parse(body);
 
             should.exist(response.stats);
-            should.exist(response.stats.collectors);
-            response.stats.collectors['Name'].should.equal(5);
+            should.exist(response.stats.Collectors);
+            response.stats.Collectors['Name'].should.equal(5);
             response.stats.site['parking-lot'].should.equal(5);
             response.stats['condition-1']['no response'].should.be.above(0);
             response.stats['new-stat']['yes'].should.equal(1);
