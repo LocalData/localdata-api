@@ -298,6 +298,7 @@ suite('Surveys', function () {
         for (i = 0; i < parsed.surveys.length; i += 1) {
           assert.notEqual(parsed.surveys[i].id, null, 'Returned surveys should have IDs.');
           parsed.surveys[i].should.have.property('slug');
+
           parsed.surveys[i].slug.should.be.a('string');
         }
 
@@ -305,7 +306,26 @@ suite('Surveys', function () {
       });
     });
 
-    test('Other user should not see surveys', function (done) {
+    test('User roles should be included with the survey', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + id,
+        jar: userAJar
+      }, function (error, response, body) {
+        var parsed = JSON.parse(body);
+        parsed.survey.userRole.should.be('owner');
+
+        request.get({
+          url: BASEURL + '/surveys/' + id,
+          jar: userBJar
+        }, function (error, response, body) {
+          var parsed = JSON.parse(body);
+          parsed.survey.userRole.should.be('guest');
+          done();
+        });
+      });
+    });
+
+    test("Users should not be able to get a list of someone else's surveys", function (done) {
       request.get({
         url: BASEURL + '/surveys',
         jar: userBJar
@@ -323,7 +343,6 @@ suite('Surveys', function () {
         done();
       });
     });
-
 
     test('Logged out users should get a 401', function (done) {
       request.get({
