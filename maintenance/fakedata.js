@@ -14,6 +14,11 @@ var Response = require('../lib/models/Response.js');
 
 var settings = require('../settings.js');
 
+// TODO: Update this to the new Response structure. In the meantime, we have
+// post-fake-data.js for creating entries through the API.
+
+process.exit();
+
 /**
  * Insert a number of fake responses
  * Why insert directly into the DB instead of posting to /surveyId/responses? 
