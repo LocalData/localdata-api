@@ -53,7 +53,7 @@ function run(done) {
     var plurals = [];
     var i;
     for (i = 0; i < len; i += 1) {
-      if (docs[i].value !== undefined) {
+      if (docs[i].value) {
         plurals.push(docs[i]);
       }
     }
