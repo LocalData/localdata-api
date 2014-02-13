@@ -11,33 +11,40 @@
  */
 'use strict';
 
+var async = require('async');
+
 var mongo = require('../lib/mongo');
 
 var db;
 
-function run(done) {
+function getSurveys(done) {
+  db.collection('surveyCollection').find({}).toArray(function (error, docs) {
+    if (error) { return done(error); }
+    done(null, docs);
+  });
+}
+
+function checkSurvey(survey, done) {
+  var surveyId = survey.id;
   db.collection('responseCollection').mapReduce(function map() {
     emit({
-      survey: this.survey,
       object_id: this.object_id || this.parcel_id
     }, {
-      survey: this.survey,
       object_id: this.object_id || this.parcel_id,
-      ids: [this.id]
+      name: this.geo_info ? this.geo_info.humanReadableName : 'unknown',
+      count: 1
     });
   }, function reduce(key, vals) {
-    var ids = [];
-    vals.forEach(function (val) {
-      ids = ids.concat(vals.ids);
-    });
+    var count = vals.reduce(function (memo, v) { return memo + v.count; }, 0);
     return {
-      survey: key.survey,
       object_id: key.object_id,
-      ids: ids
+      name: vals[0].name,
+      count: count
     };
   }, {
+    query: { survey: surveyId },
     finalize: function finalize(key, value) {
-      if (value.ids.length > 1) {
+      if (value.count > 1) {
         return value;
       }
       return undefined;
@@ -54,17 +61,28 @@ function run(done) {
     var i;
     for (i = 0; i < len; i += 1) {
       if (docs[i].value) {
-        plurals.push(docs[i]);
+        plurals.push(docs[i].value);
       }
     }
 
-    console.log(JSON.stringify(docs, null, 2));
-    done();
+    done(null, plurals);
   });
 }
 
 db = mongo.connect(function () {
-  run(function () {
+  async.waterfall([
+    getSurveys,
+    function (surveys, next) {
+      async.mapSeries(surveys, function (survey, step) {
+        checkSurvey(survey, function (error, plurals) {
+          console.log('Checked survey ' + survey.name + ' plural features = ' + plurals.length);
+          step(error, { survey: survey.name, id: survey.id, plurals: plurals });
+        });
+      }, next);
+    }
+  ], function (error, data) {
+    if (error) { console.log(error); }
+    console.log(JSON.stringify(data, null, 2));
     db.close();
   });
 });
