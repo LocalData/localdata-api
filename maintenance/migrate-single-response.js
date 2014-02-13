@@ -156,10 +156,24 @@ function transform (old) {
 }
 
 function upsert(doc, done) {
+  var entries = doc.properties.entries;
+  doc.properties.entries = [];
+
   Response.update({
     'properties.survey': doc.properties.surveyId,
     'properties.object_id': doc.properties.object_id
-  }, doc, {
+  }, {
+    // We only set the common fields when this is a brand new entry
+    $setOnInsert: doc,
+    // We always add entries. Make sure they are ascending order of
+    // creation time.
+    $push: {
+      'properties.responses.entries': {
+        $each: entries,
+        $sort: { created: 1 }
+      }
+    }
+  }, {
     upsert: true
   }, done);
 }
