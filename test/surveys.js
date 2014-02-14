@@ -447,28 +447,67 @@ suite('Surveys', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          // Ok, now we can calculate the stats.
-          url = BASEURL + '/surveys/' + id + '/stats';
-          console.log(url);
-          request.get({url: url}, function (error, response, body) {
-            should.not.exist(error);
-            response.statusCode.should.equal(200);
+          response = JSON.parse(body);
 
-            response = JSON.parse(body);
+          should.exist(response.stats);
+          should.exist(response.stats.Collectors);
+          response.stats.Collectors['Name'].should.equal(5);
+          response.stats.site['parking-lot'].should.equal(5);
+          response.stats['condition-1']['no response'].should.be.above(0);
+          response.stats['new-stat']['yes'].should.equal(1);
 
-            should.exist(response.stats);
-            should.exist(response.stats.Collectors);
-            response.stats.Collectors['Name'].should.equal(5);
-            response.stats.site['parking-lot'].should.equal(5);
-            response.stats['condition-1']['no response'].should.be.above(0);
-            response.stats['new-stat']['yes'].should.equal(1);
-
-            done();
-          });
+          done();
         });
       });
 
-    });
+    }); // end getting stats
+
+    test('Getting stats for a survey within a bounding box', function (done) {
+      async.waterfall([
+        function (next) {
+          // First, clear the responses for this survey.
+          fixtures.clearResponses(id, next);
+        },
+        function (next) {
+          // Then, add some responses.
+          var responses = fixtures.makeResponses(5);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          // Set the object_id of a response so we can keep an eye on it
+          responses.responses[0].object_id = 'myhouse';
+
+          // TODO
+          // Set the first response outside the area
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        }
+      ], function () {
+        // Ok, now we can calculate the stats.
+        // TODO use bounding polygon query
+        var url = BASEURL + '/surveys/' + id + '/stats';
+        request.get({url: url}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          response = JSON.parse(body);
+
+          should.exist(response.stats);
+          should.exist(response.stats.Collectors);
+          response.stats.Collectors['Name'].should.equal(5);
+          response.stats.site['parking-lot'].should.equal(5);
+          response.stats['condition-1']['no response'].should.be.above(0);
+          response.stats['new-stat']['yes'].should.equal(1);
+
+          done();
+
+        });
+      });
+
+    }); // end getting stats
 
   });
 
