@@ -56,38 +56,38 @@
  *     survey: String,
  *     humanReadableName: String,
  *     object_id: String,
- *     entries: [{
- *       source: {
- *         type: { type: String },
- *         collector: String,
- *         started: Date,
- *         finished: Date
- *       },
- *       created: Date,
- *       files: [String],
- *       responses: {
- *         type: Object,
- *         validate: validateResponses
- *       }
- *     }]
- *     centroid: [],
- *     indexedGeometry: {
- *       type: {
- *         type: { type: String },
- *         coordinates: []
- *       },
- *       select: false
- *     }
+ *     centroid: []
  *   },
  *   geometry: {
  *     type: { type: String },
  *     coordinates: []
+ *   },
+ *   entries: [{
+ *     source: {
+ *       type: { type: String },
+ *       collector: String,
+ *       started: Date,
+ *       finished: Date
+ *     },
+ *     created: Date,
+ *     files: [String],
+ *     responses: {
+ *       type: Object,
+ *       validate: validateResponses
+ *     }
+ *   }],
+ *   indexedGeometry: {
+ *     type: mongoose.SchemaTypes.Mixed,
+ *     select: false
  *   }
  */
 
 
+var util = require('util');
+
 var _ = require('lodash');
 var async = require('async');
+var mongoose = require('mongoose');
 
 var mongo = require('../lib/mongo');
 var Response = require('../lib/models/Response');
@@ -95,29 +95,55 @@ var Response = require('../lib/models/Response');
 var db;
 
 function log(data) {
+  if (Object.prototype.toString.call(data) === '[object Error]' ||
+     (data.name && data.message)) {
+    console.log('Error: ' + data.name + '. ' + data.message);
+    console.log(data);
+    console.log(data.stack);
+    if (Object.prototype.toString.call(data.errors) === '[object Array]') {
+      data.errors.forEach(log);
+    } else if (data.errors) {
+      log(data.errors);
+    }
+    return;
+  }
   console.log(Object.keys(data).map(function (key) {
     return key + '=' + data[key];
   }).join(' '));
 }
 
+// When we previously fixed the geometry coordinates to convert strings to
+// floats, we only processed the first ring for polygons, so we missed some
+// rare "holes".
+function fixFloats(data) {
+  if (util.isArray(data)) {
+    return data.map(fixFloats);
+  }
+  return parseFloat(data);
+}
+
 var limit = 1000;
 
 function getOldChunk(skip, done) {
-  log({ skip: skip, limit: limit });
+  log({ at: 'getOldChunk', skip: skip, limit: limit });
   // Find old objects that lack the properties.entries field.
+  // We use the mongodb driver, rather than mongoose, since our Response model
+  // refers to the new schema/collection.
   db.collection('responseCollection').find({
     'geo_info.centroid': {
       $exists: true
     },
-    'properties.entries': {
+    'entries': {
       $exists: false
     }
-  })
-  .lean()
-  .snapshot()
-  .limit(limit)
-  .skip(skip)
-  .exec(done);
+  }, {
+    limit: limit,
+    skip: skip,
+    snapshot: true
+  }, function (error, cursor) {
+    if (error) { return done(error); }
+    cursor.toArray(done);
+  });
 }
 
 function transform (old) {
@@ -126,70 +152,142 @@ function transform (old) {
   if (!geometry) {
     geometry = {
       type: 'Point',
-      coordinates: old.geo_info.centroid
+      coordinates: fixFloats(old.geo_info.centroid)
     };
+  } else {
+    geometry.coordinates = fixFloats(geometry.coordinates);
   }
 
-  // Objects with a parcel_id but no object_id
+  var idxGeometry = Response.createIndexedGeometry(geometry);
+  var doc = {
+    properties: {
+      survey: old.survey,
+      centroid: old.geo_info.centroid
+    },
+    geometry: geometry,
+    entries: [{
+      _id: old._id,
+      source: old.source,
+      created: old.created,
+      files: old.files,
+      responses: old.responses
+    }],
+    indexedGeometry: idxGeometry
+  };
+
+  if (old.geo_info.humanReadableName) {
+    doc.properties.humanReadableName = old.geo_info.humanReadableName;
+  }
+
+  // Items with a parcel_id but no object_id
   var object_id = old.object_id;
   if (!object_id) {
     object_id = old.parcel_id;
   }
 
-  var doc = {
-    properties: {
-      survey: old.survey,
-      humanReadableName: old.geo_info.humanReadableName,
-      object_id: old.geo_info.object_id,
-      entries: [{
-        _id: old._id,
-        source: old.source,
-        created: old.created,
-        files: old.files,
-        responses: old.responses
-      }],
-      centroid: old.geo_info.centroid,
-      indexedGeometry: Response.createIndexedGeometry(geometry)
-    },
-    geometry: geometry
-  };
+  // Some items have no object_id at all.
+  if (object_id) {
+    doc.properties.object_id = object_id;
+  }
+
+  return doc;
 }
 
 function upsert(doc, done) {
-  var entries = doc.properties.entries;
-  doc.properties.entries = [];
+  var entries;
+  if (doc.properties.object_id) {
+    entries = doc.entries;
+    //doc.entries = [];
+    delete doc.entries;
 
-  Response.update({
-    'properties.survey': doc.properties.surveyId,
-    'properties.object_id': doc.properties.object_id
-  }, {
-    // We only set the common fields when this is a brand new entry
-    $setOnInsert: doc,
-    // We always add entries. Make sure they are ascending order of
-    // creation time.
-    $push: {
-      'properties.responses.entries': {
-        $each: entries,
-        $sort: { created: 1 }
+    var query = {
+      'properties.survey': doc.properties.survey,
+      'properties.object_id': doc.properties.object_id
+    };
+
+    Response.update(query, {
+      // We only set the common fields when this is a brand new entry
+      $setOnInsert: doc,
+      // We always add entries. Make sure they are ascending order of
+      // creation time.
+      // In MongoDB 2.4, we can't have $sort without $slice. Since BSON
+      // documents are technically bounded in size anyways, we can just provide
+      // a very large number here and feel safe.
+      $push: {
+        'entries': {
+          $each: entries,
+          $slice: -1024,
+          $sort: { created: 1 }
+        }
       }
+    }, {
+      upsert: true
+    }, done);
+  } else {
+    // For point entries that have no reference to a base layer object, we let the Model supply the object_id field.
+    var newDoc = new Response(doc);
+    newDoc.save(done);
+  }
+}
+
+function alreadyProcessed(doc, done) {
+  Response.findOne({
+    'properties.survey': doc.survey,
+    'entries._id': new mongoose.Types.ObjectId(doc._id.toString())
+  }, function (error, doc){
+    if (error) { return done(error); }
+    if (doc) {
+      done(null, true);
+    } else {
+      done(null, false);
     }
-  }, {
-    upsert: true
+  });
+}
+
+// Eliminate the ones that already exist in the new collection
+function filterChunk(docs, done) {
+  log({ at: 'filterChunk' });
+  async.mapLimit(docs, 20, alreadyProcessed, function (error, statuses) {
+    if (error) { return done(error); }
+    done(null, _.reject(docs, function (doc, i) {
+      return statuses[i];
+    }));
+  });
+}
+
+function processChunk(docs, done) {
+  log({ at: 'processChunk', filtered_count: docs.length });
+  async.eachSeries(docs, function (doc, step) {
+    upsert(transform(doc), function (error, saved) {
+      if (error && error.name === 'ValidationError') {
+        log(error);
+        console.log(JSON.stringify(doc, null, 2));
+        step(null);
+        return;
+      }
+      step(error);
+    });
   }, done);
 }
 
-function process(done) {
+var handleChunk = async.compose(processChunk, filterChunk);
+
+function work(done) {
   var skip = 0;
   var count;
 
   async.doUntil(function (next) {
     getOldChunk(skip, function (error, docs) {
       count = docs.length;
-      async.eachSeries(docs, function (doc, step) {
-        upsert(transform(doc), step);
-      }, function (error) {
+      handleChunk(docs, function (error) {
         skip += limit;
-        next(error);
+        if (error) { return next(error); }
+        if (skip === 0) {
+          // Make sure the indexes get created.
+          Response.ensureIndexes(next);
+        } else {
+          next();
+        }
       });
     });
   },
@@ -202,12 +300,15 @@ function process(done) {
 function run(done) {
   async.series([
     _.bind(Response.ensureIndexes, Response),
-    process
+    work
   ], done);
 }
 
 db = mongo.connect(function () {
-  process(function () {
+  run(function (error) {
+    if (error) { log(error); }
     db.close();
   });
 });
+
+db.on('error', log);
