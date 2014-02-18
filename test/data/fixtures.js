@@ -246,7 +246,7 @@ fixtures.clearResponses = function clearResponses(survey, done) {
   if (done === undefined) {
     done = survey;
   } else {
-    query.survey = survey;
+    query['properties.survey'] = survey;
   }
 
   Response.remove(query, function (error, result) {
