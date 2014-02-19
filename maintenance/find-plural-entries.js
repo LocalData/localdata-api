@@ -14,14 +14,12 @@
 var async = require('async');
 
 var mongo = require('../lib/mongo');
+var Survey = require('../lib/models/Survey');
 
 var db;
 
 function getSurveys(done) {
-  db.collection('surveyCollection').find({}).toArray(function (error, docs) {
-    if (error) { return done(error); }
-    done(null, docs);
-  });
+  Survey.find({}, done);
 }
 
 function checkSurvey(survey, done) {
