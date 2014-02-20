@@ -231,7 +231,8 @@ fixtures.makeResponses = function makeResponses(count) {
   var parcelBase = 123456;
   var i;
   for (i = 0; i < count; i += 1) {
-    data.responses.push(makeResponse((parcelBase + i).toString(), Math.ceil(1000*Math.random())));
+    var num = parcelBase + i;
+    data.responses.push(makeResponse(num.toString(), num.toString() + ' A'));
   }
 
   // Delete the first condition so that there's always one with no response for that
