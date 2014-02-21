@@ -259,11 +259,20 @@ function processChunk(docs, done) {
   log({ at: 'processChunk', filtered_count: docs.length });
   async.eachSeries(docs, function (doc, step) {
     upsert(transform(doc), function (error, saved) {
-      if (error && error.name === 'ValidationError') {
-        log(error);
-        console.log(JSON.stringify(doc, null, 2));
-        step(null);
-        return;
+      if (error) {
+        if (error.name === 'ValidationError') {
+          log(error);
+          console.log(JSON.stringify(doc));
+          step(null);
+          return;
+        }
+        // "Exterior shell of polygon is invalid"
+        if (error.code === 16693) {
+          log(error);
+          console.log(JSON.stringify(doc));
+          step(null);
+          return;
+        }
       }
       step(error);
     });
