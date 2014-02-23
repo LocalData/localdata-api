@@ -42,3 +42,5 @@ You can also pass options to mocha with the `OPTS` variable or specify a test fi
 
     $ make test OPTS="--grep 'Surveys'" FILE=test/surveys.js
 
+If this is your first time running tests, you will need to create a PostgreSQL/PostGIS database with base feature data. You can import the `test/data/features-db.sql` file using psql, with `psql "CONNECTION_STRING"-f test/data/features-db.sql`.
+
