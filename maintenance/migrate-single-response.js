@@ -273,6 +273,14 @@ function processChunk(docs, done) {
           step(null);
           return;
         }
+        // If we encounter a MongoError, let's keep trying to process the other
+        // objects and log the offending one.
+        if (error.name === 'MongoError') {
+          log(error);
+          console.log(JSON.stringify(doc));
+          step(null);
+          return;
+        }
       }
       step(error);
     });
