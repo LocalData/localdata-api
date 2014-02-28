@@ -9,6 +9,8 @@ var fs = require('fs');
 var util = require('util');
 var request = require('request');
 var should = require('should');
+var geojson = require('./lib/geojson');
+var async = require('async');
 
 var Response = require('../lib/models/Response');
 
@@ -262,13 +264,20 @@ suite('Responses', function () {
     var id;
 
     suiteSetup(function (done) {
-      request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_twenty},
-                   function (error, response, body) {
-        if (error) { done(error); }
-        id = body.responses[0].id;
-
-        done();
-      });
+      async.series([
+        function (next) {
+          fixtures.clearResponses(surveyId, next);
+        },
+        function (next) {
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_twenty},
+                       function (error, response, body) {
+            if (!error) {
+              id = body.responses[0].id;
+            }
+            next(error);
+          });
+        }
+      ], done);
     });
 
 
@@ -288,6 +297,35 @@ suite('Responses', function () {
           parsed.responses[i].survey.should.equal(surveyId);
           created = Date.parse(parsed.responses[i].created);
           created.should.not.be.above(prevTime);
+          prevTime = created;
+        }
+        done();
+      });
+    });
+
+    test(' all responses for a survey as GeoJSON', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.geojson?startIndex=0&count=100000'}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        geojson.shouldBeFeatureCollection(parsed);
+        parsed.features.length.should.be.above(1);
+
+        var i;
+        var prevTime = Number.MAX_VALUE;
+        var created;
+        var feature;
+        for (i = 0; i < parsed.features.length; i += 1) {
+          feature = parsed.features[i];
+          feature.properties.should.have.property('survey');
+          feature.properties.survey.should.equal(surveyId);
+          feature.properties.should.have.property('created');
+          created = Date.parse(feature.properties.created);
+          created.should.not.be.above(prevTime);
+          feature.properties.should.have.property('source');
+          feature.properties.should.have.property('responses');
           prevTime = created;
         }
         done();

@@ -7,6 +7,7 @@
  */
 
 var server = require('./lib/router');
+var geojson = require('./lib/geojson');
 var util = require('util');
 var request = require('request');
 var should = require('should');
@@ -30,59 +31,6 @@ function getJSON(url, done) {
   });
 }
 
-// Confirm that an item is a GeoJSON MultiPolygon geometry
-function shouldBeMultiPolygon(item) {
-  item.should.have.property('type');
-  item.type.should.equal('MultiPolygon');
-  item.should.have.property('coordinates');
-  item.coordinates.should.be.an.instanceOf(Array);
-  var i;
-  for (i = 0; i < item.coordinates.length; i += 1) {
-    item.coordinates[i].should.be.an.instanceOf(Array);
-  }
-}
-
-// Confirm that an item is a GeoJSON Polygon geometry
-function shouldBePolygon(item) {
-  item.should.have.property('type');
-  item.type.should.equal('Polygon');
-  item.should.have.property('coordinates');
-  item.coordinates.should.be.an.instanceOf(Array);
-  var i;
-  for (i = 0; i < item.coordinates.length; i += 1) {
-    item.coordinates[i].should.be.an.instanceOf(Array);
-  }
-}
-
-// Confirm that an item is a GeoJSON Point geometry
-function shouldBePoint(item) {
-  item.should.have.property('type');
-  item.type.should.equal('Point');
-  item.should.have.property('coordinates');
-  item.coordinates.should.be.an.instanceOf(Array);
-  var i;
-  for (i = 0; i < item.coordinates.length; i += 1) {
-    item.coordinates[i].should.be.a.Number;
-  }
-}
-
-// Confirm that an item is a GeoJSON Feature object
-function shouldBeFeature(item) {
-  item.should.have.property('type');
-  item.type.should.equal('Feature');
-  item.should.have.property('geometry');
-  item.should.have.property('properties');
-}
-
-// Confirm that an item is a GeoJSON FeatureCollection object
-function shouldBeFeatureCollection(item) {
-  item.should.have.property('type');
-  item.type.should.equal('FeatureCollection');
-  item.should.have.property('features');
-  item.features.should.be.an.instanceOf(Array);
-  item.features.forEach(shouldBeFeature);
-}
-
 // Confirm that the feature has the standard properties
 function checkStandardProperties(feature) {
   feature.properties.should.have.property('source');
@@ -93,7 +41,7 @@ function checkStandardProperties(feature) {
 }
 
 function checkParcels(data) {
-  shouldBeFeatureCollection(data);
+  geojson.shouldBeFeatureCollection(data);
 
   data.features.forEach(function (feature) {
     // Parcel ID
@@ -105,15 +53,15 @@ function checkParcels(data) {
     // Geometry type
     feature.geometry.type.should.match(/^(MultiPolygon|Polygon)$/);
     if (feature.geometry.type === 'MultiPolygon') {
-      shouldBeMultiPolygon(feature.geometry);
+      geojson.shouldBeMultiPolygon(feature.geometry);
     } else if (feature.geometry.type === 'Polygon') {
-      shouldBePolygon(feature.geometry);
+      geojson.shouldBePolygon(feature.geometry);
     }
   });
 }
 
 function checkPoints(data) {
-  shouldBeFeatureCollection(data);
+  geojson.shouldBeFeatureCollection(data);
 
   data.features.forEach(function (feature) {
     // Parcel ID
@@ -121,7 +69,7 @@ function checkPoints(data) {
     // Properties
     checkStandardProperties(feature);
     // Geometry type
-    shouldBePoint(feature.geometry);
+    geojson.shouldBePoint(feature.geometry);
   });
 }
 
