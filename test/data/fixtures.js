@@ -30,16 +30,7 @@ fixtures.surveys = {
   "surveys" : [ {
     "name": "Just a survey",
     "location": "Detroit",
-    "users": ["A", "B"],
-    "paperinfo": {
-      "dpi": 150,
-      "regmarks": [
-        {"type": 0, "bbox": [20, 20, 70, 70]},
-        {"type": 0, "bbox": [20, 1580, 70, 1630]},
-        {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-      ],
-      "barcode": {"bbox": [1055, 20, 1255, 220]}
-    }
+    "users": ["A", "B"]
   } ]
 };
 
