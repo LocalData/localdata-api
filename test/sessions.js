@@ -3,24 +3,20 @@
 'use strict';
 
 // Libraries
-var assert = require('assert');
-var mongo = require('mongodb');
+var mongoose = require('mongoose');
 var request = require('request');
 var should = require('should');
-var util = require('util');
 var async = require('async');
 
 // LocalData
 var settings = require('../settings.js');
-var User = require('../lib/models/User');
-var users = require('../lib/controllers/users');
 
 var server = require('./lib/router');
 var fixtures = require('./data/fixtures');
 
-var BASEURL = 'http://localhost:' + settings.port + '/api';
-var SURVEY_URL = BASEURL + '/surveys';
-var USER_URL = BASEURL + '/user';
+var BASEURL = 'http://localhost:' + settings.port;
+var USER_URL = BASEURL + '/api/user';
+var PING_URL = BASEURL + '/ping';
 
 suite('Sessions', function () {
 
@@ -66,6 +62,43 @@ suite('Sessions', function () {
       }
     ], function (error) {
       done(error);
+    });
+  });
+
+  function getSessionCount(done) {
+    mongoose.connection.collection('sessions').find({}).count(done);
+  }
+
+  test('Ping endpoint should bypass session management', function (done) {
+    var initialCount;
+    async.series([
+      function (next) {
+        getSessionCount(function (error, count) {
+          initialCount = count;
+          next(error);
+        });
+      },
+      function (next) {
+        request.get({
+          url: PING_URL,
+          jar: null
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
+          next();
+        });
+      },
+      function (next) {
+        getSessionCount(function (error, count) {
+          should.not.exist(error);
+          initialCount.should.equal(count);
+          next();
+        });
+      }
+    ], function (error) {
+      should.not.exist(error);
+      done();
     });
   });
 

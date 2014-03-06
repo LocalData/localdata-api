@@ -30,16 +30,7 @@ fixtures.surveys = {
   "surveys" : [ {
     "name": "Just a survey",
     "location": "Detroit",
-    "users": ["A", "B"],
-    "paperinfo": {
-      "dpi": 150,
-      "regmarks": [
-        {"type": 0, "bbox": [20, 20, 70, 70]},
-        {"type": 0, "bbox": [20, 1580, 70, 1630]},
-        {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-      ],
-      "barcode": {"bbox": [1055, 20, 1255, 220]}
-    }
+    "users": ["A", "B"]
   } ]
 };
 
@@ -231,7 +222,8 @@ fixtures.makeResponses = function makeResponses(count) {
   var parcelBase = 123456;
   var i;
   for (i = 0; i < count; i += 1) {
-    data.responses.push(makeResponse((parcelBase + i).toString(), Math.ceil(1000*Math.random())));
+    var num = parcelBase + i;
+    data.responses.push(makeResponse(num.toString(), num.toString() + ' A'));
   }
 
   // Delete the first condition so that there's always one with no response for that
@@ -246,7 +238,7 @@ fixtures.clearResponses = function clearResponses(survey, done) {
   if (done === undefined) {
     done = survey;
   } else {
-    query.survey = survey;
+    query['properties.survey'] = survey;
   }
 
   Response.remove(query, function (error, result) {

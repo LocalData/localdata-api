@@ -5,7 +5,8 @@
 var assert = require('assert');
 var responses = require('../lib/controllers/responses.js');
 var listToCSVString = responses.listToCSVString;
-var filterToMostRecent = responses.filterToMostRecent;
+var getLatestEntries = responses.getLatestEntries;
+var getAllEntries = responses.AllEntriesies;
 
   
 suite('In csvExport,', function(){
@@ -80,24 +81,9 @@ suite('In csvExport,', function(){
     assert.equal(csv,expected);
   });
   
-  test('the filterToMostRecent function should only return the most recent of two parcel results', function() {
-    var filteredResults = filterToMostRecent(fakeResults);
-    
-    // Check if a parcel ID appears more than once
-    var parcelIDs = {};
-    for (var i=0; i < filteredResults.length; i++){
-      var result = filteredResults[i];
-      if (parcelIDs.hasOwnProperty(result['parcel_id'])) {
-        assert(false);
-      };
-      parcelIDs[result['parcel_id']] = true;
-    }
-    
-    // Make sure it's the newer of the two
-    if (filteredResults[0]['older']) {
-      assert(false);
-    };
-  });
-    
+  // TODO: test responses.getLatestEntries and responses.getAllEntries separately from API.
+  // The data format they ingest has changed significantly from the old
+  // filterToLatest. But both functions are tested via the API tests, which for
+  // now is sufficient.
 });
 

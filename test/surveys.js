@@ -25,16 +25,7 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Just a survey",
       "location": "Detroit",
-      "users": ["A", "B"],
-      "paperinfo": {
-        "dpi": 150,
-        "regmarks": [
-          {"type": 0, "bbox": [20, 20, 70, 70]},
-          {"type": 0, "bbox": [20, 1580, 70, 1630]},
-          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-        ],
-        "barcode": {"bbox": [1055, 20, 1255, 220]}
-      }
+      "users": ["A", "B"]
     } ]
   };
 
@@ -43,30 +34,12 @@ suite('Surveys', function () {
       "name": "Test survey 1",
       "location": "Detroit",
       "type": "parcel",
-      "errantStuff": "foo",
-      "paperinfo": {
-        "dpi": 150,
-        "regmarks": [
-          {"type": 0, "bbox": [20, 20, 70, 70]},
-          {"type": 0, "bbox": [20, 1580, 70, 1630]},
-          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-        ],
-        "barcode": {"bbox": [1055, 20, 1255, 220]}
-      }
+      "errantStuff": "foo"
     }, {
       "name": "Test survey 2",
       "users": ["2"],
       "type": "pointandparcel",
-      "errantStuff": 12345,
-      "paperinfo": {
-        "dpi": 150,
-        "regmarks": [
-          {"type": 0, "bbox": [20, 20, 70, 70]},
-          {"type": 0, "bbox": [20, 1580, 70, 1630]},
-          {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-        ],
-        "barcode": {"bbox": [1055, 20, 1255, 220]}
-      }
+      "errantStuff": 12345
     } ]
   };
 
@@ -74,16 +47,7 @@ suite('Surveys', function () {
     "name": "Sample survey",
     "slug": "sample-survey",
     "id": "1234",
-    "users": ["2"],
-    "paperinfo": {
-      "dpi": 150,
-      "regmarks": [
-        {"type": 0, "bbox": [20, 20, 70, 70]},
-        {"type": 0, "bbox": [20, 1580, 70, 1630]},
-        {"type": 0, "bbox": [1205, 1580, 1255, 1630]}
-      ],
-      "barcode": {"bbox": [1055, 20, 1255, 220]}
-    }
+    "users": ["2"]
   };
 
   var data_bad = {
@@ -197,7 +161,6 @@ suite('Surveys', function () {
           surveyId = body.surveys[i]._id;
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
-          assert.deepEqual(data_two.surveys[i].paperinfo, body.surveys[i].paperinfo, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
@@ -349,7 +312,6 @@ suite('Surveys', function () {
 
         assert.equal(parsed.survey.id, surveyTwo.id, 'The returned survey should match the requested ID.');
         assert.equal(data_two.surveys[1].name, parsed.survey.name, 'Response differs from posted data');
-        assert.deepEqual(data_two.surveys[1].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
@@ -374,7 +336,6 @@ suite('Surveys', function () {
 
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
-        assert.deepEqual(data_two.surveys[0].paperinfo, parsed.survey.paperinfo, 'Response differs from posted data');
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
