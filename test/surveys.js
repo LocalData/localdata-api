@@ -434,12 +434,6 @@ suite('Surveys', function () {
           var responses = fixtures.makeResponses(5);
           var url = BASEURL + '/surveys/' + id + '/responses';
 
-          // Set the object_id of a response so we can keep an eye on it
-          responses.responses[0].object_id = 'myhouse';
-
-          // TODO
-          // Set the first response outside the area
-
           request.post({url: url, json: responses}, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(201);
@@ -449,8 +443,14 @@ suite('Surveys', function () {
       ], function () {
         // Ok, now we can calculate the stats.
         // TODO use bounding polygon query
-        var url = BASEURL + '/surveys/' + id + '/stats';
-        request.get({url: url}, function (error, response, body) {
+
+        var sf = "-122.55523681640625,37.67077737288316,-122.55523681640625,37.83690319650768,-122.32040405273438,37.83690319650768,-122.32040405273438,37.67077737288316,-122.55523681640625,37.67077737288316";
+        var notsf = "-18,-13,-18,-9,-12,-9,-12,-13,-18,-13";
+
+        var sfURL = BASEURL + '/surveys/' + id + '/stats?polygon=' + sf;
+        var notsfURL = BASEURL + '/surveys/' + id + '/stats?polygon=' + notsf;
+
+        request.get({url: sfURL}, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
@@ -461,7 +461,6 @@ suite('Surveys', function () {
           response.stats.Collectors['Name'].should.equal(5);
           response.stats.site['parking-lot'].should.equal(5);
           response.stats['condition-1']['no response'].should.be.above(0);
-          response.stats['new-stat']['yes'].should.equal(1);
 
           done();
 
