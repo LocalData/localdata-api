@@ -4,6 +4,7 @@ uploaded_files/*
 setenv*.sh
 herokuconfig*.sh
 nohup.out
+.DS_Store
 
 *.env
 !sample.env
