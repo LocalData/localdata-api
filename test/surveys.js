@@ -441,16 +441,10 @@ suite('Surveys', function () {
           });
         }
       ], function () {
-        // Ok, now we can calculate the stats.
-        // TODO use bounding polygon query
-
         var sf = "-122.55523681640625,37.67077737288316,-122.55523681640625,37.83690319650768,-122.32040405273438,37.83690319650768,-122.32040405273438,37.67077737288316,-122.55523681640625,37.67077737288316";
-        var notsf = "-18,-13,-18,-9,-12,-9,-12,-13,-18,-13";
+        var url = BASEURL + '/surveys/' + id + '/stats?polygon=' + sf;
 
-        var sfURL = BASEURL + '/surveys/' + id + '/stats?polygon=' + sf;
-        var notsfURL = BASEURL + '/surveys/' + id + '/stats?polygon=' + notsf;
-
-        request.get({url: sfURL}, function (error, response, body) {
+        request.get({url: url}, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
@@ -468,6 +462,44 @@ suite('Surveys', function () {
       });
 
     }); // end getting stats
+
+
+    test('Ensure stats for a bounding box are within the box', function (done) {
+      async.waterfall([
+        function (next) {
+          // First, clear the responses for this survey.
+          fixtures.clearResponses(id, next);
+        },
+        function (next) {
+          // Then, add some responses.
+          var responses = fixtures.makeResponses(5);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        }
+      ], function () {
+        // somewhere in the Atlantic:
+        var notsf = "-18,-13,-18,-9,-12,-9,-12,-13,-18,-13";
+        var url = BASEURL + '/surveys/' + id + '/stats?polygon=' + notsf;
+
+        request.get({url: url}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          response = JSON.parse(body);
+          should.exist(response.stats);
+          should.exist(response.stats.Collectors);
+          should.not.exist(response.stats.site);
+
+          done();
+        });
+      });
+
+    }); // end getting stats outside bbox
 
   });
 
