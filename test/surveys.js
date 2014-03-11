@@ -457,7 +457,6 @@ suite('Surveys', function () {
           response.stats['condition-1']['no response'].should.be.above(0);
 
           done();
-
         });
       });
 
