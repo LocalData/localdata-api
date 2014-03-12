@@ -29,6 +29,7 @@ request = request.defaults({
 fixtures.surveys = {
   "surveys" : [ {
     "name": "Just a survey",
+    "description": "Testing the description",
     "location": "Detroit",
     "users": ["A", "B"]
   } ]
