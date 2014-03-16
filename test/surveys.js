@@ -24,7 +24,6 @@ suite('Surveys', function () {
   var data_one = {
     "surveys" : [ {
       "name": "Just a survey",
-      "description": "Test description",
       "location": "Detroit",
       "users": ["A", "B"]
     } ]
@@ -161,10 +160,11 @@ suite('Surveys', function () {
         for (i = 0; i < data_two.surveys.length; i += 1) {
           // Save the survey id for later tests
           surveyId = body.surveys[i]._id;
+          console.log(body.surveys);
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
-          assert.equal(data_two.surveys[i].description, body.surveys[i].description, 'Response differs from posted data');
+          assert.equal(data_two.surveys[i].description, body.surveys[i].description);
 
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
