@@ -408,28 +408,119 @@ suite('Surveys', function () {
           should.not.exist(error);
           response.statusCode.should.equal(200);
 
-          // Ok, now we can calculate the stats.
-          url = BASEURL + '/surveys/' + id + '/stats';
-          console.log(url);
-          request.get({url: url}, function (error, response, body) {
-            should.not.exist(error);
-            response.statusCode.should.equal(200);
+          response = JSON.parse(body);
 
-            response = JSON.parse(body);
+          should.exist(response.stats);
+          should.exist(response.stats.Collectors);
+          response.stats.Collectors['Name'].should.equal(5);
+          response.stats.site['parking-lot'].should.equal(5);
+          response.stats['condition-1']['no response'].should.be.above(0);
+          response.stats['new-stat']['yes'].should.equal(1);
 
-            should.exist(response.stats);
-            should.exist(response.stats.Collectors);
-            response.stats.Collectors['Name'].should.equal(5);
-            response.stats.site['parking-lot'].should.equal(5);
-            response.stats['condition-1']['no response'].should.be.above(0);
-            response.stats['new-stat']['yes'].should.equal(1);
-
-            done();
-          });
+          done();
         });
       });
 
-    });
+    }); // end getting stats
+
+    test('Getting stats for a survey within a bounding box', function (done) {
+      async.waterfall([
+        function (next) {
+          // First, clear the responses for this survey.
+          fixtures.clearResponses(id, next);
+        },
+        function (next) {
+          // Then, add some responses.
+          var responses = fixtures.makeResponses(5);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        }
+      ], function () {
+        var polygon = {
+          type: "Polygon",
+          coordinates: [[
+            [-122.55523681640625,37.67077737288316],
+            [-122.55523681640625,37.83690319650768],
+            [-122.32040405273438,37.83690319650768],
+            [-122.32040405273438,37.67077737288316],
+            [-122.55523681640625,37.67077737288316]
+          ]]
+        };
+        var polygonString = encodeURIComponent(JSON.stringify(polygon));
+
+        var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
+
+        request.get({url: url}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          response = JSON.parse(body);
+
+          should.exist(response.stats);
+          should.exist(response.stats.Collectors);
+          response.stats.Collectors['Name'].should.equal(5);
+          response.stats.site['parking-lot'].should.equal(5);
+          response.stats['condition-1']['no response'].should.be.above(0);
+
+          done();
+        });
+      });
+
+    }); // end getting stats
+
+
+    test('Ensure stats for a bounding box are within the box', function (done) {
+      async.waterfall([
+        function (next) {
+          // First, clear the responses for this survey.
+          fixtures.clearResponses(id, next);
+        },
+        function (next) {
+          // Then, add some responses.
+          var responses = fixtures.makeResponses(5);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        }
+      ], function () {
+        // somewhere in the Atlantic:
+        var polygon = {
+          type: "Polygon",
+          coordinates: [[
+            [-18,-13],
+            [-18,-9],
+            [-12,-9],
+            [-12,-13],
+            [-18,-13]
+          ]]
+        };
+        var polygonString = encodeURIComponent(JSON.stringify(polygon));
+
+        var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
+
+        request.get({url: url}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          response = JSON.parse(body);
+          should.exist(response.stats);
+          should.exist(response.stats.Collectors);
+          should.not.exist(response.stats.site);
+
+          done();
+        });
+      });
+
+    }); // end getting stats outside bbox
 
   });
 
