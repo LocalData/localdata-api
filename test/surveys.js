@@ -441,8 +441,19 @@ suite('Surveys', function () {
           });
         }
       ], function () {
-        var sf = "-122.55523681640625,37.67077737288316,-122.55523681640625,37.83690319650768,-122.32040405273438,37.83690319650768,-122.32040405273438,37.67077737288316,-122.55523681640625,37.67077737288316";
-        var url = BASEURL + '/surveys/' + id + '/stats?polygon=' + sf;
+        var polygon = {
+          type: "Polygon",
+          coordinates: [[
+            [-122.55523681640625,37.67077737288316],
+            [-122.55523681640625,37.83690319650768],
+            [-122.32040405273438,37.83690319650768],
+            [-122.32040405273438,37.67077737288316],
+            [-122.55523681640625,37.67077737288316]
+          ]]
+        };
+        var polygonString = encodeURIComponent(JSON.stringify(polygon));
+
+        var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
 
         request.get({url: url}, function (error, response, body) {
           should.not.exist(error);
@@ -482,8 +493,19 @@ suite('Surveys', function () {
         }
       ], function () {
         // somewhere in the Atlantic:
-        var notsf = "-18,-13,-18,-9,-12,-9,-12,-13,-18,-13";
-        var url = BASEURL + '/surveys/' + id + '/stats?polygon=' + notsf;
+        var polygon = {
+          type: "Polygon",
+          coordinates: [[
+            [-18,-13],
+            [-18,-9],
+            [-12,-9],
+            [-12,-13],
+            [-18,-13]
+          ]]
+        };
+        var polygonString = encodeURIComponent(JSON.stringify(polygon));
+
+        var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
 
         request.get({url: url}, function (error, response, body) {
           should.not.exist(error);
