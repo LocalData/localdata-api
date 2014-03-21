@@ -36,7 +36,11 @@ function checkStandardProperties(feature) {
   feature.properties.should.have.property('source');
   feature.properties.should.have.property('type');
   feature.properties.should.have.property('shortName');
+  feature.properties.shortName.should.be.a.String;
+  feature.properties.shortName.should.not.be.empty;
   feature.properties.should.have.property('longName');
+  feature.properties.longName.should.be.a.String;
+  feature.properties.longName.should.not.be.empty;
   feature.properties.should.have.property('info');
 }
 
