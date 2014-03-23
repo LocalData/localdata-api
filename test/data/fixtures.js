@@ -176,7 +176,7 @@ fixtures.addOrg = function addOrg(name, jar, done) {
 };
 
 // Generate some fake response data.
-fixtures.makeResponses = function makeResponses(count) {
+fixtures.makeResponses = function makeResponses(count, options) {
   function makeResponse(parcelId, streetNumber) {
     var response = {
       source: {
@@ -208,6 +208,13 @@ fixtures.makeResponses = function makeResponses(count) {
         'condition-1': 'demolish'
       }
     };
+
+    if (options && options.includeInfo) {
+      response.info = {
+        MAPBLKLOT: '200-400-500-6',
+        region: 57
+      };
+    }
 
     // Randomly delete the condition to simulate no response
     var x = Math.round(Math.random());
