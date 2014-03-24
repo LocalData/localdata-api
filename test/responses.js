@@ -100,6 +100,22 @@ suite('Responses', function () {
       });
     });
 
+    test('Posting JSON to /surveys/' + surveyId + '/responses with an info field', function (done) {
+
+      var data = fixtures.makeResponses(1, { includeInfo: true });
+
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        body.responses[0].should.have.property('info');
+        // Check equivalent content of the info fields.
+        body.responses[0].info.should.eql(data.responses[0].info);
+
+        done();
+      });
+    });
+
     test('Posting JSON to /surveys/' + surveyId + '/responses without a responses object', function (done) {
 
       var data = fixtures.makeResponses(1);
