@@ -16,11 +16,6 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Shapefile', function () {
 
-  var data_survey = {
-    name: 'Test Survey',
-    type: 'parcel'
-  };
-
   var data_twenty = (function () {
     function makeResponse(parcelId) {
       return {
@@ -75,16 +70,17 @@ suite('Shapefile', function () {
   suite('GET', function () {
     var surveyId;
     var id;
-    var jar;
+    var ownerJar;
+    var strangerJar;
 
     suiteSetup(function (done) {
       async.waterfall([
         fixtures.clearUsers,
+        // Create test users.
         function (next) {
-          // Create a user.
-          fixtures.addUser('Test Testson', function (error, authJar, userId) {
-            if (error) { return next(error); }
-            jar = authJar;
+          fixtures.setupUser(function (error, jar1, jar2) {
+            ownerJar = jar1;
+            strangerJar = jar2;
             next();
           });
         },
@@ -92,8 +88,8 @@ suite('Shapefile', function () {
           // Create a survey.
           request.post({
             url: BASEURL + '/surveys',
-            json: { surveys: data_survey },
-            jar: jar
+            json: fixtures.surveys,
+            jar: ownerJar
           }, next);
         },
         function (response, body, next) {
@@ -102,7 +98,7 @@ suite('Shapefile', function () {
           request.post({
             url: BASEURL + '/surveys/' + surveyId + '/responses',
             json: data_twenty,
-            jar: jar
+            jar: ownerJar
           }, next);
         }
       ], done);
@@ -113,7 +109,7 @@ suite('Shapefile', function () {
       // Initial request for processing.
       request.get({
         url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
-        jar: jar
+        jar: ownerJar
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(202);
@@ -121,7 +117,7 @@ suite('Shapefile', function () {
         // Check back to get the URL.
         request.get({
           url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
-          jar: jar,
+          jar: ownerJar,
           followRedirects: false
         }, function (error, response, body) {
           should.not.exist(error);
@@ -153,6 +149,30 @@ suite('Shapefile', function () {
         });
       });
 
+    });
+
+    test('shapefile for a survey not logged in', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
+        jar: request.jar()
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(401);
+
+        done();
+      });
+    });
+
+    test('shapefile for a survey we do not own', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
+        jar: strangerJar
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(403);
+
+        done();
+      });
     });
 
 

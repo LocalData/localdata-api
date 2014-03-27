@@ -276,17 +276,41 @@ suite('Responses', function () {
   });
 
   suite('GET', function () {
-    var surveyId = '123';
+    var surveyId;
     var id;
+    var ownerJar;
+    var strangerJar;
 
     suiteSetup(function (done) {
       async.series([
+        // Clear existing responses.
+        fixtures.clearResponses.bind(fixtures, surveyId),
+        // Create test users.
         function (next) {
-          fixtures.clearResponses(surveyId, next);
+          fixtures.setupUser(function (error, jar1, jar2) {
+            ownerJar = jar1;
+            strangerJar = jar2;
+            next();
+          });
         },
+        // Create a test survey owned by one of the users.
         function (next) {
-          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_twenty},
-                       function (error, response, body) {
+          request.post({
+            url: BASEURL + '/surveys',
+            json: fixtures.surveys,
+            jar: ownerJar
+          }, function (error, response, body) {
+            if (error) { return next(error); }
+            surveyId = body.surveys[0].id;
+            next();
+          });
+        },
+        // Add responses.
+        function (next) {
+          request.post({
+            url: BASEURL + '/surveys/' + surveyId + '/responses',
+            json: data_twenty
+          }, function (error, response, body) {
             if (!error) {
               id = body.responses[0].id;
             }
@@ -295,7 +319,6 @@ suite('Responses', function () {
         }
       ], done);
     });
-
 
     test(' all responses for a survey', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=100000'}, function (error, response, body) {
@@ -505,8 +528,10 @@ suite('Responses', function () {
 
 
     test('Get response data as CSV', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.csv'},
-                  function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
+        jar: ownerJar
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
 
@@ -528,11 +553,14 @@ suite('Responses', function () {
         var data = fixtures.makeResponses(2);
         request.post({url: url, json: data}, function (error, response, body) {
 
-          request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.csv'},
-                      function (error, response, bodyAll) {
-
-            request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.csv?latest=true'},
-                        function (error, response, bodyFiltered) {
+          request.get({
+            url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
+            jar: ownerJar
+          }, function (error, response, bodyAll) {
+            request.get({
+              url: BASEURL + '/surveys/' + surveyId + '/responses.csv?latest=true',
+              jar: ownerJar
+            }, function (error, response, bodyFiltered) {
               should.not.exist(error);
               response.statusCode.should.equal(200);
 
@@ -555,9 +583,35 @@ suite('Responses', function () {
       });
     });
 
+    test('Get response data as CSV not logged in', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
+        jar: request.jar()
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(401);
+
+        done();
+      });
+    });
+
+    test('Get response data as CSV for a survey we do not own', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
+        jar: strangerJar
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(403);
+
+        done();
+      });
+    });
+
     test('Get response data as KML', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.kml'},
-                  function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
+        jar: ownerJar
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
 
@@ -566,6 +620,30 @@ suite('Responses', function () {
 
         response.headers.should.have.property('content-disposition');
         response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.kml');
+
+        done();
+      });
+    });
+
+    test('Get response data as KML not logged in', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
+        jar: request.jar()
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(401);
+
+        done();
+      });
+    });
+
+    test('Get response data as KML for a survey we do not own', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
+        jar: strangerJar
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(403);
 
         done();
       });
