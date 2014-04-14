@@ -32,6 +32,7 @@ suite('Surveys', function () {
   var data_two = {
     "surveys" : [ {
       "name": "Test survey 1",
+      "tilelayer": "{x},{y},{z}",
       "location": "Detroit",
       "type": "parcel",
       "errantStuff": "foo"
@@ -163,6 +164,7 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
+          assert.equal(data_two.surveys[i].tilelayer, body.surveys[i].tilelayer);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
@@ -336,6 +338,7 @@ suite('Surveys', function () {
 
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
+        assert.equal(data_two.surveys[0].tilelayer, parsed.survey.tilelayer);
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
