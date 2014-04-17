@@ -33,6 +33,7 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Test survey 1",
       "location": "Detroit",
+      "description": "Test description",
       "type": "parcel",
       "errantStuff": "foo"
     }, {
@@ -159,9 +160,12 @@ suite('Surveys', function () {
         for (i = 0; i < data_two.surveys.length; i += 1) {
           // Save the survey id for later tests
           surveyId = body.surveys[i]._id;
+          console.log(body.surveys);
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
+          assert.equal(data_two.surveys[i].description, body.surveys[i].description);
+
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
@@ -336,6 +340,7 @@ suite('Surveys', function () {
 
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
+        assert.equal(data_two.surveys[0].description, parsed.survey.description, 'Response differs from posted data');
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
