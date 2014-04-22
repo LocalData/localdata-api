@@ -6,14 +6,16 @@
  * Tests for the base geographic features API.
  */
 
-var server = require('./lib/router');
-var geojson = require('./lib/geojson');
 var util = require('util');
+
+var _ = require('lodash');
+var async = require('async');
 var request = require('request');
 var should = require('should');
-var async = require('async');
 
-var settings = require('../settings.js');
+var server = require('./lib/router');
+var geojson = require('./lib/geojson');
+var settings = require('../settings');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
@@ -242,6 +244,72 @@ suite('Features', function () {
     getJSON('/features.geojson?type=parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
       parsed.features.length.should.be.above(40);
+
+      done();
+    });
+  });
+
+  test('Find all source options', function (done) {
+    getJSON('/sources', function (error, parsed) {
+      parsed.should.have.property('sources');
+      parsed.sources.should.be.an.instanceOf(Array);
+      parsed.sources.length.should.be.above(1);
+      parsed.sources.forEach(function (source) {
+        source.should.have.property('name');
+        source.name.should.be.an.instanceOf(String);
+        source.should.have.property('type');
+        source.type.should.be.an.instanceOf(String);
+        source.should.have.property('description');
+        source.description.should.be.an.instanceOf(String);
+      });
+
+      var lighting = _.find(parsed.sources, { name: 'detroit-streetlights' });
+      should.exist(lighting);
+      lighting.name.should.equal('detroit-streetlights');
+      lighting.type.should.equal('lighting');
+
+      var parcels = _.find(parsed.sources, { name: 'detroit-parcels' });
+      should.exist(parcels);
+      parcels.name.should.equal('detroit-parcels');
+      parcels.type.should.equal('parcels');
+
+      done();
+    });
+  });
+
+  test('Find source options near a point', function (done) {
+    getJSON('/sources?lon=-83.08076&lat=42.338', function (error, parsed) {
+      parsed.should.have.property('sources');
+      parsed.sources.should.be.an.instanceOf(Array);
+      parsed.sources.should.have.length(2);
+      parsed.sources.forEach(function (source) {
+        source.should.have.property('name');
+        source.name.should.be.an.instanceOf(String);
+        source.should.have.property('type');
+        source.type.should.be.an.instanceOf(String);
+        source.should.have.property('description');
+        source.description.should.be.an.instanceOf(String);
+      });
+
+      var lighting = _.find(parsed.sources, { name: 'detroit-streetlights' });
+      should.exist(lighting);
+      lighting.name.should.equal('detroit-streetlights');
+      lighting.type.should.equal('lighting');
+
+      var parcels = _.find(parsed.sources, { name: 'detroit-parcels' });
+      should.exist(parcels);
+      parcels.name.should.equal('detroit-parcels');
+      parcels.type.should.equal('parcels');
+
+      done();
+    });
+  });
+
+  test('Find source options where there are none', function (done) {
+    getJSON('/sources?lon=0&lat=0', function (error, parsed) {
+      parsed.should.have.property('sources');
+      parsed.sources.should.be.an.instanceOf(Array);
+      parsed.sources.should.have.length(0);
 
       done();
     });
