@@ -700,7 +700,6 @@ suite('Surveys', function () {
         }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(403);
-
           done();
         });
 
@@ -728,6 +727,11 @@ suite('Surveys', function () {
         }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(400);
+
+          // Make sure the message exists
+          var parsed = JSON.parse(body);
+          should.exist(parsed.name);
+          should.exist(parsed.message);
 
           done();
         });
@@ -814,6 +818,11 @@ suite('Surveys', function () {
         }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(400);
+
+          // Make sure the message exists
+          var parsed = JSON.parse(body);
+          should.exist(parsed.name);
+          should.exist(parsed.message);
 
           done();
         });
