@@ -18,8 +18,6 @@ var settings = require('../settings');
 var BASEURL = 'http://localhost:' + settings.port + '/api';
 
 suite('Surveys', function () {
-  var userA;
-  var userB;
 
   var data_one = {
     "surveys" : [ {
@@ -32,9 +30,7 @@ suite('Surveys', function () {
   var data_two = {
     "surveys" : [ {
       "name": "Test survey 1",
-      "tilelayer": "{x},{y},{z}",
       "location": "Detroit",
-      "description": "Test description",
       "type": "parcel",
       "errantStuff": "foo"
     }, {
@@ -59,6 +55,8 @@ suite('Surveys', function () {
     } ]
   };
 
+  var userA;
+  var userB;
   var userAJar;
   var userBJar;
 
@@ -120,26 +118,30 @@ suite('Surveys', function () {
       });
 
       // Create a user and add a survey
-      fixtures.setupUser(function(error, jar, jar2, userId){
-        request.post({url: url, json: data_two, jar: jar}, function (error, response, body) {
-          surveyId = body.surveys[0].id;
+      //fixtures.setupUser(function(error, jar, jar2, userId){
+      request.post({
+        url: url,
+        json: data_two,
+        jar: userAJar
+      }, function (error, response, body) {
+        surveyId = body.surveys[0].id;
 
-          // Try to find the survey
-          Survey.findIfOwnedByUser(surveyId, userId, function(error, survey) {
-            should.not.exist(error);
-            survey.id.should.equal(surveyId);
+        // Try to find the survey
+        Survey.findIfOwnedByUser(surveyId, userA._id, function(error, survey) {
+          should.not.exist(error);
+          survey.id.should.equal(surveyId);
 
-            // Survey should not have users property
-            survey.should.not.have.property('users');
+          // Survey should not have users property
+          survey.should.not.have.property('users');
 
-            // Try with a non-logged-in user
-            Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, survey) {
-              error.code.should.equal(403);
-              done();
-            });
+          // Try with a non-logged-in user
+          Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, survey) {
+            error.code.should.equal(403);
+            done();
           });
         });
       });
+      //});
     });
   });
 
@@ -161,14 +163,10 @@ suite('Surveys', function () {
         for (i = 0; i < data_two.surveys.length; i += 1) {
           // Save the survey id for later tests
           surveyId = body.surveys[i]._id;
-          console.log(body.surveys);
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
-          assert.equal(data_two.surveys[i].description, body.surveys[i].description);
-
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
-          assert.equal(data_two.surveys[i].tilelayer, body.surveys[i].tilelayer);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
@@ -342,8 +340,6 @@ suite('Surveys', function () {
 
         assert.equal(parsed.survey.id, id, 'The returned survey should match the requested ID.');
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
-        assert.equal(data_two.surveys[0].tilelayer, parsed.survey.tilelayer);
-        assert.equal(data_two.surveys[0].description, parsed.survey.description, 'Response differs from posted data');
 
         parsed.survey.should.have.property('responseCount');
         parsed.survey.responseCount.should.be.a('number');
@@ -585,7 +581,213 @@ suite('Surveys', function () {
           json: {'survey': surveyToChange},
           jar: userBJar
         }, function (error, response, body) {
-          console.log(body);
+          should.not.exist(error);
+          response.statusCode.should.equal(403);
+
+          done();
+        });
+
+      });
+    });
+  });
+
+  suite('USERS: ', function () {
+    var surveyId;
+
+    test('Survey owners should be able to get full user info', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var survey = body.surveys[0];
+
+        url = BASEURL + '/surveys/' + survey.id + '/users';
+        request.get({
+          url: url,
+          jar: userAJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          var parsed = JSON.parse(body);
+          parsed.users.length.should.equal(1);
+
+          done();
+        });
+      });
+    });
+
+    test('Non-owners should not be able to get full user info', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var survey = body.surveys[0];
+
+        url = BASEURL + '/surveys/' + survey.id + '/users';
+        request.get({
+          url: url,
+          jar: userBJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(403);
+          done();
+        });
+      });
+    });
+  });
+
+
+  suite('SHARE: ', function () {
+    var url = BASEURL + '/surveys';
+
+    var surveyId;
+
+    test('Share a survey with valid user email', function (done) {
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+
+        url = BASEURL + '/surveys/' + surveyToChange.id + '/users/user-b@localdata.com';
+        request.put({
+          url: url,
+          jar: userAJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          done();
+        });
+      });
+    });
+
+    test('Attempt to share without proper authorization', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id + '/users/User B';
+        request.put({
+          url: url,
+          jar: userBJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(403);
+          done();
+        });
+
+      });
+    });
+
+    test('Share with a user that does not exist', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id + '/users/example@example.com';
+        request.put({
+          url: url,
+          jar: userAJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(400);
+
+          // Make sure the message exists
+          var parsed = JSON.parse(body);
+          should.exist(parsed.name);
+          should.exist(parsed.message);
+
+          done();
+        });
+
+      });
+    });
+
+    test('Remove a user from a survey', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id + '/users/user-a@localdata.com';
+        request.del({
+          url: url,
+          jar: userAJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(204);
+
+          done();
+        });
+
+      });
+    });
+
+    test('Remove a user from a survey without the right permissions', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+        surveyToChange.name = 'new name';
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id + '/users/user-a@localdata.com';
+        request.del({
+          url: url,
+          jar: userBJar
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(403);
 
@@ -595,7 +797,42 @@ suite('Surveys', function () {
       });
     });
 
+    test('Attempt to remove a user that does not exist', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_one
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[0];
+
+        // Log in as a new user and try to change the survey
+        url = BASEURL + '/surveys/' + surveyToChange.id + '/users/example@example.com';
+        request.del({
+          url: url,
+          jar: userAJar
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(400);
+
+          // Make sure the message exists
+          var parsed = JSON.parse(body);
+          should.exist(parsed.name);
+          should.exist(parsed.message);
+
+          done();
+        });
+
+      });
+    });
+
+
   });
+
 
   suite('DEL', function () {
     var id;
@@ -628,4 +865,3 @@ suite('Surveys', function () {
   });
 
 });
-
