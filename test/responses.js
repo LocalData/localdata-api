@@ -400,6 +400,27 @@ suite('Responses', function () {
       });
     });
 
+    test('Get all responses for a filter key', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?filter=site:parking-lot'},
+       function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.be.above(0);
+
+
+        var i;
+        for (i = 0; i < parsed.responses.length; i += 1) {
+          parsed.responses[i].responses.site.should.equal('parking-lot');
+        }
+
+        done();
+      });
+    });
+
     test('Get all responses for a specific collector', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&collector=' + data_twenty.responses[1].source.collector },
        function (error, response, body) {
