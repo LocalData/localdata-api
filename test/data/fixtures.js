@@ -222,11 +222,6 @@ fixtures.makeResponses = function makeResponses(count, options) {
       delete response.responses['condition-1'];
     }
 
-    // Randomly change a property
-    if (Math.round(Math.random()))  {
-      response.responses.site = 'house';
-    }
-
     return response;
   }
 
