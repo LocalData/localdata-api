@@ -93,7 +93,7 @@ suite('Features', function () {
     // upper-right longitude, upper-right latitude
     getJSON('/features?type=parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(40);
+      parsed.features.length.should.equal(5);
       parsed.features.forEach(function (feature) {
         feature.properties.type.should.equal('parcels');
       });
@@ -121,7 +121,7 @@ suite('Features', function () {
     // upper-right longitude, upper-right latitude
     getJSON('/features?source=detroit-parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(40);
+      parsed.features.length.should.equal(5);
       parsed.features.forEach(function (feature) {
         feature.properties.type.should.equal('parcels');
         feature.properties.source.should.equal('detroit-parcels');
@@ -169,7 +169,7 @@ suite('Features', function () {
   });
 
   test('Get parcels at a point', function (done) {
-    getJSON('/features?type=parcels&lon=-83.08076&lat=42.338', function (error, parsed) {
+    getJSON('/features?type=parcels&lon=-83.08025747537613&lat=42.33617307062472', function (error, parsed) {
       checkParcels(parsed);
       parsed.features.length.should.be.above(0);
 
@@ -243,7 +243,7 @@ suite('Features', function () {
   test('Explicitly specify .geojson format', function (done) {
     getJSON('/features.geojson?type=parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(40);
+      parsed.features.length.should.equal(5);
 
       done();
     });
@@ -256,13 +256,14 @@ suite('Features', function () {
       parsed.sources.length.should.be.above(1);
       parsed.sources.forEach(function (source) {
         source.should.have.property('name');
-        source.name.should.be.an.instanceOf(String);
+        source.name.should.be.type('string');
         source.should.have.property('type');
-        source.type.should.be.an.instanceOf(String);
+        source.type.should.be.type('string');
         source.should.have.property('description');
-        source.description.should.be.an.instanceOf(String);
+        source.description.should.be.type('string');
       });
 
+      // We should find streetlight and parcel sources
       var lighting = _.find(parsed.sources, { name: 'detroit-streetlights' });
       should.exist(lighting);
       lighting.name.should.equal('detroit-streetlights');
@@ -284,13 +285,14 @@ suite('Features', function () {
       parsed.sources.should.have.length(2);
       parsed.sources.forEach(function (source) {
         source.should.have.property('name');
-        source.name.should.be.an.instanceOf(String);
+        source.name.should.be.type('string');
         source.should.have.property('type');
-        source.type.should.be.an.instanceOf(String);
+        source.type.should.be.type('string');
         source.should.have.property('description');
-        source.description.should.be.an.instanceOf(String);
+        source.description.should.be.type('string');
       });
 
+      // We should find streetlight and parcel sources
       var lighting = _.find(parsed.sources, { name: 'detroit-streetlights' });
       should.exist(lighting);
       lighting.name.should.equal('detroit-streetlights');
