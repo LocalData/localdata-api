@@ -37,7 +37,8 @@ suite('Surveys', function () {
       "name": "Test survey 2",
       "users": ["2"],
       "type": "pointandparcel",
-      "errantStuff": 12345
+      "errantStuff": 12345,
+      "responseLongevity": 5
     } ]
   };
 
@@ -167,6 +168,7 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
+          assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
