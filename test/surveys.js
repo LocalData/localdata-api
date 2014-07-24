@@ -37,7 +37,8 @@ suite('Surveys', function () {
       "name": "Test survey 2",
       "users": ["2"],
       "type": "pointandparcel",
-      "errantStuff": 12345
+      "errantStuff": 12345,
+      "responseLongevity": 5
     } ]
   };
 
@@ -167,6 +168,7 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
+          assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
@@ -180,7 +182,7 @@ suite('Surveys', function () {
 
           // Slug tests
           body.surveys[i].should.have.property('slug');
-          body.surveys[i].slug.should.be.a('string');
+          body.surveys[i].slug.should.be.type('string');
         }
 
         done();
@@ -211,7 +213,7 @@ suite('Surveys', function () {
         body.surveys.length.should.equal(1);
         var survey = body.surveys[0];
         survey.should.have.property('slug');
-        survey.slug.should.be.a('string');
+        survey.slug.should.be.type('string');
 
         // Test for unacceptable characters
         /[~`!@#$%\^&*()+;:'",<>\/?\\{}\[\]|]/.test(survey.slug).should.equal(false);
@@ -265,7 +267,7 @@ suite('Surveys', function () {
         for (i = 0; i < parsed.surveys.length; i += 1) {
           assert.notEqual(parsed.surveys[i].id, null, 'Returned surveys should have IDs.');
           parsed.surveys[i].should.have.property('slug');
-          parsed.surveys[i].slug.should.be.a('string');
+          parsed.surveys[i].slug.should.be.type('string');
         }
 
         done();
@@ -318,11 +320,11 @@ suite('Surveys', function () {
         assert.equal(data_two.surveys[1].name, parsed.survey.name, 'Response differs from posted data');
 
         parsed.survey.should.have.property('responseCount');
-        parsed.survey.responseCount.should.be.a('number');
+        parsed.survey.responseCount.should.be.Number;
         parsed.survey.responseCount.should.equal(0);
 
         parsed.survey.should.have.property('slug');
-        parsed.survey.slug.should.be.a('string');
+        parsed.survey.slug.should.be.type('string');
 
         done();
       });
@@ -342,11 +344,11 @@ suite('Surveys', function () {
         assert.equal(data_two.surveys[0].name, parsed.survey.name, 'Response differs from posted data');
 
         parsed.survey.should.have.property('responseCount');
-        parsed.survey.responseCount.should.be.a('number');
+        parsed.survey.responseCount.should.be.Number;
         parsed.survey.responseCount.should.equal(20);
 
         parsed.survey.should.have.property('slug');
-        parsed.survey.slug.should.be.a('string');
+        parsed.survey.slug.should.be.type('string');
 
         // calculate bounds manually on the input data.
         var bounds = [
