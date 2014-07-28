@@ -171,6 +171,8 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
+          body.surveys[i].should.have.property('created');
+
           assert.notEqual(body.surveys[i].id, null, 'Response does not have an ID.');
 
           body.surveys[i].should.have.property('users');
