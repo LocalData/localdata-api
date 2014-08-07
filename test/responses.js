@@ -437,6 +437,40 @@ suite('Responses', function () {
       });
     });
 
+    test('Get all responses that match a date until filter', function (done) {
+      // Get the until date of the first response
+      var i;
+      var first;
+      var created;
+
+      for (i = 0; i < parsed.responses.length; i += 1) {
+        parsed.responses[i].survey.should.equal(surveyId);
+        created = Date.parse(parsed.responses[i].created);
+        if (first > created || !created) {
+          first = created
+        }
+        console.log("PARSED TIMES", created);
+      }
+
+
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20' },
+       function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.equal(2);
+        parsed.responses[0].responses.site.should.equal('house');
+
+
+// 1407274293076
+// 1407274293074
+
+        done();
+      });
+    });
 
     test('one response', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
