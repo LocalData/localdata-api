@@ -38,7 +38,10 @@ suite('Surveys', function () {
       "users": ["2"],
       "type": "pointandparcel",
       "errantStuff": 12345,
-      "responseLongevity": 5
+      "responseLongevity": 5,
+      "geoObjectSource": {
+        "type": "foo"
+      }
     } ]
   };
 
@@ -169,6 +172,12 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
+
+          assert.deepEqual(data_two.surveys[i].geoObjectSource, body.surveys[i].geoObjectSource);
+          if(data_two.surveys[i].geoObjectSource) {
+            assert.equal(data_two.surveys[i].geoObjectSource.type, body.surveys[i].geoObjectSource.type);
+          }
+
           assert.notEqual(data_two.surveys[i].errantStuff, body.surveys[i].errantStuff);
 
           body.surveys[i].should.have.property('created');
