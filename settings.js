@@ -1,6 +1,8 @@
 /*jslint node: true */
 'use strict';
 
+var url = require('url');
+
 var settings = module.exports;
 
 // Are we in debug mode?
@@ -47,6 +49,15 @@ settings.appPrefix = process.env.REMOTE_APP_PREFIX || '';
 
 // Shapefile conversion service
 settings.converterBase = process.env.CONVERTER_BASE;
+
+// Redis connection details
+var redisURL = url.parse(process.env.REDIS_URL);
+settings.redisHost = redisURL.hostname;
+settings.redisPort = redisURL.port;
+settings.redisPassword = undefined;
+if (redisURL.auth) {
+  settings.redisPassword = redisURL.auth.split(':')[1];
+}
 
 // Web server
 settings.port = process.env.PORT || 3000;
