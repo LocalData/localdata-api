@@ -34,6 +34,8 @@ settings.s3_key = process.env.S3_KEY;
 settings.s3_secret = process.env.S3_SECRET;
 settings.s3_bucket = process.env.S3_BUCKET;
 settings.s3_dir = process.env.S3_UPLOAD_DIR;
+settings.exportBucket = process.env.EXPORT_BUCKET;
+settings.exportDir = process.env.EXPORT_DIR;
 
 // Postgresql parcel server
 // Use Heroku-style primary postgresql database environment variable
