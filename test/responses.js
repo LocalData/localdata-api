@@ -422,7 +422,7 @@ suite('Responses', function () {
 
 
     test('Get all responses that match a filter', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&site=house' },
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&responses[site]=house' },
        function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
