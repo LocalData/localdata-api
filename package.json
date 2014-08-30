@@ -9,6 +9,7 @@
   "dependencies": {
     "async": ">=0.2",
     "bcrypt": ">= 0.5",
+    "bluebird": "^2.3.2",
     "connect-mongo": "~0.3.2",
     "connect-s3": "~0.2.0",
     "ejs": "~0.8.3",
