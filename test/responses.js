@@ -22,11 +22,14 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 var FILENAME = __dirname + '/data/scan.jpeg';
 
 suite('Responses', function () {
+  // Set up some fixtures
   var data_one = fixtures.makeResponses(1);
-
   var data_two = fixtures.makeResponses(2);
-
   var data_twenty = fixtures.makeResponses(20);
+
+  // Mix up data_twenty a bit for testing different areas
+  data_twenty.responses[18].responses.site = 'house';
+  data_twenty.responses[19].responses.site = 'house';
 
   suiteSetup(function (done) {
     server.run(function (error) {
@@ -401,7 +404,7 @@ suite('Responses', function () {
     });
 
     test('Get all responses for a specific collector', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&collector=' + data_twenty.responses[1].source.collector },
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=20&collector=' + data_twenty.responses[1].source.collector },
        function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
@@ -416,6 +419,24 @@ suite('Responses', function () {
         done();
       });
     });
+
+
+    test('Get all responses that match a filter', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&responses[site]=house' },
+       function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.equal(2);
+        parsed.responses[0].responses.site.should.equal('house');
+
+        done();
+      });
+    });
+
 
     test('one response', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
