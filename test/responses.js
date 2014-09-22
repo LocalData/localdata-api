@@ -191,6 +191,107 @@ suite('Responses', function () {
     });
   });
 
+
+  suite('PATCH', function () {
+    var surveyId;
+    var id, id2;
+    var ownerJar, strangerJar;
+
+    suiteSetup(function (done) {
+      // Create an account...
+      fixtures.setupUser(function(error, jar1, jar2) {
+        should.exist(jar1);
+        should.exist(jar2);
+
+        ownerJar = jar1;
+        strangerJar = jar2;
+
+        // Create a test survey owned by this user.
+        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: ownerJar}, function (error, response, body) {
+          should.not.exist(error);
+          should.exist(body);
+          surveyId = body.surveys[0].id;
+
+          // Add a response
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_two, jar: ownerJar},
+            function (error, response, body) {
+            should.not.exist(error);
+            should.exist(body);
+            id = body.responses[0].id;
+            id2 = body.responses[1].id;
+            done();
+          });
+        });
+      });
+    });
+
+    test('Patching a response', function (done) {
+
+      request.patch({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          json: {
+            foo: 'bar'
+          },
+          jar: ownerJar
+        },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(204);
+
+          // Check to make sure something was changed.
+          request.get({
+            url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+            jar: ownerJar
+          }, function (error, response) {
+            should.not.exist(error);
+            should.exist(response);
+            response.entries.foo.should.equal('bar');
+
+            done();
+          });
+        }
+      );
+    });
+
+
+    test('Patching a response we if we\'re not logged in', function (done) {
+      request.del({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        json: {
+          foo: 'bar'
+        },
+        jar: request.jar()
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(401);
+          done();
+        }
+      );
+    });
+
+    test('Patching a response not owned by this user', function (done) {
+      request.patch({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        json: {
+          foo: 'bar'
+        },
+        jar: strangerJar
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(403);
+          done();
+        }
+      );
+    });
+
+  });
+
+
   suite('DEL', function () {
     var surveyId;
     var id, id2;
