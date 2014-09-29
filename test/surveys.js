@@ -23,6 +23,7 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Just a survey",
       "location": "Detroit",
+      "timezone": "America/Detroit",
       "users": ["A", "B"]
     } ]
   };
@@ -31,6 +32,7 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Test survey 1",
       "location": "Detroit",
+      "timezone": "America/Detroit",
       "type": "parcel",
       "errantStuff": "foo"
     }, {
@@ -170,6 +172,7 @@ suite('Surveys', function () {
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
+          assert.equal(data_two.surveys[i].timezone, body.surveys[i].timezone, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
 
