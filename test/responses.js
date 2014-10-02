@@ -182,6 +182,63 @@ suite('Responses', function () {
       form.append('data', dataAsString);
     });
 
+
+    test('Posting a file without a human-readable name to /surveys/' + surveyId + '/responses', function (done) {
+      this.timeout(5000);
+      var req = request.post({url: url}, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+
+        body = JSON.parse(body);
+
+        var i;
+        for (i = 0; i < data_one.responses.length; i += 1) {
+          // Source
+          assert.deepEqual(data_one.responses[i].source, body.responses[i].source, 'Response differs from posted data');
+          // Centroid
+          assert.deepEqual(data_one.responses[i].geo_info.centroid,
+                           body.responses[i].geo_info.centroid,
+                           'Response centroid differs from posted data');
+          // Geometry
+          assert.deepEqual(data_one.responses[i].geo_info.geometry,
+                           body.responses[i].geo_info.geometry,
+                           'Response geometry differs from posted data');
+          // Human-readable name
+          data_one.responses[i].geo_info.humanReadableName.should.equal(body.responses[i].geo_info.humanReadableName);
+
+          // Object ID
+          assert.deepEqual(data_one.responses[i].parcel_id, body.responses[i].parcel_id, 'Response differs from posted data');
+          assert.deepEqual(data_one.responses[i].object_id, body.responses[i].object_id, 'Response differs from posted data');
+          // Answers
+          assert.deepEqual(data_one.responses[i].responses, body.responses[i].responses, 'Response differs from posted data');
+
+          assert.notEqual(body.responses[i].id, null, 'Response does not have an ID.');
+          assert.equal(body.responses[i].survey, surveyId,
+                       'Response does not indicate the correct survey: ' +
+                       body.responses[i].survey + ' vs ' + surveyId);
+          assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+
+          // Files
+          body.responses[i].should.have.property('files');
+          body.responses[i].files.length.should.equal(1);
+        }
+
+        done();
+      });
+
+      var form = req.form();
+
+      form.append('my_file', fs.createReadStream(FILENAME));
+
+      // REMOVE the human readable name before posting
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].geo_info.humanReadableName;
+
+      var dataAsString = JSON.stringify(data);
+      form.append('data', dataAsString);
+    });
+
+
     test('Posting bad data to /surveys/' + surveyId + '/responses', function (done) {
       request.post({url: url, json: {respnoses: {}}}, function (error, response, body) {
         should.not.exist(error);
