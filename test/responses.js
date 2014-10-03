@@ -495,6 +495,25 @@ suite('Responses', function () {
     });
 
 
+    test('Get all responses that do not have a particular response', function (done) {
+      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&responses[doesnotexist]=undefined' },
+       function (error, response, body) {
+        var i;
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.equal(20);
+        for (i = 0; i < parsed.responses.length; i++) {
+          parsed.responses[i].responses.should.not.have.property('doesnotexist');
+        }
+
+        done();
+      });
+    });
+
     test('one response', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
                   function (error, response, body) {
