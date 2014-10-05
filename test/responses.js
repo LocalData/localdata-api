@@ -251,7 +251,7 @@ suite('Responses', function () {
 
   suite('PATCH', function () {
     var surveyId;
-    var id, id2;
+    var id, id2, id3;
     var ownerJar, strangerJar;
 
     suiteSetup(function (done) {
@@ -276,7 +276,21 @@ suite('Responses', function () {
             should.exist(body);
             id = body.responses[0].id;
             id2 = body.responses[1].id;
-            done();
+
+            console.log("got responses", body.responses);
+
+            // Add another response with the same objectId as #1
+            var sameAsOne = fixtures.makeResponses(1);
+            sameAsOne.parcel_id = body.responses[0].parcel_id;
+            sameAsOne.object_id = body.responses[0].parcel_id;
+            request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: sameAsOne, jar: ownerJar},
+            function (error, response, body) {
+              should.not.exist(error);
+              should.exist(body);
+              id3 = body.responses[0].id;
+              done();
+            });
+
           });
         });
       });
@@ -311,7 +325,21 @@ suite('Responses', function () {
             parsed.should.have.property('response');
             parsed.response.responses.foo.should.equal('bar');
 
-            done();
+            // Check to make sure the other response for the same object
+            // was NOT changed
+            request.get({
+              url: BASEURL + '/surveys/' + surveyId + '/responses/' + id3,
+              jar: ownerJar
+            }, function (error, response, body) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('response');
+              should.not.exist(parsed.response.responses.foo);
+              done();
+            });
           });
         }
       );
