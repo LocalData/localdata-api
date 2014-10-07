@@ -240,6 +240,7 @@ fixtures.makeResponses = function makeResponses(count, options) {
   return data;
 };
 
+
 fixtures.clearResponses = function clearResponses(survey, done) {
   var query = {};
   if (done === undefined) {

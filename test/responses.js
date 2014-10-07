@@ -635,32 +635,114 @@ suite('Responses', function () {
       var first;
       var created;
 
-      for (i = 0; i < parsed.responses.length; i += 1) {
-        parsed.responses[i].survey.should.equal(surveyId);
-        created = Date.parse(parsed.responses[i].created);
-        if (first > created || !created) {
-          first = created
-        }
-        console.log("PARSED TIMES", created);
-      }
+      fixtures.clearResponses(surveyId, function() {
+        // Set up our first, baseline response.
+        var url = BASEURL + '/surveys/' + surveyId + '/responses';
+        var data = fixtures.makeResponses(1);
+        request.post({url: url, json: data}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          response.should.be.json;
 
+          created = Date.parse(body.responses[0].created);
+          console.log("testing with created date", created);
 
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20' },
-       function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(200);
-        response.should.be.json;
+          // Set up two more responses
+          var data = fixtures.makeResponses(2);
+          request.post({url: url, json: data}, function (error, response, body) {
 
-        var parsed = JSON.parse(body);
-        parsed.should.have.property('responses');
-        parsed.responses.length.should.equal(2);
-        parsed.responses[0].responses.site.should.equal('house');
+            var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&until=' + created;
+            request.get({url: url },
+              function(error, response, body) {
+                should.not.exist(error);
+                response.statusCode.should.equal(200);
+                response.should.be.json;
 
+                var parsed = JSON.parse(body);
+                parsed.should.have.property('responses');
+                parsed.responses.length.should.equal(1);
+                done();
+            });
+          });
+        });
+      });
+    });
 
-// 1407274293076
-// 1407274293074
+    test('Get all responses that match a date after filter', function (done) {
+      // Get the until date of the first response
+      var i;
+      var first;
+      var created;
 
-        done();
+      fixtures.clearResponses(surveyId, function() {
+        // Set up our first response.
+        var url = BASEURL + '/surveys/' + surveyId + '/responses';
+        var data = fixtures.makeResponses(1);
+        request.post({url: url, json: data}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          response.should.be.json;
+
+          created = Date.parse(body.responses[0].created);
+
+          // Set up two more responses
+          var data = fixtures.makeResponses(2);
+          request.post({url: url, json: data}, function (error, response, body) {
+
+            var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + created;
+            request.get({url: url },
+              function(error, response, body) {
+                should.not.exist(error);
+                response.statusCode.should.equal(200);
+                response.should.be.json;
+
+                var parsed = JSON.parse(body);
+                parsed.should.have.property('responses');
+                parsed.responses.length.should.equal(2);
+                done();
+            });
+          });
+        });
+      });
+    });
+
+    test('Get all responses that match an until and after filter', function (done) {
+      // Get the until date of the first response
+      var i;
+      var first;
+      var created;
+
+      fixtures.clearResponses(surveyId, function() {
+        // Set up our first response.
+        var url = BASEURL + '/surveys/' + surveyId + '/responses';
+        var data = fixtures.makeResponses(1);
+        request.post({url: url, json: data}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          response.should.be.json;
+
+          var after = Date.parse(body.responses[0].created);
+
+          // Set up two more responses
+          var data = fixtures.makeResponses(2);
+          request.post({url: url, json: data}, function (error, response, body) {
+
+            var until = Date.parse(body.responses[0].created);
+
+            var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + after + '&until=' + until;
+            request.get({url: url },
+              function(error, response, body) {
+                should.not.exist(error);
+                response.statusCode.should.equal(200);
+                response.should.be.json;
+
+                var parsed = JSON.parse(body);
+                parsed.should.have.property('responses');
+                parsed.responses.length.should.equal(1);
+                done();
+            });
+          });
+        });
       });
     });
 
