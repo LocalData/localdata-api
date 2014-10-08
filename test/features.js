@@ -44,6 +44,8 @@ function checkStandardProperties(feature) {
   feature.properties.longName.should.be.a.String;
   feature.properties.longName.should.not.be.empty;
   feature.properties.should.have.property('info');
+  feature.properties.should.have.property('centroid');
+  geojson.shouldBePoint(feature.properties.centroid);
 }
 
 function checkParcels(data) {
