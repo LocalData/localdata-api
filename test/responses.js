@@ -105,19 +105,79 @@ suite('Responses', function () {
 
     test('Posting JSON to /surveys/' + surveyId + '/responses with an info field', function (done) {
 
-      var data = fixtures.makeResponses(1, { includeInfo: true });
+      fixtures.clearResponses(surveyId, function() {
+        var data = fixtures.makeResponses(1, { includeInfo: true });
 
-      request.post({url: url, json: data}, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(201);
+        request.post({url: url, json: data}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
 
-        body.responses[0].should.have.property('info');
-        // Check equivalent content of the info fields.
-        body.responses[0].info.should.eql(data.responses[0].info);
+          console.log(body.responses[0]);
 
-        done();
+          body.responses[0].should.have.property('info');
+          // Check equivalent content of the info fields.
+          assert.deepEqual(body.responses[0].info, data.responses[0].info);
+
+          done();
+        });
       });
     });
+
+
+    test('Posting JSON to /surveys/' + surveyId + '/responses with an info field after not having one', function (done) {
+      // Because we upsert response.enries and don't modify the original response
+      // properties, adding an info field to a response that doesn't have one
+      // should result in no change.
+
+      fixtures.clearResponses(surveyId, function() {
+        var data = fixtures.makeResponses(1);
+
+        request.post({url: url, json: data}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          body.responses[0].should.not.have.property('info');
+
+          // Now add an info field.
+          // It shouldn't change the existing results.
+          var data = fixtures.makeResponses(1, { includeInfo: true });
+          request.post({url: url, json: data}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            body.responses[0].should.not.have.property('info');
+            done();
+          });
+        });
+      });
+    });
+
+
+    test('Posting JSON to /surveys/' + surveyId + '/responses without an info field does not remove existing data', function (done) {
+      // Because we upsert response.enries and don't modify the original response
+      // properties, removing an info field from a response that already has one
+      // should result in no change -- and especially no data loss.
+
+      fixtures.clearResponses(surveyId, function() {
+        var data = fixtures.makeResponses(1, { includeInfo: true });
+
+        request.post({url: url, json: data}, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          body.responses[0].should.have.property('info');
+
+          // Now add an info field.
+          // It shouldn't change the existing results.
+          var data2 = fixtures.makeResponses(1);
+          request.post({url: url, json: data2}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            body.responses[0].should.have.property('info');
+            assert.deepEqual(body.responses[0].info, data.responses[0].info);
+            done();
+          });
+        });
+      });
+    });
+
 
     test('Posting JSON to /surveys/' + surveyId + '/responses without a responses object', function (done) {
 
