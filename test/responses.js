@@ -686,7 +686,7 @@ suite('Responses', function () {
         var data = fixtures.makeResponses(2);
         request.post({url: url, json: data}, function (error, response, body) {
 
-          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + created;
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + created.getTime();
           request.get({url: url },
             function(error, response, body) {
               should.not.exist(error);
