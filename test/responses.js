@@ -680,7 +680,7 @@ suite('Responses', function () {
         response.statusCode.should.equal(201);
         response.should.be.json;
 
-        created = Date.parse(body.responses[0].created);
+        created = new Date(body.responses[0].created);
 
         // Set up two more responses
         var data = fixtures.makeResponses(2);
@@ -716,15 +716,15 @@ suite('Responses', function () {
         response.statusCode.should.equal(201);
         response.should.be.json;
 
-        var after = Date.parse(body.responses[0].created);
+        var after = new Date(body.responses[0].created);
 
         // Set up two more responses
         var data = fixtures.makeResponses(2);
         request.post({url: url, json: data}, function (error, response, body) {
 
-          var until = Date.parse(body.responses[0].created);
+          var until = new Date(body.responses[0].created);
 
-          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + after + '&until=' + until;
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + after.getTime() + '&until=' + until.getTime();
           request.get({url: url },
             function(error, response, body) {
               should.not.exist(error);
