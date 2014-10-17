@@ -26,6 +26,8 @@ console.log = function (str) {
     if (str.indexOf('info') !== 0) {
       log.apply(console, arguments);
     }
+  } else {
+    log.apply(console, arguments);
   }
 };
 
