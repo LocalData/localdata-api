@@ -138,7 +138,11 @@ suite('Surveys', function () {
           survey.id.should.equal(surveyId);
 
           // Survey should not have users property
-          survey.should.not.have.property('users');
+          // It's OK for survey to contain a property that's been set to
+          // undefined. We shouldn't really be iterating over the own,
+          // enumerable properties of a survey. And JSON.stringify will produce
+          // the same output as if we had used delete on the property.
+          should.equal(survey.users, undefined);
 
           // Try with a non-logged-in user
           Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, survey) {
