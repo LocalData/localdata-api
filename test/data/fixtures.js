@@ -255,4 +255,4 @@ fixtures.clearResponses = function clearResponses(survey, done) {
     }
     done();
   });
-}
+};
