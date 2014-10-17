@@ -19,6 +19,16 @@ var proxy = new httpProxy.HttpProxy({
   }
 });
 
+// Suppress info logs, so we can focus on test progress and errors.
+var log = console.log;
+console.log = function (str) {
+  if (typeof str === 'string') {
+    if (str.indexOf('info') !== 0) {
+      log.apply(console, arguments);
+    }
+  }
+};
+
 var router;
 module.exports = {
   run: function start(done) {
