@@ -24,11 +24,13 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 // done is called with done(error, parsed) for consistency.
 function getJSON(url, done) {
   request({
-    url: BASEURL + url
+    url: BASEURL + url,
+    jar: false
   }, function (error, response, body) {
     should.not.exist(error);
     response.statusCode.should.equal(200);
     response.should.be.json;
+    response.headers.should.not.have.property('set-cookie');
     done(error, JSON.parse(body));
   });
 }

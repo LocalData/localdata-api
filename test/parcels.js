@@ -74,11 +74,13 @@ suite('Parcels', function () {
       // lower-left longitude, lower-left latitude, upper-right longitude,
       // upper-right latitude
       request({
-        url: BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34'
+        url: BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.length.should.be.above(40);
@@ -95,11 +97,13 @@ suite('Parcels', function () {
       // lower-left longitude, lower-left latitude, upper-right longitude,
       // upper-right latitude
       request({
-        url: BASEURL + '/parcels.geojson?bbox=-83.0805,42.336,-83.08,42.34'
+        url: BASEURL + '/parcels.geojson?bbox=-83.0805,42.336,-83.08,42.34',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         shouldBeFeatureCollection(parsed);
@@ -137,11 +141,13 @@ suite('Parcels', function () {
 
     test('Get parcels at a point', function (done) {
       request({
-        url: BASEURL + '/parcels?lon=-83.08076&lat=42.338'
+        url: BASEURL + '/parcels?lon=-83.08076&lat=42.338',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         // Expect an array, since condos could have parcels that overlap.
@@ -158,12 +164,14 @@ suite('Parcels', function () {
 
     test('Do not allow bounding box with lat-lon query', function (done) {
       request({
-        url: BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34&lon=-83.08076&lat=42.338'
+        url: BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34&lon=-83.08076&lat=42.338',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         // We should get "400 Bad Request" if we specify both a bounding box
         // and a point.
         response.statusCode.should.equal(400);
+        response.headers.should.not.have.property('set-cookie');
 
         done();
       });
@@ -173,11 +181,13 @@ suite('Parcels', function () {
       // lon=105.436096, lat=-6.152738 is in the water, in Indonesia, so we
       // should not find any parcels.
       request({
-        url: BASEURL + '/parcels?lon=105.436096&lat=-6.152738'
+        url: BASEURL + '/parcels?lon=105.436096&lat=-6.152738',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.be.an.instanceOf(Array);
@@ -191,11 +201,13 @@ suite('Parcels', function () {
       // bounding box 105.43,-6.154,105.44,-6.144 is in the water, in
       // Indonesia, so we should not find any parcels.
       request({
-        url: BASEURL + '/parcels?bbox=105.43,-6.154,105.44,-6.144'
+        url: BASEURL + '/parcels?bbox=105.43,-6.154,105.44,-6.144',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.be.an.instanceOf(Array);
@@ -211,11 +223,13 @@ suite('Parcels', function () {
       // should receive a status code 304 response
       var url = BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34';
       request({
-        url: url
+        url: url,
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var etag = response.headers.etag;
         request({

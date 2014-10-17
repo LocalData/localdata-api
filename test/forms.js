@@ -90,11 +90,14 @@ suite('Forms', function () {
     });
 
     test('Get all forms for a survey', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/forms'},
-                  function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/forms',
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('forms');
@@ -120,11 +123,14 @@ suite('Forms', function () {
     });
 
     test('Get a form by ID', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/forms/' + id},
-                  function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/forms/' + id,
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('form');
@@ -139,11 +145,14 @@ suite('Forms', function () {
 
     test('Get forms by parcel ID', function (done) {
       var parcelId = '03001529.';
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/forms?parcel=' + parcelId},
-                  function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/forms?parcel=' + parcelId,
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('forms');

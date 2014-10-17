@@ -339,9 +339,13 @@ suite('Surveys', function () {
 
 
     test('Getting a survey with no responses', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyTwo.id,
+        jar: false
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
 
@@ -363,9 +367,13 @@ suite('Surveys', function () {
 
 
     test('Getting a survey with responses', function (done) {
-      request.get({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + id,
+        jar: false
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
 
@@ -441,9 +449,13 @@ suite('Surveys', function () {
       ], function () {
         // Ok, now we can calculate the stats.
         var url = BASEURL + '/surveys/' + id + '/stats';
-        request.get({url: url}, function (error, response, body) {
+        request.get({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
 
           response = JSON.parse(body);
 
@@ -492,9 +504,13 @@ suite('Surveys', function () {
 
         var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
 
-        request.get({url: url}, function (error, response, body) {
+        request.get({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
 
           response = JSON.parse(body);
 
@@ -544,9 +560,13 @@ suite('Surveys', function () {
 
         var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
 
-        request.get({url: url}, function (error, response, body) {
+        request.get({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
 
           response = JSON.parse(body);
           should.exist(response.stats);

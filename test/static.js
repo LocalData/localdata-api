@@ -45,11 +45,13 @@ suite('Static', function () {
 
     test('base without slash', function (done) {
       request({
-        url: BASEURL + '/mobile'
+        url: BASEURL + '/mobile',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+        response.headers.should.not.have.property('set-cookie');
 
         var hash = crypto.createHash('md5');
         hash.update(body);
@@ -61,11 +63,13 @@ suite('Static', function () {
 
     test('base with slash', function (done) {
       request({
-        url: BASEURL + '/mobile/'
+        url: BASEURL + '/mobile/',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+        response.headers.should.not.have.property('set-cookie');
 
         var hash = crypto.createHash('md5');
         hash.update(body);
@@ -77,11 +81,13 @@ suite('Static', function () {
 
     test('index.html', function (done) {
       request({
-        url: BASEURL + '/mobile/index.html'
+        url: BASEURL + '/mobile/index.html',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+        response.headers.should.not.have.property('set-cookie');
 
         var hash = crypto.createHash('md5');
         hash.update(body);
@@ -111,11 +117,13 @@ suite('Static', function () {
 
     test('base without slash', function (done) {
       request({
-        url: BASEURL
+        url: BASEURL,
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+        response.headers.should.not.have.property('set-cookie');
 
         var hash = crypto.createHash('md5');
         hash.update(body);
@@ -127,11 +135,13 @@ suite('Static', function () {
 
     test('base with slash', function (done) {
       request({
-        url: BASEURL + '/'
+        url: BASEURL + '/',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+        response.headers.should.not.have.property('set-cookie');
 
         var hash = crypto.createHash('md5');
         hash.update(body);
@@ -143,11 +153,13 @@ suite('Static', function () {
 
     test('index.html', function (done) {
       request({
-        url: BASEURL + '/index.html'
+        url: BASEURL + '/index.html',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.html;
+        response.headers.should.not.have.property('set-cookie');
 
         var hash = crypto.createHash('md5');
         hash.update(body);
