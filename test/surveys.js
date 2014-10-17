@@ -325,6 +325,19 @@ suite('Surveys', function () {
     });
 
 
+    test('Get a survey that does not exist', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/doesnotexist',
+        jar: false
+      }, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 404, 'Status should be 404. Status is ' + response.statusCode);
+
+        done();
+      });
+    });
+
+
     test('Getting a survey with no responses', function (done) {
       request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
         assert.ifError(error);
