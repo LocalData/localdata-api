@@ -33,7 +33,7 @@ module.exports = {
       }, function (req, res) {
         proxy.proxyRequest(req, res);
       }).listen(settings.testSecurePort, function (error) {
-        console.log('Listening for HTTPS on ' + settings.testSecurePort);
+        console.log('info at=test_https_router event=listening port=' + settings.testSecurePort);
         done(error);
       });
     });
@@ -42,4 +42,4 @@ module.exports = {
     router.close();
     server.stop(done);
   }
-}
+};

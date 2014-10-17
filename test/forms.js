@@ -84,7 +84,6 @@ suite('Forms', function () {
         jar: userAJar
       }, function (error, response, body) {
         if (error) { return done(error); }
-        console.log(body);
         id = body.forms[0].id;
         done();
       });

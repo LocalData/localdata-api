@@ -112,8 +112,6 @@ suite('Responses', function () {
           should.not.exist(error);
           response.statusCode.should.equal(201);
 
-          console.log(body.responses[0]);
-
           body.responses[0].should.have.property('info');
           // Check equivalent content of the info fields.
           assert.deepEqual(body.responses[0].info, data.responses[0].info);
@@ -336,8 +334,6 @@ suite('Responses', function () {
             should.exist(body);
             id = body.responses[0].id;
             id2 = body.responses[1].id;
-
-            console.log("got responses", body.responses);
 
             // Add another response with the same objectId as #1
             var sameAsOne = fixtures.makeResponses(1);
@@ -733,7 +729,6 @@ suite('Responses', function () {
       var center = data_twenty.responses[0].geo_info.centroid;
       var bbox = [center[0] - 0.1, center[1] - 0.1, center[0] + 0.1, center[1] + 0.1];
       var url = BASEURL + '/surveys/' + surveyId + '/responses?bbox=' + bbox.join(',');
-      console.log(url);
       request.get({url: url}, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
