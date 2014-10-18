@@ -296,6 +296,134 @@ suite('Responses', function () {
       form.append('data', dataAsString);
     });
 
+    test('Posting a file with no human-readable name and no object_id', function (done) {
+      // Post initial response/file
+      var req = request.post({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
+
+        done();
+      });
+
+      var form = req.form();
+      form.append('my_file', fs.createReadStream(FILENAME));
+
+      // Remove the human readable name before posting
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].geo_info.humanReadableName;
+
+      // Remove the object_id before posting
+      delete data.responses[0].object_id;
+
+      form.append('data', JSON.stringify(data));
+    });
+
+    test('Posting two files of the same feature', function (done) {
+      var name1;
+      var name2;
+
+      // Post initial response/file
+      var req1 = request.post({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        body = JSON.parse(body);
+        body.should.have.property('responses');
+        body.responses.should.have.length(1);
+
+        var orig = data_one.responses[0];
+        var received = body.responses[0];
+
+        // Source
+        received.source.should.eql(orig.source);
+        // Centroid
+        received.geo_info.centroid.should.eql(orig.geo_info.centroid);
+        // Geometry
+        received.geo_info.geometry.should.eql(orig.geo_info.geometry);
+        // Human-readable name
+        received.geo_info.humanReadableName.should.eql(orig.geo_info.humanReadableName);
+
+        // Object ID
+        received.parcel_id.should.eql(orig.parcel_id);
+        received.object_id.should.eql(orig.object_id);
+        // Answers
+        received.responses.should.eql(orig.responses);
+
+        received.should.have.property('id');
+        received.should.have.property('survey');
+        received.survey.should.equal(surveyId);
+        received.should.have.property('created');
+
+        // Files
+        received.should.have.property('files');
+        received.files.length.should.equal(1);
+
+        name1 = received.files[0];
+
+        // Post duplicate response/file.
+        var req2 = request.post({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+
+          body = JSON.parse(body);
+          body.should.have.property('responses');
+          body.responses.should.have.length(1);
+
+          var orig = data_one.responses[0];
+          var received = body.responses[0];
+
+          // Source
+          received.source.should.eql(orig.source);
+          // Centroid
+          received.geo_info.centroid.should.eql(orig.geo_info.centroid);
+          // Geometry
+          received.geo_info.geometry.should.eql(orig.geo_info.geometry);
+          // Human-readable name
+          received.geo_info.humanReadableName.should.eql(orig.geo_info.humanReadableName);
+
+          // Object ID
+          received.parcel_id.should.eql(orig.parcel_id);
+          received.object_id.should.eql(orig.object_id);
+          // Answers
+          received.responses.should.eql(orig.responses);
+
+          received.should.have.property('id');
+          received.should.have.property('survey');
+          received.survey.should.equal(surveyId);
+          received.should.have.property('created');
+
+          // Files
+          received.should.have.property('files');
+          received.files.length.should.equal(1);
+
+          name2 = received.files[0];
+
+          name1.should.not.equal(name2);
+
+          done();
+        });
+
+        var form2 = req2.form();
+        form2.append('my_file', fs.createReadStream(FILENAME));
+        var data2 = JSON.stringify(data_one);
+        form2.append('data', data2);
+      });
+
+      var form1 = req1.form();
+      form1.append('my_file', fs.createReadStream(FILENAME));
+      var data1 = JSON.stringify(data_one);
+      form1.append('data', data1);
+    });
+
 
     test('Posting bad data to /surveys/' + surveyId + '/responses', function (done) {
       request.post({url: url, json: {respnoses: {}}}, function (error, response, body) {
