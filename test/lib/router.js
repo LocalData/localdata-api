@@ -19,6 +19,18 @@ var proxy = new httpProxy.HttpProxy({
   }
 });
 
+// Suppress info logs, so we can focus on test progress and errors.
+var log = console.log;
+console.log = function (str) {
+  if (typeof str === 'string') {
+    if (str.indexOf('info') !== 0) {
+      log.apply(console, arguments);
+    }
+  } else {
+    log.apply(console, arguments);
+  }
+};
+
 var router;
 module.exports = {
   run: function start(done) {
@@ -33,7 +45,7 @@ module.exports = {
       }, function (req, res) {
         proxy.proxyRequest(req, res);
       }).listen(settings.testSecurePort, function (error) {
-        console.log('Listening for HTTPS on ' + settings.testSecurePort);
+        console.log('info at=test_https_router event=listening port=' + settings.testSecurePort);
         done(error);
       });
     });
@@ -42,4 +54,4 @@ module.exports = {
     router.close();
     server.stop(done);
   }
-}
+};

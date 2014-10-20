@@ -219,11 +219,6 @@ fixtures.makeResponses = function makeResponses(count, options) {
       };
     }
 
-    // Randomly delete the condition to simulate no response
-    if (Math.round(Math.random()))  {
-      delete response.responses['condition-1'];
-    }
-
     return response;
   }
 

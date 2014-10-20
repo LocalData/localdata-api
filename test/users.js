@@ -44,36 +44,6 @@ suite('Users -', function () {
   };
 
   /**
-   * Remove all results from a collection
-   * @param  {String}   collection Name of the collection
-   * @param  {Function} done       Callback, accepts error, response
-   */
-  var clearCollection = function(collectionName, done) {
-    var db = new mongo.Db(settings.mongo_db, new mongo.Server(settings.mongo_host,
-                                                          settings.mongo_port,
-                                                          {}), { w: 1, safe: true });
-
-    db.open(function() {
-      db.collection(collectionName, function(error, collection) {
-        if(error) {
-          console.log("BIG ERROR");
-          console.log(error);
-          assert(false);
-          done(error);
-        }
-
-        // Remove all the things!
-        collection.remove({}, function(error, response){
-          should.not.exist(error);
-          done(error, response);
-        });
-      });
-
-    });
-  };
-
-
-  /**
    * Log out the user, clear the user collection, and create a test user
    * @param  {Function} done           Params (error, response)
    */
@@ -82,7 +52,7 @@ suite('Users -', function () {
     request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
       should.not.exist(error);
       // Clear out the users
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
         // Create a new user
         request.post({url: USER_URL, json: generateUser()}, function (error, response, body) {
@@ -110,7 +80,7 @@ suite('Users -', function () {
   suite('finding, creating and editing without the API:', function () {
 
     test('create a user', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
 
         var userData = generateUser();
@@ -127,7 +97,7 @@ suite('Users -', function () {
 
 
     test('users must have an email', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
 
         (new User({"name": "No Email", "password": "luggage"})).save(function (error, user) {
@@ -139,7 +109,7 @@ suite('Users -', function () {
     });
 
     test('users must be created with a password', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
         User.create({"name": "No Password", "email": "matth@localdata.com"}, function(error, user){
           should.exist(error);
@@ -150,7 +120,7 @@ suite('Users -', function () {
     });
 
     test('user emails must be unique', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
         User.create(generateUser(), function(error, userOne) {
           // console.log("First user ", userOne);
@@ -164,7 +134,7 @@ suite('Users -', function () {
     });
 
     test('update a user name and email', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
         User.create(generateUser(), function(error, user) {
           var tempId = user._id;
@@ -172,14 +142,10 @@ suite('Users -', function () {
           user.email = "prashant@codeforamerica.org";
 
           user.save(function (error) {
-            // console.log(tempId);
-            console.log("first user" , user);
-
             should.not.exist(error);
 
             User.findOne({"email": "prashant@codeforamerica.org"}, function (error, user) {
               // Make sure the old and the new have the same Id
-              console.log("Found this user", user);
               assert.equal(String(tempId), String(user._id));
               assert.equal(user.name, "Prashant");
               done();
@@ -211,7 +177,7 @@ suite('Users -', function () {
     });
 
     test('Create a user via API', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         should.not.exist(error);
         request.post({url: USER_URL, json: generateUser()}, function (error, response, body) {
           should.not.exist(error);
@@ -479,7 +445,7 @@ suite('Users -', function () {
 
 
     test('Try to get details about the current user via API when not logged in', function (done) {
-      clearCollection('usersCollection', function(error, response){
+      fixtures.clearUsers(function (error) {
         // First, let's log out
         request.get({url: BASE_LOGOUT_URL}, function(error, response, body) {
           request.get({url: HTTP_USER_URL}, function(error, response, body) {
