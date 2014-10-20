@@ -424,20 +424,6 @@ suite('Surveys', function () {
 
           // Set the object_id of a response so we can keep an eye on it
           responses.responses[0].object_id = 'myhouse';
-
-          request.post({url: url, json: responses}, function (error, response, body) {
-            should.not.exist(error);
-            response.statusCode.should.equal(201);
-            next(error);
-          });
-        },
-        function (next) {
-          // Add another response that's more recent.
-          var responses = fixtures.makeResponses(1);
-          var url = BASEURL + '/surveys/' + id + '/responses';
-
-          // Set the object_id of the response so we can keep an eye on it
-          responses.responses[0].object_id = 'myhouse';
           responses.responses[0].responses['new-stat'] = 'yes';
 
           request.post({url: url, json: responses}, function (error, response, body) {
@@ -461,10 +447,10 @@ suite('Surveys', function () {
 
           should.exist(response.stats);
           should.exist(response.stats.Collectors);
-          response.stats.Collectors['Name'].should.equal(5);
+          response.stats.Collectors.Name.should.equal(5);
           response.stats.site['parking-lot'].should.equal(5);
           response.stats['condition-1']['no response'].should.be.above(0);
-          response.stats['new-stat']['yes'].should.equal(1);
+          response.stats['new-stat'].yes.should.equal(1);
 
           done();
         });
@@ -516,12 +502,103 @@ suite('Surveys', function () {
 
           should.exist(response.stats);
           should.exist(response.stats.Collectors);
-          response.stats.Collectors['Name'].should.equal(5);
+          response.stats.Collectors.Name.should.equal(5);
           response.stats.site['parking-lot'].should.equal(5);
           response.stats['condition-1']['no response'].should.be.above(0);
 
           done();
         });
+      });
+
+    }); // end getting stats
+
+
+    test('Getting stats within a time frame', function (done) {
+      var firstDate;
+      var secondDate;
+      async.waterfall([
+        // First, clear the responses for this survey.
+        function (next) {
+          fixtures.clearResponses(id, next);
+        },
+
+        // Then, add some responses.
+        function (next) {
+          var responses = fixtures.makeResponses(10);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            firstDate = new Date(body.responses[3].created);
+            secondDate = new Date(body.responses[8].created);
+            console.log("First pass, created", body);
+            next(error);
+          });
+        },
+
+        // Test responses before a time
+        function(next) {
+          var url = BASEURL + '/surveys/' + id + '/stats?until=' + firstDate.getTime();
+          console.log("Using url", url);
+          request.get({url: url}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
+
+            response = JSON.parse(body);
+
+            should.exist(response.stats);
+            should.exist(response.stats.Collectors);
+            response.stats.Collectors.Name.should.equal(4);
+            response.stats.site['parking-lot'].should.equal(4);
+            response.stats['condition-1']['no response'].should.be.above(0);
+
+            next(error);
+          });
+        },
+
+        // Test responses after a time
+        function(next) {
+          var url = BASEURL + '/surveys/' + id + '/stats?after=' + firstDate.getTime();
+          console.log("Using url", url);
+          request.get({url: url}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
+
+            response = JSON.parse(body);
+
+            should.exist(response.stats);
+            should.exist(response.stats.Collectors);
+            response.stats.Collectors.Name.should.equal(6);
+            response.stats.site['parking-lot'].should.equal(6);
+
+            next(error);
+          });
+        },
+
+        // Test responses between a time
+        function(next) {
+          var url = BASEURL + '/surveys/' + id + '/stats?after=' + firstDate.getTime() + '&until=' + secondDate.getTime();
+          console.log("Using url", url);
+          request.get({url: url}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
+
+            response = JSON.parse(body);
+
+            should.exist(response.stats);
+            should.exist(response.stats.Collectors);
+            response.stats.Collectors.Name.should.equal(5);
+            response.stats.site['parking-lot'].should.equal(5);
+
+            next(error);
+          });
+        }
+
+      ], function () {
+
+        done();
+
       });
 
     }); // end getting stats

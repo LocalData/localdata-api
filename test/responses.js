@@ -703,10 +703,12 @@ suite('Responses', function () {
     var ownerJar;
     var strangerJar;
 
-    suiteSetup(function (done) {
+    setup(function (done) {
+
       async.series([
         // Clear existing responses.
         fixtures.clearResponses.bind(fixtures, surveyId),
+
         // Create test users.
         function (next) {
           fixtures.setupUser(function (error, jar1, jar2) {
@@ -715,6 +717,7 @@ suite('Responses', function () {
             next();
           });
         },
+
         // Create a test survey owned by one of the users.
         function (next) {
           request.post({
@@ -727,6 +730,7 @@ suite('Responses', function () {
             next();
           });
         },
+
         // Add responses.
         function (next) {
           request.post({
@@ -876,6 +880,115 @@ suite('Responses', function () {
       });
     });
 
+    test('Get all responses that match a date until filter', function (done) {
+      // Get the until date of the first response
+      var i;
+      var first;
+      var created;
+
+      // Set up our first, baseline response.
+      var url = BASEURL + '/surveys/' + surveyId + '/responses';
+      var data = fixtures.makeResponses(1);
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        response.should.be.json;
+
+        created = Date.parse(body.responses[0].created);
+
+        // Set up two more responses
+        var data = fixtures.makeResponses(2);
+        request.post({url: url, json: data}, function (error, response, body) {
+
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&until=' + created;
+          request.get({url: url },
+            function(error, response, body) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('responses');
+              parsed.responses.length.should.equal(21);
+              done();
+          });
+        });
+      });
+    });
+
+    test('Get all responses that match a date after filter', function (done) {
+      // Get the until date of the first response
+      var i;
+      var first;
+      var created;
+
+      // Set up our first response.
+      var url = BASEURL + '/surveys/' + surveyId + '/responses';
+      var data = fixtures.makeResponses(1);
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        response.should.be.json;
+
+        created = new Date(body.responses[0].created);
+
+        // Set up two more responses
+        var data = fixtures.makeResponses(2);
+        request.post({url: url, json: data}, function (error, response, body) {
+
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + created.getTime();
+          request.get({url: url },
+            function(error, response, body) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('responses');
+              parsed.responses.length.should.equal(2);
+              done();
+          });
+        });
+      });
+    });
+
+    test('Get all responses that match an until and after filter', function (done) {
+      // Get the until date of the first response
+      var i;
+      var first;
+      var created;
+
+      // Set up our first response.
+      var url = BASEURL + '/surveys/' + surveyId + '/responses';
+      var data = fixtures.makeResponses(1);
+      request.post({url: url, json: data}, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+        response.should.be.json;
+
+        var after = new Date(body.responses[0].created);
+
+        // Set up two more responses
+        var data = fixtures.makeResponses(2);
+        request.post({url: url, json: data}, function (error, response, body) {
+
+          var until = new Date(body.responses[0].created);
+
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + after.getTime() + '&until=' + until.getTime();
+          request.get({url: url },
+            function(error, response, body) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('responses');
+              parsed.responses.length.should.equal(1);
+              done();
+          });
+        });
+      });
+    });
 
     test('Get all responses that do not have a particular response', function (done) {
       request.get({
