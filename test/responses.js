@@ -703,10 +703,12 @@ suite('Responses', function () {
     var ownerJar;
     var strangerJar;
 
-    beforeEach(function (done) {
+    setup(function (done) {
+
       async.series([
         // Clear existing responses.
         fixtures.clearResponses.bind(fixtures, surveyId),
+
         // Create test users.
         function (next) {
           fixtures.setupUser(function (error, jar1, jar2) {
@@ -715,6 +717,7 @@ suite('Responses', function () {
             next();
           });
         },
+
         // Create a test survey owned by one of the users.
         function (next) {
           request.post({
@@ -727,6 +730,7 @@ suite('Responses', function () {
             next();
           });
         },
+
         // Add responses.
         function (next) {
           request.post({
@@ -891,7 +895,6 @@ suite('Responses', function () {
         response.should.be.json;
 
         created = Date.parse(body.responses[0].created);
-        console.log("testing with created date", created);
 
         // Set up two more responses
         var data = fixtures.makeResponses(2);

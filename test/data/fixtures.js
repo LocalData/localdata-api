@@ -131,8 +131,6 @@ fixtures.setupUser = function(callback) {
           callback(error, null);
         }
 
-        console.log("WTF", error);
-
         idA = body._id;
 
         // Create a second user

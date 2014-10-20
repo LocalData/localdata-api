@@ -424,20 +424,6 @@ suite('Surveys', function () {
 
           // Set the object_id of a response so we can keep an eye on it
           responses.responses[0].object_id = 'myhouse';
-
-          request.post({url: url, json: responses}, function (error, response, body) {
-            should.not.exist(error);
-            response.statusCode.should.equal(201);
-            next(error);
-          });
-        },
-        function (next) {
-          // Add another response that's more recent.
-          var responses = fixtures.makeResponses(1);
-          var url = BASEURL + '/surveys/' + id + '/responses';
-
-          // Set the object_id of the response so we can keep an eye on it
-          responses.responses[0].object_id = 'myhouse';
           responses.responses[0].responses['new-stat'] = 'yes';
 
           request.post({url: url, json: responses}, function (error, response, body) {
@@ -585,7 +571,6 @@ suite('Surveys', function () {
             should.exist(response.stats.Collectors);
             response.stats.Collectors.Name.should.equal(6);
             response.stats.site['parking-lot'].should.equal(6);
-            response.stats['condition-1']['no response'].should.be.above(0);
 
             next(error);
           });
@@ -605,7 +590,6 @@ suite('Surveys', function () {
             should.exist(response.stats.Collectors);
             response.stats.Collectors.Name.should.equal(5);
             response.stats.site['parking-lot'].should.equal(5);
-            response.stats['condition-1']['no response'].should.be.above(0);
 
             next(error);
           });
