@@ -883,8 +883,7 @@ suite('Responses', function () {
     test('Get all responses that match a date until filter', function (done) {
       // Get the until date of the first response
       var i;
-      var first;
-      var created;
+      var cutoff;
 
       // Set up our first, baseline response.
       var url = BASEURL + '/surveys/' + surveyId + '/responses';
@@ -894,13 +893,13 @@ suite('Responses', function () {
         response.statusCode.should.equal(201);
         response.should.be.json;
 
-        created = Date.parse(body.responses[0].created);
+        cutoff = Date.parse(body.responses[0].created);
 
         // Set up two more responses
         var data = fixtures.makeResponses(2);
         request.post({url: url, json: data}, function (error, response, body) {
 
-          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&until=' + created;
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=10000&until=' + cutoff;
           request.get({url: url },
             function(error, response, body) {
               should.not.exist(error);
@@ -908,8 +907,15 @@ suite('Responses', function () {
               response.should.be.json;
 
               var parsed = JSON.parse(body);
+
               parsed.should.have.property('responses');
               parsed.responses.length.should.equal(21);
+
+              for(i = 0; i < parsed.responses.length; i++) {
+                var date = new Date(parsed.responses[i].created);
+                date.should.be.within(0, cutoff);
+              }
+
               done();
           });
         });
@@ -919,8 +925,7 @@ suite('Responses', function () {
     test('Get all responses that match a date after filter', function (done) {
       // Get the until date of the first response
       var i;
-      var first;
-      var created;
+      var cutoff;
 
       // Set up our first response.
       var url = BASEURL + '/surveys/' + surveyId + '/responses';
@@ -930,13 +935,13 @@ suite('Responses', function () {
         response.statusCode.should.equal(201);
         response.should.be.json;
 
-        created = new Date(body.responses[0].created);
+        cutoff = new Date(body.responses[0].created);
 
         // Set up two more responses
         var data = fixtures.makeResponses(2);
         request.post({url: url, json: data}, function (error, response, body) {
 
-          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + created.getTime();
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=10000&after=' + cutoff.getTime();
           request.get({url: url },
             function(error, response, body) {
               should.not.exist(error);
@@ -946,6 +951,11 @@ suite('Responses', function () {
               var parsed = JSON.parse(body);
               parsed.should.have.property('responses');
               parsed.responses.length.should.equal(2);
+
+              for(i = 0; i < parsed.responses.length; i++) {
+                var date = new Date(parsed.responses[i].created);
+                date.should.be.above(cutoff);
+              }
               done();
           });
         });
@@ -955,8 +965,6 @@ suite('Responses', function () {
     test('Get all responses that match an until and after filter', function (done) {
       // Get the until date of the first response
       var i;
-      var first;
-      var created;
 
       // Set up our first response.
       var url = BASEURL + '/surveys/' + surveyId + '/responses';
@@ -974,7 +982,7 @@ suite('Responses', function () {
 
           var until = new Date(body.responses[0].created);
 
-          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&after=' + after.getTime() + '&until=' + until.getTime();
+          var url = BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=10000&after=' + after.getTime() + '&until=' + until.getTime();
           request.get({url: url },
             function(error, response, body) {
               should.not.exist(error);
@@ -984,6 +992,11 @@ suite('Responses', function () {
               var parsed = JSON.parse(body);
               parsed.should.have.property('responses');
               parsed.responses.length.should.equal(1);
+
+              var date = new Date(parsed.responses[0].created);
+              date.should.be.above(after);
+              date.should.be.within(after, until);
+
               done();
           });
         });
