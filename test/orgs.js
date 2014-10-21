@@ -211,10 +211,12 @@ suite('Orgs', function () {
     test('list all orgs anonymously', function (done) {
       // We should get back the three orgs we created.
       request.get({
-        url: BASEURL + '/orgs'
+        url: BASEURL + '/orgs',
+        jar: false
       }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('orgs');

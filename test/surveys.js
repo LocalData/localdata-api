@@ -23,6 +23,7 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Just a survey",
       "location": "Detroit",
+      "timezone": "America/Detroit",
       "users": ["A", "B"]
     } ]
   };
@@ -31,6 +32,7 @@ suite('Surveys', function () {
     "surveys" : [ {
       "name": "Test survey 1",
       "location": "Detroit",
+      "timezone": "America/Detroit",
       "type": "parcel",
       "errantStuff": "foo"
     }, {
@@ -136,7 +138,11 @@ suite('Surveys', function () {
           survey.id.should.equal(surveyId);
 
           // Survey should not have users property
-          survey.should.not.have.property('users');
+          // It's OK for survey to contain a property that's been set to
+          // undefined. We shouldn't really be iterating over the own,
+          // enumerable properties of a survey. And JSON.stringify will produce
+          // the same output as if we had used delete on the property.
+          should.equal(survey.users, undefined);
 
           // Try with a non-logged-in user
           Survey.findIfOwnedByUser(surveyId, 'nobody', function(error, survey) {
@@ -170,6 +176,7 @@ suite('Surveys', function () {
 
           assert.equal(data_two.surveys[i].name, body.surveys[i].name, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].location, body.surveys[i].location, 'Response differs from posted data');
+          assert.equal(data_two.surveys[i].timezone, body.surveys[i].timezone, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
 
@@ -318,10 +325,27 @@ suite('Surveys', function () {
     });
 
 
+    test('Get a survey that does not exist', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/doesnotexist',
+        jar: false
+      }, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 404, 'Status should be 404. Status is ' + response.statusCode);
+
+        done();
+      });
+    });
+
+
     test('Getting a survey with no responses', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyTwo.id}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyTwo.id,
+        jar: false
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
 
@@ -343,9 +367,13 @@ suite('Surveys', function () {
 
 
     test('Getting a survey with responses', function (done) {
-      request.get({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + id,
+        jar: false
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 200, 'Status should be 200. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
 
@@ -421,9 +449,13 @@ suite('Surveys', function () {
       ], function () {
         // Ok, now we can calculate the stats.
         var url = BASEURL + '/surveys/' + id + '/stats';
-        request.get({url: url}, function (error, response, body) {
+        request.get({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
 
           response = JSON.parse(body);
 
@@ -472,9 +504,13 @@ suite('Surveys', function () {
 
         var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
 
-        request.get({url: url}, function (error, response, body) {
+        request.get({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
 
           response = JSON.parse(body);
 
@@ -524,9 +560,13 @@ suite('Surveys', function () {
 
         var url = BASEURL + '/surveys/' + id + '/stats?intersects=' + polygonString;
 
-        request.get({url: url}, function (error, response, body) {
+        request.get({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
           should.not.exist(error);
           response.statusCode.should.equal(200);
+          response.headers.should.not.have.property('set-cookie');
 
           response = JSON.parse(body);
           should.exist(response.stats);

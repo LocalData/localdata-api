@@ -217,12 +217,6 @@ fixtures.makeResponses = function makeResponses(count, options) {
       };
     }
 
-    // Randomly delete the condition to simulate no response
-    var x = Math.round(Math.random());
-    if (x)  {
-      delete response.responses['condition-1'];
-    }
-
     return response;
   }
 
@@ -256,4 +250,4 @@ fixtures.clearResponses = function clearResponses(survey, done) {
     }
     done();
   });
-}
+};

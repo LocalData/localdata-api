@@ -22,11 +22,14 @@ var BASEURL = 'http://localhost:' + settings.port + '/api';
 var FILENAME = __dirname + '/data/scan.jpeg';
 
 suite('Responses', function () {
+  // Set up some fixtures
   var data_one = fixtures.makeResponses(1);
-
   var data_two = fixtures.makeResponses(2);
-
   var data_twenty = fixtures.makeResponses(20);
+
+  // Mix up data_twenty a bit for testing different areas
+  data_twenty.responses[18].responses.site = 'house';
+  data_twenty.responses[19].responses.site = 'house';
 
   suiteSetup(function (done) {
     server.run(function (error) {
@@ -46,9 +49,14 @@ suite('Responses', function () {
     var surveyId = '123';
     var url = BASEURL + '/surveys/' + surveyId + '/responses';
     test('Posting JSON to /surveys/' + surveyId + '/responses', function (done) {
-      request.post({url: url, json: data_one}, function (error, response, body) {
+      request.post({
+        url: url,
+        json: data_one,
+        jar: false
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
 
         var i;
         for (i = 0; i < data_one.responses.length; i += 1) {
@@ -88,9 +96,14 @@ suite('Responses', function () {
       var data = fixtures.makeResponses(1);
       delete data.responses[0].parcel_id;
 
-      request.post({url: url, json: data}, function (error, response, body) {
+      request.post({
+        url: url,
+        json: data,
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(201);
+        response.headers.should.not.have.property('set-cookie');
         body.responses[0].should.have.property('object_id');
         body.responses[0].should.have.property('parcel_id');
         body.responses[0].object_id.should.equal(data.responses[0].object_id);
@@ -102,28 +115,106 @@ suite('Responses', function () {
 
     test('Posting JSON to /surveys/' + surveyId + '/responses with an info field', function (done) {
 
-      var data = fixtures.makeResponses(1, { includeInfo: true });
+      fixtures.clearResponses(surveyId, function() {
+        var data = fixtures.makeResponses(1, { includeInfo: true });
 
-      request.post({url: url, json: data}, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(201);
+        request.post({
+          url: url,
+          json: data,
+          jar: false
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          response.headers.should.not.have.property('set-cookie');
 
-        body.responses[0].should.have.property('info');
-        // Check equivalent content of the info fields.
-        body.responses[0].info.should.eql(data.responses[0].info);
+          body.responses[0].should.have.property('info');
+          // Check equivalent content of the info fields.
+          assert.deepEqual(body.responses[0].info, data.responses[0].info);
 
-        done();
+          done();
+        });
       });
     });
+
+
+    test('Posting JSON to /surveys/' + surveyId + '/responses with an info field after not having one', function (done) {
+      // Because we upsert response.enries and don't modify the original response
+      // properties, adding an info field to a response that doesn't have one
+      // should result in no change.
+
+      fixtures.clearResponses(surveyId, function() {
+        var data = fixtures.makeResponses(1);
+
+        request.post({
+          url: url,
+          json: data,
+          jar: false
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          response.headers.should.not.have.property('set-cookie');
+          body.responses[0].should.not.have.property('info');
+
+          // Now add an info field.
+          // It shouldn't change the existing results.
+          var data = fixtures.makeResponses(1, { includeInfo: true });
+          request.post({url: url, json: data}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            body.responses[0].should.not.have.property('info');
+            done();
+          });
+        });
+      });
+    });
+
+
+    test('Posting JSON to /surveys/' + surveyId + '/responses without an info field does not remove existing data', function (done) {
+      // Because we upsert response.enries and don't modify the original response
+      // properties, removing an info field from a response that already has one
+      // should result in no change -- and especially no data loss.
+
+      fixtures.clearResponses(surveyId, function() {
+        var data = fixtures.makeResponses(1, { includeInfo: true });
+
+        request.post({
+          url: url,
+          json: data,
+          jar: false
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+          response.headers.should.not.have.property('set-cookie');
+          body.responses[0].should.have.property('info');
+
+          // Now add an info field.
+          // It shouldn't change the existing results.
+          var data2 = fixtures.makeResponses(1);
+          request.post({url: url, json: data2}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            body.responses[0].should.have.property('info');
+            assert.deepEqual(body.responses[0].info, data.responses[0].info);
+            done();
+          });
+        });
+      });
+    });
+
 
     test('Posting JSON to /surveys/' + surveyId + '/responses without a responses object', function (done) {
 
       var data = fixtures.makeResponses(1);
       delete data.responses[0].responses;
 
-      request.post({url: url, json: data}, function (error, response, body) {
+      request.post({
+        url: url,
+        json: data,
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(400);
+        response.headers.should.not.have.property('set-cookie');
 
         done();
       });
@@ -131,9 +222,13 @@ suite('Responses', function () {
 
     test('Posting a file to /surveys/' + surveyId + '/responses', function (done) {
       this.timeout(5000);
-      var req = request.post({url: url}, function (error, response, body) {
+      var req = request.post({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
         assert.ifError(error);
         assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
 
         body = JSON.parse(body);
 
@@ -179,14 +274,341 @@ suite('Responses', function () {
       form.append('data', dataAsString);
     });
 
-    test('Posting bad data to /surveys/' + surveyId + '/responses', function (done) {
-      request.post({url: url, json: {respnoses: {}}}, function (error, response, body) {
+
+    test('Posting a file without a human-readable name to /surveys/' + surveyId + '/responses', function (done) {
+      this.timeout(5000);
+      var req = request.post({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
+        assert.ifError(error);
+        assert.equal(response.statusCode, 201, 'Status should be 201. Status is ' + response.statusCode);
+        response.headers.should.not.have.property('set-cookie');
+
+        body = JSON.parse(body);
+
+        var i;
+        for (i = 0; i < data_one.responses.length; i += 1) {
+          // Source
+          assert.deepEqual(data_one.responses[i].source, body.responses[i].source, 'Response differs from posted data');
+          // Centroid
+          assert.deepEqual(data_one.responses[i].geo_info.centroid,
+                           body.responses[i].geo_info.centroid,
+                           'Response centroid differs from posted data');
+          // Geometry
+          assert.deepEqual(data_one.responses[i].geo_info.geometry,
+                           body.responses[i].geo_info.geometry,
+                           'Response geometry differs from posted data');
+          // Human-readable name
+          data_one.responses[i].geo_info.humanReadableName.should.equal(body.responses[i].geo_info.humanReadableName);
+
+          // Object ID
+          assert.deepEqual(data_one.responses[i].parcel_id, body.responses[i].parcel_id, 'Response differs from posted data');
+          assert.deepEqual(data_one.responses[i].object_id, body.responses[i].object_id, 'Response differs from posted data');
+          // Answers
+          assert.deepEqual(data_one.responses[i].responses, body.responses[i].responses, 'Response differs from posted data');
+
+          assert.notEqual(body.responses[i].id, null, 'Response does not have an ID.');
+          assert.equal(body.responses[i].survey, surveyId,
+                       'Response does not indicate the correct survey: ' +
+                       body.responses[i].survey + ' vs ' + surveyId);
+          assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+
+          // Files
+          body.responses[i].should.have.property('files');
+          body.responses[i].files.length.should.equal(1);
+        }
+
+        done();
+      });
+
+      var form = req.form();
+
+      form.append('my_file', fs.createReadStream(FILENAME));
+
+      // REMOVE the human readable name before posting
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].geo_info.humanReadableName;
+
+      var dataAsString = JSON.stringify(data);
+      form.append('data', dataAsString);
+    });
+
+    test('Posting a file with no human-readable name and no object_id', function (done) {
+      // Post initial response/file
+      var req = request.post({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(400);
+
+        done();
+      });
+
+      var form = req.form();
+      form.append('my_file', fs.createReadStream(FILENAME));
+
+      // Remove the human readable name before posting
+      var data = fixtures.makeResponses(1);
+      delete data.responses[0].geo_info.humanReadableName;
+
+      // Remove the object_id before posting
+      delete data.responses[0].object_id;
+
+      form.append('data', JSON.stringify(data));
+    });
+
+    test('Posting two files of the same feature', function (done) {
+      var name1;
+      var name2;
+
+      // Post initial response/file
+      var req1 = request.post({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        body = JSON.parse(body);
+        body.should.have.property('responses');
+        body.responses.should.have.length(1);
+
+        var orig = data_one.responses[0];
+        var received = body.responses[0];
+
+        // Source
+        received.source.should.eql(orig.source);
+        // Centroid
+        received.geo_info.centroid.should.eql(orig.geo_info.centroid);
+        // Geometry
+        received.geo_info.geometry.should.eql(orig.geo_info.geometry);
+        // Human-readable name
+        received.geo_info.humanReadableName.should.eql(orig.geo_info.humanReadableName);
+
+        // Object ID
+        received.parcel_id.should.eql(orig.parcel_id);
+        received.object_id.should.eql(orig.object_id);
+        // Answers
+        received.responses.should.eql(orig.responses);
+
+        received.should.have.property('id');
+        received.should.have.property('survey');
+        received.survey.should.equal(surveyId);
+        received.should.have.property('created');
+
+        // Files
+        received.should.have.property('files');
+        received.files.length.should.equal(1);
+
+        name1 = received.files[0];
+
+        // Post duplicate response/file.
+        var req2 = request.post({
+          url: url,
+          jar: false
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(201);
+
+          body = JSON.parse(body);
+          body.should.have.property('responses');
+          body.responses.should.have.length(1);
+
+          var orig = data_one.responses[0];
+          var received = body.responses[0];
+
+          // Source
+          received.source.should.eql(orig.source);
+          // Centroid
+          received.geo_info.centroid.should.eql(orig.geo_info.centroid);
+          // Geometry
+          received.geo_info.geometry.should.eql(orig.geo_info.geometry);
+          // Human-readable name
+          received.geo_info.humanReadableName.should.eql(orig.geo_info.humanReadableName);
+
+          // Object ID
+          received.parcel_id.should.eql(orig.parcel_id);
+          received.object_id.should.eql(orig.object_id);
+          // Answers
+          received.responses.should.eql(orig.responses);
+
+          received.should.have.property('id');
+          received.should.have.property('survey');
+          received.survey.should.equal(surveyId);
+          received.should.have.property('created');
+
+          // Files
+          received.should.have.property('files');
+          received.files.length.should.equal(1);
+
+          name2 = received.files[0];
+
+          name1.should.not.equal(name2);
+
+          done();
+        });
+
+        var form2 = req2.form();
+        form2.append('my_file', fs.createReadStream(FILENAME));
+        var data2 = JSON.stringify(data_one);
+        form2.append('data', data2);
+      });
+
+      var form1 = req1.form();
+      form1.append('my_file', fs.createReadStream(FILENAME));
+      var data1 = JSON.stringify(data_one);
+      form1.append('data', data1);
+    });
+
+
+    test('Posting bad data to /surveys/' + surveyId + '/responses', function (done) {
+      request.post({
+        url: url,
+        json: {respnoses: {}},
+        jar: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(400);
+        response.headers.should.not.have.property('set-cookie');
         done();
       });
     });
   });
+
+
+  suite('PATCH', function () {
+    var surveyId;
+    var id, id2, id3;
+    var ownerJar, strangerJar;
+
+    suiteSetup(function (done) {
+      // Create an account...
+      fixtures.setupUser(function(error, jar1, jar2) {
+        should.exist(jar1);
+        should.exist(jar2);
+
+        ownerJar = jar1;
+        strangerJar = jar2;
+
+        // Create a test survey owned by this user.
+        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: ownerJar}, function (error, response, body) {
+          should.not.exist(error);
+          should.exist(body);
+          surveyId = body.surveys[0].id;
+
+          // Add a response
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_two, jar: ownerJar},
+            function (error, response, body) {
+            should.not.exist(error);
+            should.exist(body);
+            id = body.responses[0].id;
+            id2 = body.responses[1].id;
+
+            // Add another response with the same objectId as #1
+            var sameAsOne = fixtures.makeResponses(1);
+            sameAsOne.parcel_id = body.responses[0].parcel_id;
+            sameAsOne.object_id = body.responses[0].parcel_id;
+            request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: sameAsOne, jar: ownerJar},
+            function (error, response, body) {
+              should.not.exist(error);
+              should.exist(body);
+              id3 = body.responses[0].id;
+              done();
+            });
+
+          });
+        });
+      });
+    });
+
+    test('Patching a response', function (done) {
+
+      request.patch({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          json: {
+            responses: {
+              foo: 'bar'
+            }
+          },
+          jar: ownerJar
+        },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(204);
+
+          // Check to make sure something was changed.
+          request.get({
+            url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+            jar: ownerJar
+          }, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
+            response.should.be.json;
+
+            var parsed = JSON.parse(body);
+            parsed.should.have.property('response');
+            parsed.response.responses.foo.should.equal('bar');
+
+            // Check to make sure the other response for the same object
+            // was NOT changed
+            request.get({
+              url: BASEURL + '/surveys/' + surveyId + '/responses/' + id3,
+              jar: ownerJar
+            }, function (error, response, body) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('response');
+              should.not.exist(parsed.response.responses.foo);
+              done();
+            });
+          });
+        }
+      );
+    });
+
+
+    test('Patching a response we if we\'re not logged in', function (done) {
+      request.del({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        json: {
+          foo: 'bar'
+        },
+        jar: request.jar()
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(401);
+          done();
+        }
+      );
+    });
+
+    test('Patching a response not owned by this user', function (done) {
+      request.patch({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        json: {
+          foo: 'bar'
+        },
+        jar: strangerJar
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(403);
+          done();
+        }
+      );
+    });
+
+  });
+
 
   suite('DEL', function () {
     var surveyId;
@@ -321,10 +743,14 @@ suite('Responses', function () {
     });
 
     test(' all responses for a survey', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=100000'}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=100000',
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
@@ -343,10 +769,14 @@ suite('Responses', function () {
     });
 
     test(' all responses for a survey as GeoJSON', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses.geojson?startIndex=0&count=100000'}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses.geojson?startIndex=0&count=100000',
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         geojson.shouldBeFeatureCollection(parsed);
@@ -373,11 +803,15 @@ suite('Responses', function () {
 
 
     test('Get all responses for a specific parcel', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?objectId=' + data_twenty.responses[1].parcel_id},
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?objectId=' + data_twenty.responses[1].parcel_id,
+        jar: false
+      },
        function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
@@ -401,11 +835,15 @@ suite('Responses', function () {
     });
 
     test('Get all responses for a specific collector', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&collector=' + data_twenty.responses[1].source.collector },
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=20&collector=' + data_twenty.responses[1].source.collector,
+        jar: false
+      },
        function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
@@ -417,12 +855,60 @@ suite('Responses', function () {
       });
     });
 
-    test('one response', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses/' + id},
-                  function (error, response, body) {
+
+    test('Get all responses that match a filter', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&responses[site]=house',
+        jar: false
+      },
+       function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.equal(2);
+        parsed.responses[0].responses.site.should.equal('house');
+
+        done();
+      });
+    });
+
+
+    test('Get all responses that do not have a particular response', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?&startIndex=0&count=20&responses[doesnotexist]=undefined',
+        jar: false
+      },
+       function (error, response, body) {
+        var i;
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+        parsed.responses.length.should.equal(20);
+        for (i = 0; i < parsed.responses.length; i++) {
+          parsed.responses[i].responses.should.not.have.property('doesnotexist');
+        }
+
+        done();
+      });
+    });
+
+    test('one response', function (done) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+        jar: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
 
@@ -441,11 +927,14 @@ suite('Responses', function () {
       var center = data_twenty.responses[0].geo_info.centroid;
       var bbox = [center[0] - 0.1, center[1] - 0.1, center[0] + 0.1, center[1] + 0.1];
       var url = BASEURL + '/surveys/' + surveyId + '/responses?bbox=' + bbox.join(',');
-      console.log(url);
-      request.get({url: url}, function (error, response, body) {
+      request.get({
+        url: url,
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
@@ -470,10 +959,14 @@ suite('Responses', function () {
     });
 
     test('Get a chunk of responses', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=5&count=10'}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=5&count=10',
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
@@ -502,10 +995,14 @@ suite('Responses', function () {
     });
 
     test('Get responses in ascending creation order', function (done) {
-      request.get({url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=100000&sort=asc'}, function (error, response, body) {
+      request.get({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=100000&sort=asc',
+        jar: false
+      }, function (error, response, body) {
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
 
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
@@ -525,130 +1022,5 @@ suite('Responses', function () {
         done();
       });
     });
-
-
-    test('Get response data as CSV', function (done) {
-      request.get({
-        url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
-        jar: ownerJar
-      }, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(200);
-
-        response.headers.should.have.property('content-type');
-        response.headers['content-type'].should.equal('text/csv');
-
-        response.headers.should.have.property('content-disposition');
-        response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.csv');
-
-        done();
-      });
-    });
-
-    test('Get response data as CSV with latest parameter', function (done) {
-      var url = BASEURL + '/surveys/' + surveyId + '/responses';
-      var data = fixtures.makeResponses(10);
-      request.post({url: url, json: data}, function (error, response, body) {
-
-        var data = fixtures.makeResponses(2);
-        request.post({url: url, json: data}, function (error, response, body) {
-
-          request.get({
-            url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
-            jar: ownerJar
-          }, function (error, response, bodyAll) {
-            request.get({
-              url: BASEURL + '/surveys/' + surveyId + '/responses.csv?latest=true',
-              jar: ownerJar
-            }, function (error, response, bodyFiltered) {
-              should.not.exist(error);
-              response.statusCode.should.equal(200);
-
-              var lengthAll = bodyAll.split('\n').length;
-              var lengthFiltered = bodyFiltered.split('\n').length;
-              console.log(lengthAll);
-              console.log(lengthFiltered);
-              lengthFiltered.should.be.below(lengthAll);
-
-              response.headers.should.have.property('content-type');
-              response.headers['content-type'].should.equal('text/csv');
-
-              response.headers.should.have.property('content-disposition');
-              response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.csv');
-
-              done();
-            });
-          });
-        });
-      });
-    });
-
-    test('Get response data as CSV not logged in', function (done) {
-      request.get({
-        url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
-        jar: request.jar()
-      }, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(401);
-
-        done();
-      });
-    });
-
-    test('Get response data as CSV for a survey we do not own', function (done) {
-      request.get({
-        url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
-        jar: strangerJar
-      }, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(403);
-
-        done();
-      });
-    });
-
-    test('Get response data as KML', function (done) {
-      request.get({
-        url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
-        jar: ownerJar
-      }, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(200);
-
-        response.headers.should.have.property('content-type');
-        response.headers['content-type'].should.equal('application/vnd.google-earth.kml+xml');
-
-        response.headers.should.have.property('content-disposition');
-        response.headers['content-disposition'].should.equal('attachment; filename=Survey Export.kml');
-
-        done();
-      });
-    });
-
-    test('Get response data as KML not logged in', function (done) {
-      request.get({
-        url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
-        jar: request.jar()
-      }, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(401);
-
-        done();
-      });
-    });
-
-    test('Get response data as KML for a survey we do not own', function (done) {
-      request.get({
-        url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
-        jar: strangerJar
-      }, function (error, response, body) {
-        should.not.exist(error);
-        response.statusCode.should.equal(403);
-
-        done();
-      });
-    });
-
-
   });
 });

@@ -1,6 +1,8 @@
 /*jslint node: true */
 'use strict';
 
+var url = require('url');
+
 var settings = module.exports;
 
 // Are we in debug mode?
@@ -32,6 +34,8 @@ settings.s3_key = process.env.S3_KEY;
 settings.s3_secret = process.env.S3_SECRET;
 settings.s3_bucket = process.env.S3_BUCKET;
 settings.s3_dir = process.env.S3_UPLOAD_DIR;
+settings.exportBucket = process.env.EXPORT_BUCKET;
+settings.exportDir = process.env.EXPORT_DIR;
 
 // Postgresql parcel server
 // Use Heroku-style primary postgresql database environment variable
@@ -47,6 +51,15 @@ settings.appPrefix = process.env.REMOTE_APP_PREFIX || '';
 
 // Shapefile conversion service
 settings.converterBase = process.env.CONVERTER_BASE;
+
+// Redis connection details
+var redisURL = url.parse(process.env.REDIS_URL);
+settings.redisHost = redisURL.hostname;
+settings.redisPort = redisURL.port;
+settings.redisPassword = undefined;
+if (redisURL.auth) {
+  settings.redisPassword = redisURL.auth.split(':')[1];
+}
 
 // Web server
 settings.port = process.env.PORT || 3000;
