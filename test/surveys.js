@@ -3,10 +3,11 @@
 'use strict';
 
 var assert = require('assert');
+var async = require('async');
+var Promise = require('bluebird');
 var request = require('request');
 var should = require('should');
 var util = require('util');
-var async = require('async');
 
 var Survey = require('../lib/models/Survey');
 
@@ -16,6 +17,8 @@ var settings = require('../settings');
 
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
+
+Promise.promisifyAll(request);
 
 suite('Surveys', function () {
 
@@ -651,6 +654,15 @@ suite('Surveys', function () {
       });
 
     }); // end getting stats outside bbox
+
+    test('stats for a nonexistant survey', function () {
+      return request.getAsync({
+        url: BASEURL + '/surveys/doesnotexist/stats',
+        jar: false
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(404);
+      });
+    });
 
   });
 
