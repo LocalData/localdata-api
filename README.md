@@ -1,7 +1,7 @@
 SURVEY API
 ==========
 
-To install dependencies
+## install dependencies
 
     $ npm install
 
@@ -13,8 +13,9 @@ Or you can create a separate environment files. For example, to use a `remote-db
 
     $ node_modules/.bin/envrun -e remote-db.env node lib/server.js
 
+## Web interfaces
 
-To use the web interfaces, you'll need host copies of the dashboard and mobile
+You'll need host copies of the dashboard and mobile
 app. Change `REMOTE_MOBILE_PREFIX` and `REMOTE_ADMIN_PREFIX` to point to your
 installs of those apps.
 
@@ -22,13 +23,17 @@ For active development, it's handy to use envrun for reading a set of environmen
 
     $ node_modules/.bin/envrun --path -e local.env supervisor -n error -- lib/server.js
 
-To simulate a live deployment, you can use the `bin/fakeroku` script to handle HTTPS and forward requests to the actual LocalData API:
+## Simulate a live deployment
+
+You can use the `bin/fakeroku` script to handle HTTPS and forward requests to the actual LocalData API:
 
     $ PORT=3443 bin/fakeroku 3000
 
 The script will use `~/.ssh/localdata-key.pem` and `~/.ssh/localdata-cert.pem`.
 You can import the cert to your browser or simplify instruct the browser to
 proceed despite a self-signed certificate. See below for generating a cert.
+
+## Test the API
 
 To test the API, use:
 
