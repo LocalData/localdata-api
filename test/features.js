@@ -280,8 +280,6 @@ suite('Features', function () {
         source.description.should.be.type('string');
       });
 
-      console.log("GOT SOURCES", parsed);
-
       // We should find streetlight and parcel sources
       var lighting = _.find(parsed.sources, { name: 'detroit-streetlights' });
       should.exist(lighting);
@@ -289,7 +287,6 @@ suite('Features', function () {
       lighting.type.should.equal('lighting');
 
       var parcels = _.find(parsed.sources, { name: 'detroit-parcels' });
-      console.log("FILTERED TO PARCELS", parcels);
       should.exist(parcels);
       parcels.name.should.equal('detroit-parcels');
       parcels.type.should.equal('parcels');
