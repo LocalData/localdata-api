@@ -92,12 +92,27 @@ suite('Features', function () {
     server.stop();
   });
 
+  test('Get a parcel by id', function (done) {
+    // lower-left longitude, lower-left latitude,
+    // upper-right longitude, upper-right latitude
+    getJSON('/features/10004927.', function (error, parsed) {
+      checkParcels(parsed);
+      parsed.features.length.should.equal(1);
+      parsed.features.forEach(function (feature) {
+        feature.properties.type.should.equal('parcels');
+        feature.properties.object_id.should.equal('10004927.');
+      });
+
+      done();
+    });
+  });
+
   test('Get type=parcels inside a bounding box', function (done) {
     // lower-left longitude, lower-left latitude,
     // upper-right longitude, upper-right latitude
     getJSON('/features?type=parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(5);
+      parsed.features.length.should.equal(5);
       parsed.features.forEach(function (feature) {
         feature.properties.type.should.equal('parcels');
       });
@@ -125,7 +140,7 @@ suite('Features', function () {
     // upper-right longitude, upper-right latitude
     getJSON('/features?source=detroit-parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(5);
+      parsed.features.length.should.equal(5);
       parsed.features.forEach(function (feature) {
         feature.properties.type.should.equal('parcels');
         feature.properties.source.should.equal('detroit-parcels');
@@ -247,7 +262,7 @@ suite('Features', function () {
   test('Explicitly specify .geojson format', function (done) {
     getJSON('/features.geojson?type=parcels&bbox=-83.0805,42.336,-83.08,42.34', function (error, parsed) {
       checkParcels(parsed);
-      parsed.features.length.should.be.above(5);
+      parsed.features.length.should.equal(5);
 
       done();
     });
@@ -267,6 +282,8 @@ suite('Features', function () {
         source.description.should.be.type('string');
       });
 
+      console.log("GOT SOURCES", parsed);
+
       // We should find streetlight and parcel sources
       var lighting = _.find(parsed.sources, { name: 'detroit-streetlights' });
       should.exist(lighting);
@@ -274,6 +291,7 @@ suite('Features', function () {
       lighting.type.should.equal('lighting');
 
       var parcels = _.find(parsed.sources, { name: 'detroit-parcels' });
+      console.log("FILTERED TO PARCELS", parcels);
       should.exist(parcels);
       parcels.name.should.equal('detroit-parcels');
       parcels.type.should.equal('parcels');
@@ -288,7 +306,7 @@ suite('Features', function () {
       parsed.sources.should.be.an.instanceOf(Array);
       // TODO: we should mock these and use a spy, so we don't depend on the
       // live database, which changes.
-      parsed.sources.length.should.be.above(2);
+      parsed.sources.length.should.equal(2);
       parsed.sources.forEach(function (source) {
         source.should.have.property('name');
         source.name.should.be.type('string');

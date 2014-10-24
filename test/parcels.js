@@ -162,6 +162,29 @@ suite('Parcels', function () {
       });
     });
 
+    test('Get a parcel by id', function (done) {
+      request({
+        url: BASEURL + '/parcels/10004927.',
+        jar: false
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
+
+        var parsed = JSON.parse(body);
+        // Expect an array, since condos could have parcels that overlap.
+        parsed.should.be.an.instanceOf(Array);
+        parsed.length.should.be.above(0);
+        var i;
+        for (i = 0; i < parsed.length; i += 1) {
+          shouldBeParcel(parsed[i]);
+        }
+
+        done();
+      });
+    });
+
     test('Do not allow bounding box with lat-lon query', function (done) {
       request({
         url: BASEURL + '/parcels?bbox=-83.0805,42.336,-83.08,42.34&lon=-83.08076&lat=42.338',
