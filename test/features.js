@@ -93,14 +93,12 @@ suite('Features', function () {
   });
 
   test('Get a parcel by id', function (done) {
-    // lower-left longitude, lower-left latitude,
-    // upper-right longitude, upper-right latitude
     getJSON('/features/10004927.', function (error, parsed) {
       checkParcels(parsed);
       parsed.features.length.should.equal(1);
       parsed.features.forEach(function (feature) {
+        feature.id.should.equal('10004927.');
         feature.properties.type.should.equal('parcels');
-        feature.properties.object_id.should.equal('10004927.');
       });
 
       done();
