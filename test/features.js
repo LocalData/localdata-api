@@ -93,11 +93,12 @@ suite('Features', function () {
   });
 
   test('Get a parcel by id', function (done) {
-    getJSON('/features/10004927.', function (error, parsed) {
+    getJSON('/features/detroit-parcels/10004927.', function (error, parsed) {
       checkParcels(parsed);
       parsed.features.length.should.equal(1);
       parsed.features.forEach(function (feature) {
         feature.id.should.equal('10004927.');
+        feature.properties.source.should.equal('detroit-parcels');
         feature.properties.type.should.equal('parcels');
       });
 
