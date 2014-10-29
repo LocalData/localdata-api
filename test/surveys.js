@@ -44,6 +44,9 @@ suite('Surveys', function () {
       "type": "pointandparcel",
       "errantStuff": 12345,
       "responseLongevity": 5,
+      "surveyOptions": {
+        "foo": "bar"
+      },
       "geoObjectSource": {
         "type": "foo"
       }
@@ -182,6 +185,7 @@ suite('Surveys', function () {
           assert.equal(data_two.surveys[i].timezone, body.surveys[i].timezone, 'Response differs from posted data');
           assert.equal(data_two.surveys[i].type, body.surveys[i].type);
           assert.equal(data_two.surveys[i].responseLongevity, body.surveys[i].responseLongevity);
+          assert.deepEqual(data_two.surveys[i].surveyOptions, body.surveys[i].surveyOptions);
 
           assert.deepEqual(data_two.surveys[i].geoObjectSource, body.surveys[i].geoObjectSource);
           if(data_two.surveys[i].geoObjectSource) {
@@ -667,11 +671,11 @@ suite('Surveys', function () {
   });
 
   suite('PUT: ', function () {
-    var url = BASEURL + '/surveys';
-
     var surveyId;
 
     test('PUT JSON to /survey/:id', function (done) {
+      var url = BASEURL + '/surveys';
+
       request.post({
         url: url,
         jar: userAJar,
@@ -693,6 +697,37 @@ suite('Surveys', function () {
           response.statusCode.should.equal(200);
 
           body.survey.name.should.equal('new name');
+          done();
+        });
+      });
+    });
+
+    test('PUT JSON and ensure non-modified field remains', function (done) {
+      var url = BASEURL + '/surveys';
+
+      request.post({
+        url: url,
+        jar: userAJar,
+        json: data_two
+      }, function (error, response, body) {
+        should.not.exist(error);
+        response.statusCode.should.equal(201);
+
+        var surveyToChange = body.surveys[1];
+        surveyToChange.name = 'new name';
+
+        url = BASEURL + '/surveys/' + surveyToChange.id;
+        request.put({
+          url: url,
+          jar: userAJar,
+          json: {'survey': surveyToChange}
+        }, function (error, response, body) {
+          should.not.exist(error);
+          response.statusCode.should.equal(200);
+
+          body.survey.name.should.equal('new name');
+          assert.deepEqual(data_two.surveys[1].surveyOptions, body.survey.surveyOptions);
+
           done();
         });
       });
