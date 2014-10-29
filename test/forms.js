@@ -1,18 +1,21 @@
 /*jslint node: true, indent: 2, white: true, vars: true */
-/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
+/*globals suite, test, setup, suiteSetup, suiteTeardown */
 'use strict';
 
-var async = require('async');
 var fs = require('fs');
+
+var async = require('async');
+var Promise = require('bluebird');
 var request = require('request');
 var should = require('should');
-var util = require('util');
 
 var fixtures = require('./data/fixtures');
 var server = require('./lib/router');
 var settings = require('../settings.js');
 
 var BASEURL = 'http://localhost:' + settings.port + '/api';
+
+Promise.promisifyAll(request);
 
 suite('Forms', function () {
   var data_paper = { forms: [] };
@@ -230,6 +233,17 @@ suite('Forms', function () {
         done();
       });
     });
+
+    test('POST bad data', function () {
+      return request.postAsync({
+        url: BASEURL + '/surveys/' + surveyId + '/forms',
+        json: {},
+        jar: userAJar
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(400);
+      });
+    });
+
   });
 
   // suite('DEL', function () {
