@@ -1,6 +1,6 @@
 MOCHA = "./node_modules/.bin/mocha"
 
-MOCHA_FLAGS = --ui tdd --reporter spec
+MOCHA_FLAGS = --ui tdd --reporter spec -s 500 -t 2500
 ifdef OPTS
 	MOCHA_FLAGS += $(OPTS)
 endif
