@@ -84,7 +84,11 @@ suite('Responses', function () {
           assert.equal(body.responses[i].survey, surveyId,
                        'Response does not indicate the correct survey: ' +
                        body.responses[i].survey + ' vs ' + surveyId);
+
+          // Dates
           assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+          assert.notEqual(body.responses[i].modified, null, 'Response does not have a modified timestamp.');
+          body.responses[i].created.should.eql(body.responses[i].modified);
         }
 
         done();
@@ -257,7 +261,11 @@ suite('Responses', function () {
           assert.equal(body.responses[i].survey, surveyId,
                        'Response does not indicate the correct survey: ' +
                        body.responses[i].survey + ' vs ' + surveyId);
+
+          // Dates
           assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+          assert.notEqual(body.responses[i].modified, null, 'Response does not have a modified timestamp.');
+          body.responses[i].created.should.eql(body.responses[i].modified);
 
           // Files
           body.responses[i].should.have.property('files');
@@ -312,7 +320,11 @@ suite('Responses', function () {
           assert.equal(body.responses[i].survey, surveyId,
                        'Response does not indicate the correct survey: ' +
                        body.responses[i].survey + ' vs ' + surveyId);
+
+          // Dates
           assert.notEqual(body.responses[i].created, null, 'Response does not have a creation timestamp.');
+          assert.notEqual(body.responses[i].modified, null, 'Response does not have a modified timestamp.');
+          body.responses[i].created.should.eql(body.responses[i].modified);
 
           // Files
           body.responses[i].should.have.property('files');
@@ -397,6 +409,7 @@ suite('Responses', function () {
         received.should.have.property('survey');
         received.survey.should.equal(surveyId);
         received.should.have.property('created');
+        received.should.have.property('modified');
 
         // Files
         received.should.have.property('files');
@@ -438,6 +451,7 @@ suite('Responses', function () {
           received.should.have.property('survey');
           received.survey.should.equal(surveyId);
           received.should.have.property('created');
+          received.should.have.property('modified');
 
           // Files
           received.should.have.property('files');
@@ -524,7 +538,6 @@ suite('Responses', function () {
     });
 
     test('Patching a response', function (done) {
-
       request.patch({
           url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
           json: {
@@ -548,9 +561,15 @@ suite('Responses', function () {
             response.statusCode.should.equal(200);
             response.should.be.json;
 
+            // Confirm the property was modified
             var parsed = JSON.parse(body);
             parsed.should.have.property('response');
             parsed.response.responses.foo.should.equal('bar');
+
+            // Confirm the modified date has updated
+            var created = new Date(parsed.response.created);
+            var modified = new Date(parsed.response.modified);
+            modified.should.be.above(created);
 
             // Check to make sure the other response for the same object
             // was NOT changed
@@ -795,6 +814,8 @@ suite('Responses', function () {
           feature.properties.should.have.property('survey');
           feature.properties.survey.should.equal(surveyId);
           feature.properties.should.have.property('created');
+          feature.properties.should.have.property('modified');
+          feature.properties.modified.should.equal(feature.properties.created);
           created = Date.parse(feature.properties.created);
           created.should.not.be.above(prevTime);
           feature.properties.should.have.property('source');
