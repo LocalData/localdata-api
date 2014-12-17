@@ -157,6 +157,39 @@ suite('Exports', function () {
     });
   });
 
+  test('Shapefile not logged in - public export on', function (done) {
+    request.get({
+      url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
+      jar: request.jar()
+    }, function (error, response, body) {
+      should.not.exist(error);
+      response.statusCode.should.equal(200);
+      done();
+    });
+  });
+
+  test('CSV not logged in - public export on', function (done) {
+    request.get({
+      url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
+      jar: request.jar()
+    }, function (error, response, body) {
+      should.not.exist(error);
+      response.statusCode.should.equal(200);
+      done();
+    });
+  });
+
+  test('KML not logged in - public export on', function (done) {
+    request.get({
+      url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
+      jar: request.jar()
+    }, function (error, response, body) {
+      should.not.exist(error);
+      response.statusCode.should.equal(200);
+      done();
+    });
+  });
+
   test('Shapefile wrong user', function (done) {
     request.get({
       url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
