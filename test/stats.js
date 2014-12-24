@@ -4,6 +4,7 @@
 'use strict';
 
 var _ = require('lodash');
+var moment = require('moment');
 var Promise = require('bluebird');
 var request = require('request');
 var should = require('should');
@@ -347,7 +348,7 @@ suite('Stats', function () {
             humanReadableName: 'Someplace' + i,
             object_id: 'A12345-' + i,
             info: {},
-            centroid: [-122.43469027023522, 37.77127939798119],
+            centroid: [-122.43469027023522, 37.77127939798119]
           },
           entries: entries,
           geometry: geometry
@@ -430,7 +431,7 @@ suite('Stats', function () {
           [west, south]
         ] ]
       };
-      
+
       var now = Date.now();
       var start = now - 24 * 60 * 60 * 1000;
       // 6-minute resolution
@@ -720,4 +721,199 @@ suite('Stats', function () {
     });
   });
 
+
+  suite('Activity', function () {
+    suiteSetup(function () {
+      function makeEntry(date, oddeven) {
+        return {
+          source: {
+            type: 'mobile',
+            collector: oddeven + ' person',
+            started: date,
+            finished: date
+          },
+          created: date,
+          files: [],
+          responses: {
+            baseline: 'A',
+            evenodd: oddeven
+          }
+        };
+      }
+
+      this.entryCount = 0;
+      this.oddCount = 0;
+
+      var responses = [];
+      var i;
+      var entries;
+      var date;
+      var geometry;
+
+      var now = Date.now();
+      var baseTime = now - 100 * 24 * 60 * 60 * 1000; // 100 days ago.
+      var step = Math.floor((now - baseTime) / 200); // Distribute them evenly
+                                                     // over 200 days
+
+      for (i = 0; i < 200; i += 1) {
+        date = new Date(baseTime + i * step);
+        if (i === 0) {
+          // One response gets 2 entries.
+          entries = [makeEntry(new Date(baseTime - 60 * 1000), 'even'), makeEntry(date, 'even')];
+        } else if (i % 2 === 0) {
+          entries = [makeEntry(date, 'even')];
+        } else {
+          entries = [makeEntry(date, 'odd')];
+          this.oddCount += 1;
+        }
+
+        this.entryCount += entries.length;
+
+        if (i % 2 === 0) {
+          geometry = {
+            type: 'MultiPolygon',
+            coordinates: [ [ [
+              [-122.43469523018862, 37.771087088400655],
+              [-122.43477071284453, 37.77146083403105],
+              [-122.4346853083731, 37.77147170307505],
+              [-122.43460982859321, 37.771097964560134],
+              [-122.43463544873167, 37.77109470163426],
+              [-122.43469523018862, 37.771087088400655]
+            ] ] ]
+          };
+        } else {
+          geometry = {
+            type: 'MultiPolygon',
+            coordinates: [ [ [
+              [-52.43469523018862, 37.771087088400655],
+              [-52.43477071284453, 37.77146083403105],
+              [-52.4346853083731, 37.77147170307505],
+              [-52.43460982859321, 37.771097964560134],
+              [-52.43463544873167, 37.77109470163426],
+              [-52.43469523018862, 37.771087088400655]
+            ] ] ]
+          };
+        }
+
+        responses[i] = {
+          properties: {
+            survey: this.surveyId,
+            humanReadableName: 'Someplace' + i,
+            object_id: 'A12345-' + i,
+            info: {},
+            centroid: [-122.43469027023522, 37.77127939798119]
+          },
+          entries: entries,
+          geometry: geometry
+        };
+      }
+
+      // Clear the responses.
+      return fixtures.clearResponsesAsync(this.surveyId)
+      .bind(this)
+      .then(function () {
+        return responses;
+      }).map(function (response) {
+        return Response.createAsync(response);
+      }, {
+        concurrency: 100
+      }).then(function (responses) {
+        this.responses = responses;
+      });
+    });
+
+    // The ones that should work.
+
+    test('monthly range queries', function () {
+      var now = Date.now();
+      var start = now - 24 * 60 * 60 * 1000;
+      // 6-minute resolution
+      var resolution = 6 * 60 * 1000;
+
+      return request.getAsync({
+        url: BASEURL + '/surveys/' + this.surveyId + '/stats/activity/monthly',
+        jar: false
+      }).bind(this).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        var data = JSON.parse(body);
+        data.should.have.property('stats');
+        data.stats.should.have.property('total');
+        data.stats.should.have.property('activity');
+
+        var entries = _(this.responses).pluck('entries').flatten();
+        var trueCount = entries.size();
+        data.stats.total.should.equal(trueCount);
+
+        // Verify the activity breakdown
+        _(data.stats.activity).forEach(function (item) {
+          var year = item.date.year;
+          var month = item.date.month;
+
+          var trueCount = entries.filter(function (entry) {
+            var m = moment(entry.created);
+            var trueMonth = m.format('MM');
+            var trueYear = m.format('YYYY');
+            return year === trueYear && month === trueMonth;
+          }).value().length;
+
+          item.count.should.equal(trueCount);
+        });
+
+        // Verify sort order
+        data.stats.activity.should.eql(_.sortBy(data.stats.activity, 'ts'), 'Activity should be sorted');
+      });
+    });
+
+    test('monthly range queries filtered by question', function () {
+      var now = Date.now();
+      var start = now - 24 * 60 * 60 * 1000;
+      // 6-minute resolution
+      var resolution = 6 * 60 * 1000;
+
+      return request.getAsync({
+        url: BASEURL + '/surveys/' + this.surveyId + '/stats/activity/monthly?responses[evenodd]=even',
+        jar: false
+      }).bind(this).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        var data = JSON.parse(body);
+        data.should.have.property('stats');
+        data.stats.should.have.property('total');
+        data.stats.should.have.property('activity');
+
+        var entries = _(this.responses).pluck('entries').flatten();
+        entries = entries.where({ responses: { 'evenodd': 'even'}});
+        var trueCount = entries.size();
+        data.stats.total.should.equal(trueCount);
+
+        // Verify the activity breakdown
+        _(data.stats.activity).forEach(function (item) {
+          var year = item.date.year;
+          var month = item.date.month;
+
+          var trueCount = entries.filter(function (entry) {
+            var m = moment(entry.created);
+            var trueMonth = m.format('MM');
+            var trueYear = m.format('YYYY');
+            return year === trueYear && month === trueMonth;
+          }).value().length;
+
+          item.count.should.equal(trueCount);
+        });
+
+        // Verify sort order
+        data.stats.activity.should.eql(_.sortBy(data.stats.activity, 'ts'), 'Activity should be sorted');
+      });
+    });
+    test('for a nonexistant survey', function () {
+      return request.getAsync({
+        url: BASEURL + '/surveys/DOES-NOT-EXIST/stats/activity/monthly',
+        jar: false
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(404);
+      });
+    });
+
+  });
 });
