@@ -64,3 +64,6 @@ if (redisURL.auth) {
 // Web server
 settings.port = process.env.PORT || 3000;
 settings.testSecurePort = 3838;
+
+settings.NOANSWER = 'no response';
+
