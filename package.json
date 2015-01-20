@@ -11,7 +11,7 @@
     "bcrypt": ">= 0.5",
     "bluebird": "^2.3.2",
     "connect-mongo": "~0.3.2",
-    "connect-s3": "~0.2.0",
+    "connect-s3": "~0.3.0",
     "cuid": "^1.2.4",
     "ejs": "~0.8.3",
     "express": "3.0.x",
