@@ -1008,33 +1008,59 @@ suite('Surveys', function () {
 
 
   suite('DEL', function () {
-    var id;
-
-    setup(function (done) {
+    test('Authorized users should be able to delete a survey', function (done) {
       request.post({
         url: BASEURL + '/surveys',
         jar: userAJar,
         json: data_one
       }, function(error, response, body) {
         if (error) { done(error); }
-        id = body.surveys[0].id;
-        done();
+        var id = body.surveys[0].id;
+        request.del({
+          url: BASEURL + '/surveys/' + id,
+          jar: userAJar
+        }, function (error, response, body) {
+          assert.ifError(error);
+          response.statusCode.should.equal(204);
+          done();
+        });
       });
     });
 
-    // test('Deleting a survey', function (done) {
-    //   request.del({url: BASEURL + '/surveys/' + id}, function (error, response, body) {
-    //     assert.ifError(error);
-    //     response.statusCode.should.equal(200);
-//
-    //     var parsed = JSON.parse(body);
-//
-    //     assert.equal(parsed.count, 1, 'We should have deleted 1 item.');
-//
-    //     done();
-    //   });
-    // });
+    test('Anonymous users should not be able to delete a survey', function (done) {
+      request.post({
+        url: BASEURL + '/surveys',
+        jar: userAJar,
+        json: data_one
+      }, function(error, response, body) {
+        if (error) { done(error); }
+        var id = body.surveys[0].id;
+        request.del({
+          url: BASEURL + '/surveys/' + id
+        }, function (error, response, body) {
+          response.statusCode.should.equal(401);
+          done();
+        });
+      });
+    });
 
+    test("Users who don't own a survey shouldn't be able to delete it", function (done) {
+      request.post({
+        url: BASEURL + '/surveys',
+        jar: userAJar,
+        json: data_one
+      }, function(error, response, body) {
+        if (error) { done(error); }
+        var id = body.surveys[0].id;
+        request.del({
+          url: BASEURL + '/surveys/' + id,
+          jar: userBJar
+        }, function (error, response, body) {
+          response.statusCode.should.equal(403);
+          done();
+        });
+      });
+    });
   });
 
 });
