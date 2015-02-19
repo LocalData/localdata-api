@@ -17,6 +17,7 @@
     "express": "3.0.x",
     "knox": "~0.9.1",
     "lodash": "~1.0.1",
+    "logfmt": "^1.2.0",
     "lru-cache": "2.2.2",
     "moment": "2.8.x",
     "moment-range": "1.0.x",
