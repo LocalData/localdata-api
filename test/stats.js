@@ -3,6 +3,8 @@
 /*jshint -W030*/
 'use strict';
 
+var assert = require('assert');
+
 var _ = require('lodash');
 var moment = require('moment');
 var Promise = require('bluebird');
@@ -110,6 +112,70 @@ suite('Stats', function () {
         response.stats['new-stat'].yes.should.equal(1);
       });
     }); // end getting stats
+
+    test('Getting cached stats for a survey', function () {
+      var responses = fixtures.makeResponses(5);
+      var url = BASEURL + '/surveys/' + this.surveyId + '/responses';
+
+      // Set the object_id of a response so we can keep an eye on it
+      responses.responses[0].object_id = 'myhouse';
+      responses.responses[0].responses['new-stat'] = 'yes';
+
+      return Promise.bind(this)
+      .then(function () {
+        // Add some responses.
+        return request.postAsync({
+          url: url,
+          json: responses
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(201);
+
+        // Get the stats
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats1 = response.stats;
+
+        // Get the stats again
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats2 = response.stats;
+
+        var newResponses = fixtures.makeResponses(2);
+        // Add some more responses.
+        return request.postAsync({
+          url: url,
+          json: newResponses
+        });
+      }).then(function () {
+        // Get the new stats
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats3 = response.stats;
+
+        assert.deepEqual(this.stats2, this.stats1);
+        assert.notDeepEqual(this.stats3, this.stats1);
+      });
+    }); // end getting cached stats
+
 
     test('Getting stats for a survey within a bounding box', function () {
       var responses = fixtures.makeResponses(5);
