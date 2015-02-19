@@ -1,15 +1,12 @@
 /*jslint node: true, indent: 2, white: true, vars: true */
-/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
+/*globals suite, test, setup, suiteSetup, suiteTeardown */
 'use strict';
 
 var server = require('./lib/router');
-var assert = require('assert');
-var util = require('util');
 var request = require('request');
 var should = require('should');
 
 var settings = require('../settings.js');
-var User = require('../lib/models/User');
 
 var fixtures = require('./data/fixtures');
 
@@ -22,8 +19,8 @@ suite('Compress', function () {
     server.run(done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   setup(function (done) {
@@ -35,8 +32,6 @@ suite('Compress', function () {
   });
 
   suite('GET', function () {
-    var id;
-
     test('Requesting data', function (done) {
       request.get({
         url: BASEURL + '/surveys',
@@ -54,4 +49,3 @@ suite('Compress', function () {
     });
   });
 });
-

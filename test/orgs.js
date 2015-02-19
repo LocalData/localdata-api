@@ -64,8 +64,8 @@ suite('Orgs', function () {
     ], done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
 
