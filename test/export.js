@@ -54,8 +54,8 @@ suite('Exports', function () {
     ], done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   test('Shapefile', function (done) {

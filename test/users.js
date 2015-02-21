@@ -73,8 +73,8 @@ suite('Users -', function () {
     });
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   suite('finding, creating and editing without the API:', function () {

@@ -37,8 +37,8 @@ suite('Slugs', function () {
     server.run(done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   var jar;

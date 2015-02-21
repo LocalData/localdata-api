@@ -3,6 +3,8 @@
 /*jshint -W030*/
 'use strict';
 
+var assert = require('assert');
+
 var _ = require('lodash');
 var moment = require('moment');
 var Promise = require('bluebird');
@@ -111,6 +113,149 @@ suite('Stats', function () {
       });
     }); // end getting stats
 
+    test('Getting cached stats for a survey', function () {
+      var responses = fixtures.makeResponses(5);
+      var url = BASEURL + '/surveys/' + this.surveyId + '/responses';
+
+      return Promise.bind(this)
+      .then(function () {
+        // Add some responses.
+        return request.postAsync({
+          url: url,
+          json: responses
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(201);
+
+        // Get the stats
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats1 = response.stats;
+
+        // Get the stats again
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats2 = response.stats;
+
+        assert.deepEqual(this.stats2, this.stats1);
+      });
+    }); // end getting cached stats
+
+    test('Getting fresh stats after an addition', function () {
+      var responses = fixtures.makeResponses(5);
+      var url = BASEURL + '/surveys/' + this.surveyId + '/responses';
+
+      return Promise.bind(this)
+      .then(function () {
+        // Add some responses.
+        return request.postAsync({
+          url: url,
+          json: responses
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(201);
+
+        // Get the stats
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats1 = response.stats;
+
+        var newResponses = fixtures.makeResponses(2, {
+          parcelBase: 4444
+        });
+        // Add some more responses.
+        return request.postAsync({
+          url: url,
+          json: newResponses
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(201);
+
+        // Get the stats again
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats2 = response.stats;
+
+        assert.notDeepEqual(this.stats2, this.stats1);
+      });
+    });
+
+    test('Getting fresh stats after a deletion', function () {
+      var responses = fixtures.makeResponses(5);
+      var url = BASEURL + '/surveys/' + this.surveyId + '/responses';
+
+      return Promise.bind(this)
+      .then(function () {
+        // Add some responses.
+        return request.postAsync({
+          url: url,
+          json: responses
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(201);
+
+        this.responseId = body.responses[0].id;
+
+        // Get the stats
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats1 = response.stats;
+
+        // Delete a response
+        return request.delAsync({
+          url: BASEURL +
+               '/surveys/' + this.surveyId +
+               '/responses/' + this.responseId,
+          jar: this.userAJar,
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(204);
+
+        // Get the stats again
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats',
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats2 = response.stats;
+
+        assert.notDeepEqual(this.stats2, this.stats1);
+      });
+    });
+
     test('Getting stats for a survey within a bounding box', function () {
       var responses = fixtures.makeResponses(5);
 
@@ -154,6 +299,56 @@ suite('Stats', function () {
       });
     }); // end getting stats
 
+    test('Getting cached stats for a survey within a bounding box', function () {
+      var polygon = {
+        type: 'Polygon',
+        coordinates: [[
+          [-122.55523681640625,37.67077737288316],
+          [-122.55523681640625,37.83690319650768],
+          [-122.32040405273438,37.83690319650768],
+          [-122.32040405273438,37.67077737288316],
+          [-122.55523681640625,37.67077737288316]
+        ]]
+      };
+      var polygonString = encodeURIComponent(JSON.stringify(polygon));
+      var responses = fixtures.makeResponses(5);
+      var url = BASEURL + '/surveys/' + this.surveyId + '/responses';
+
+      return Promise.bind(this)
+      .then(function () {
+        // Add some responses.
+        return request.postAsync({
+          url: url,
+          json: responses
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(201);
+
+        // Get the stats
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?intersects=' + polygonString,
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats1 = response.stats;
+
+        // Get the stats again
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?intersects=' + polygonString,
+          jar: false
+        });
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+
+        response = JSON.parse(body);
+        this.stats2 = response.stats;
+
+        assert.deepEqual(this.stats2, this.stats1);
+      });
+    });
 
     suite('With time boundaries', function () {
       setup(function () {

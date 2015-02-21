@@ -65,8 +65,8 @@ suite('Parcels', function () {
     server.run(done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   suite('GET', function () {
@@ -249,4 +249,3 @@ suite('Parcels', function () {
 
   });
 });
-

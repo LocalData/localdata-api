@@ -1,12 +1,10 @@
 /*jslint node: true */
-/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
+/*globals suite, test, setup, suiteSetup, suiteTeardown  */
 'use strict';
 
 /*
  * Tests for the base geographic features API.
  */
-
-var util = require('util');
 
 var _ = require('lodash');
 var async = require('async');
@@ -88,8 +86,8 @@ suite('Features', function () {
     server.run(done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   test('Get a parcel by id', function (done) {

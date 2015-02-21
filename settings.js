@@ -39,6 +39,9 @@ settings.psqlConnectionString = process.env.DATABASE_URL;
 // Tiles
 settings.tilePrefix = process.env.TILESERVER_BASE;
 
+// Cache (mongo, redis, none)
+settings.cache = process.env.CACHE;
+
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
@@ -61,4 +64,3 @@ settings.port = process.env.PORT || 3000;
 settings.testSecurePort = 3838;
 
 settings.NOANSWER = 'no response';
-

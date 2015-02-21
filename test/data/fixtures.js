@@ -222,6 +222,9 @@ fixtures.makeResponses = function makeResponses(count, options) {
 
   var data = { responses: [] };
   var parcelBase = 123456;
+  if (options && options.parcelBase) {
+    parcelBase = options.parcelBase;
+  }
   var i;
   for (i = 0; i < count; i += 1) {
     var num = parcelBase + i;

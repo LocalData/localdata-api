@@ -22,8 +22,8 @@ suite('Static', function () {
     server.run(done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   suite('Mobile client', function () {

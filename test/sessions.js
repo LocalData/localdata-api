@@ -24,8 +24,8 @@ suite('Sessions', function () {
     server.run(done);
   });
 
-  suiteTeardown(function () {
-    server.stop();
+  suiteTeardown(function (done) {
+    server.stop(done);
   });
 
   test('Sessions should persist across server restart', function (done) {
