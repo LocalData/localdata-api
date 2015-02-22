@@ -42,6 +42,9 @@ settings.tilePrefix = process.env.TILESERVER_BASE;
 // Cache (mongo, redis, none)
 settings.cache = process.env.CACHE;
 
+// Service name, used by the cache and by New Relic
+settings.name = process.env.NAME || 'unknown';
+
 // Static apps
 settings.mobilePrefix = process.env.REMOTE_MOBILE_PREFIX;
 settings.adminPrefix = process.env.REMOTE_ADMIN_PREFIX;
