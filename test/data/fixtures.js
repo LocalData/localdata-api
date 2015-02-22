@@ -206,7 +206,8 @@ fixtures.makeResponses = function makeResponses(count, options) {
         'use-count': '1',
         collector: 'Some Name',
         site: 'parking-lot',
-        'condition-1': 'demolish'
+        'condition-1': 'demolish',
+        'text-question': 'St. Cloud, MN; basically anything'
       }
     };
 
