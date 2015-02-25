@@ -130,7 +130,7 @@ suite('Exports', function () {
       jar: request.jar()
     }, function (error, response, body) {
       should.not.exist(error);
-      response.statusCode.should.equal(401);
+      response.statusCode.should.equal(202);
       done();
     });
   });
@@ -141,7 +141,7 @@ suite('Exports', function () {
       jar: request.jar()
     }, function (error, response, body) {
       should.not.exist(error);
-      response.statusCode.should.equal(401);
+      response.statusCode.should.equal(202);
       done();
     });
   });
@@ -152,73 +152,40 @@ suite('Exports', function () {
       jar: request.jar()
     }, function (error, response, body) {
       should.not.exist(error);
-      response.statusCode.should.equal(401);
+      response.statusCode.should.equal(202);
       done();
     });
   });
 
-  test('Shapefile not logged in - public export on', function (done) {
-    request.get({
-      url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
-      jar: request.jar()
-    }, function (error, response, body) {
-      should.not.exist(error);
-      response.statusCode.should.equal(200);
-      done();
-    });
-  });
-
-  test('CSV not logged in - public export on', function (done) {
-    request.get({
-      url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
-      jar: request.jar()
-    }, function (error, response, body) {
-      should.not.exist(error);
-      response.statusCode.should.equal(200);
-      done();
-    });
-  });
-
-  test('KML not logged in - public export on', function (done) {
-    request.get({
-      url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
-      jar: request.jar()
-    }, function (error, response, body) {
-      should.not.exist(error);
-      response.statusCode.should.equal(200);
-      done();
-    });
-  });
-
-  test('Shapefile wrong user', function (done) {
+  test('Shapefile non-owner user', function (done) {
     request.get({
       url: BASEURL + '/surveys/' + surveyId + '/responses.zip',
       jar: strangerJar
     }, function (error, response, body) {
       should.not.exist(error);
-      response.statusCode.should.equal(403);
+      response.statusCode.should.equal(202);
       done();
     });
   });
 
-  test('CSV wrong user', function (done) {
+  test('CSV non-owner user', function (done) {
     request.get({
       url: BASEURL + '/surveys/' + surveyId + '/responses.csv',
       jar: strangerJar
     }, function (error, response, body) {
       should.not.exist(error);
-      response.statusCode.should.equal(403);
+      response.statusCode.should.equal(202);
       done();
     });
   });
 
-  test('KML wrong user', function (done) {
+  test('KML non-owner user', function (done) {
     request.get({
       url: BASEURL + '/surveys/' + surveyId + '/responses.kml',
       jar: strangerJar
     }, function (error, response, body) {
       should.not.exist(error);
-      response.statusCode.should.equal(403);
+      response.statusCode.should.equal(202);
       done();
     });
   });
