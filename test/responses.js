@@ -1,20 +1,28 @@
 /*jslint node: true, indent: 2, white: true, vars: true */
-/*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
+/*globals suite, test, setup, suiteSetup, suiteTeardown*/
+/*jshint -W030*/
 'use strict';
 
-var server = require('./lib/router');
-var assert = require('assert');
-var fixtures = require('./data/fixtures.js');
 var fs = require('fs');
-var util = require('util');
+
+var assert = require('assert');
+var async = require('async');
+var ObjectId = require('mongoose').Types.ObjectId;
+var Promise = require('bluebird');
 var request = require('request');
 var should = require('should');
+
+var fixtures = require('./data/fixtures.js');
 var geojson = require('./lib/geojson');
-var async = require('async');
+var server = require('./lib/router');
 
 var Response = require('../lib/models/Response');
 
 var settings = require('../settings.js');
+
+Promise.promisifyAll(request);
+Promise.promisifyAll(Response);
+
 // We don't use filtering right now, so we'll skip testing it
 // var filterToRemoveResults = require('../responses.js').filterToRemoveResults;
 
@@ -662,29 +670,131 @@ suite('Responses', function () {
       });
     });
 
-    test('Deleting a response', function (done) {
+    // Per-test setup.
+    setup(function () {
+      // Create 3 entries, two of which will be part of the same Response doc.
+      var parcelBase = Math.floor(10000 * Math.random() + 5000);
+      var data = fixtures.makeResponses(2, {
+        parcelBase: parcelBase
+      });
+      this.rawResponses = data.responses.concat(fixtures.makeResponses(1, {
+        parcelBase: parcelBase
+      }).responses);
 
-      // Delete the response.
-      request.del({
+      return Promise.bind(this)
+      .then(function () {
+        return this.rawResponses;
+      }).map(function (response) {
+        return request.postAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses',
+          json: { responses: [response] },
+          jar: ownerJar
+        }).spread(function (response, body) {
+          return body.responses[0];
+        });
+      }, {
+        concurrency: 1
+      }).then(function (responses) {
+        this.responses = responses;
+      });
+    });
+
+    test('Deleting one entry for a base object that has two entries', function () {
+      var id = this.responses[0].id;
+      var count;
+      return request.getAsync({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+        jar: ownerJar
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        count = data.responses.length;
+
+        // Delete the response.
+        return request.delAsync({
           url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
           jar: ownerJar
-        },
-        function(error, response) {
-          should.not.exist(error);
-          should.exist(response);
-          response.statusCode.should.equal(204);
+        });
+      }).spread(function(response) {
+        should.exist(response);
+        response.statusCode.should.equal(204);
 
-          // Try to get the response
-          request.get({
-            url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
-            jar: ownerJar
-          }, function (error, response) {
-            should.not.exist(error);
-            response.statusCode.should.equal(404);
-            done();
-          });
-        }
-      );
+        // Try to get the response
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: ownerJar
+        });
+      }).spread(function (response) {
+        response.statusCode.should.equal(404);
+
+        // Confirm that we have the correct number of responses after a
+        // deletion.
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+          jar: ownerJar
+        });
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        data.responses.length.should.equal(count - 1);
+
+        // Comfirm the existence of the zombie response
+        return Response.findAsync({
+          'properties.survey.deleted': true,
+          'properties.survey.id': surveyId  ,
+          'entries._id': new ObjectId(id)
+        });
+      }).then(function (docs) {
+        should.exist(docs);
+        docs.length.should.equal(1);
+      });
+    });
+
+    test('Deleting one entry for a base object that has only one entry', function () {
+      var id = this.responses[1].id;
+      var count;
+      return request.getAsync({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+        jar: ownerJar
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        count = data.responses.length;
+
+        // Delete the response.
+        return request.delAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: ownerJar
+        });
+      }).spread(function(response) {
+        should.exist(response);
+        response.statusCode.should.equal(204);
+
+        // Try to get the response
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: ownerJar
+        });
+      }).spread(function (response) {
+        response.statusCode.should.equal(404);
+
+        // Confirm that we have the correct number of responses after a
+        // deletion.
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+          jar: ownerJar
+        });
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        data.responses.length.should.equal(count - 1);
+
+        // Comfirm the existence of the zombie response
+        return Response.findAsync({
+          'properties.survey.deleted': true,
+          'properties.survey.id': surveyId,
+          'entries._id': new ObjectId(id)
+        });
+      }).then(function (docs) {
+        should.exist(docs);
+        docs.length.should.equal(1);
+      });
     });
 
     test('Deleting a response we if we\'re not logged in', function (done) {
@@ -932,7 +1042,7 @@ suite('Responses', function () {
               parsed.should.have.property('responses');
               parsed.responses.length.should.equal(21);
 
-              for(i = 0; i < parsed.responses.length; i++) {
+              for(i = 0; i < parsed.responses.length; i += 1) {
                 var date = new Date(parsed.responses[i].created);
                 date.should.be.within(0, cutoff);
               }
@@ -973,7 +1083,7 @@ suite('Responses', function () {
               parsed.should.have.property('responses');
               parsed.responses.length.should.equal(2);
 
-              for(i = 0; i < parsed.responses.length; i++) {
+              for(i = 0; i < parsed.responses.length; i += 1) {
                 var date = new Date(parsed.responses[i].created);
                 date.should.be.above(cutoff);
               }
@@ -985,7 +1095,6 @@ suite('Responses', function () {
 
     test('Get all responses that match an until and after filter', function (done) {
       // Get the until date of the first response
-      var i;
 
       // Set up our first response.
       var url = BASEURL + '/surveys/' + surveyId + '/responses';
@@ -1039,7 +1148,7 @@ suite('Responses', function () {
         var parsed = JSON.parse(body);
         parsed.should.have.property('responses');
         parsed.responses.length.should.equal(20);
-        for (i = 0; i < parsed.responses.length; i++) {
+        for (i = 0; i < parsed.responses.length; i += 1) {
           parsed.responses[i].responses.should.not.have.property('doesnotexist');
         }
 
