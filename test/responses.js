@@ -748,6 +748,83 @@ suite('Responses', function () {
       });
     });
 
+    test('Deleting two entries for a base object that has two entries', function () {
+      var id0 = this.responses[0].id;
+      var id1 = this.responses[2].id;
+      var count;
+      return request.getAsync({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+        jar: ownerJar
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        count = data.responses.length;
+
+        // Delete the first response.
+        return request.delAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id0,
+          jar: ownerJar
+        });
+      }).spread(function(response) {
+        should.exist(response);
+        response.statusCode.should.equal(204);
+
+        // Try to get the response
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id0,
+          jar: ownerJar
+        });
+      }).spread(function (response) {
+        response.statusCode.should.equal(404);
+
+        // Delete the second response.
+        return request.delAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id1,
+          jar: ownerJar
+        });
+      }).spread(function(response) {
+        should.exist(response);
+        response.statusCode.should.equal(204);
+
+        // Try to get the response
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id1,
+          jar: ownerJar
+        });
+      }).spread(function (response) {
+        response.statusCode.should.equal(404);
+
+        // Confirm that we have the correct number of responses after a
+        // deletion.
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+          jar: ownerJar
+        });
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        data.responses.length.should.equal(count - 2);
+
+        // Comfirm the existence of the zombie response for the first entry.
+        return Response.findAsync({
+          'properties.survey.deleted': true,
+          'properties.survey.id': surveyId  ,
+          'entries._id': new ObjectId(id0)
+        });
+      }).then(function (docs) {
+        should.exist(docs);
+        docs.length.should.equal(1);
+
+        // Comfirm the existence of the zombie response for the second entry.
+        return Response.findAsync({
+          'properties.survey.deleted': true,
+          'properties.survey.id': surveyId  ,
+          'entries._id': new ObjectId(id1)
+        });
+      }).then(function (docs) {
+        should.exist(docs);
+        docs.length.should.equal(1);
+      });
+    });
+
     test('Deleting one entry for a base object that has only one entry', function () {
       var id = this.responses[1].id;
       var count;
