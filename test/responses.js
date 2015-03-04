@@ -232,6 +232,20 @@ suite('Responses', function () {
       });
     });
 
+    test('Posting JSON to /surveys/' + surveyId + '/responses with a null responses object', function () {
+      var data = fixtures.makeResponses(1);
+      data.responses[0].responses = null;
+
+      return request.postAsync({
+        url: url,
+        json: data,
+        jar: false
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(400);
+        response.headers.should.not.have.property('set-cookie');
+      });
+    });
+
     test('Posting a file to /surveys/' + surveyId + '/responses', function (done) {
       this.timeout(5000);
       var req = request.post({
@@ -866,6 +880,67 @@ suite('Responses', function () {
         return Response.findAsync({
           'properties.survey.deleted': true,
           'properties.survey.id': surveyId,
+          'entries._id': new ObjectId(id)
+        });
+      }).then(function (docs) {
+        should.exist(docs);
+        docs.length.should.equal(1);
+      });
+    });
+
+    test('Deleting an entry with an empty responses hash', function () {
+      var raw = fixtures.makeResponses(1);
+      raw.responses[0].responses = {};
+
+      var id;
+      var count;
+
+      return request.postAsync({
+        url: BASEURL + '/surveys/' + surveyId + '/responses',
+        json: raw,
+        jar: ownerJar
+      }).spread(function (response, body) {
+        id = body.responses[0].id;
+
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+          jar: ownerJar
+        });
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        count = data.responses.length;
+
+        // Delete the response.
+        return request.delAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: ownerJar
+        });
+      }).spread(function(response) {
+        should.exist(response);
+        response.statusCode.should.equal(204);
+
+        // Try to get the response
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          jar: ownerJar
+        });
+      }).spread(function (response) {
+        response.statusCode.should.equal(404);
+
+        // Confirm that we have the correct number of responses after a
+        // deletion.
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=10000',
+          jar: ownerJar
+        });
+      }).spread(function (response, body) {
+        var data = JSON.parse(body);
+        data.responses.length.should.equal(count - 1);
+
+        // Comfirm the existence of the zombie response
+        return Response.findAsync({
+          'properties.survey.deleted': true,
+          'properties.survey.id': surveyId  ,
           'entries._id': new ObjectId(id)
         });
       }).then(function (docs) {
