@@ -31,7 +31,8 @@
     "pg": "~2.8.2",
     "redis": "^0.10.1",
     "request": "2.21.x",
-    "slugs": "0.1.2"
+    "slugs": "0.1.2",
+    "turf": "^2.0.0"
   },
   "devDependencies": {
     "envrun": "~0.0.2",
