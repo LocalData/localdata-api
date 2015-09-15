@@ -414,6 +414,39 @@ suite('Stats', function () {
       });
     }); // time boundaries suite
 
+    suite('With a collector filter', function () {
+      setup(function () {
+        return Promise.bind(this)
+        .then(function () {
+          // Add some responses.
+          var responses = fixtures.makeResponses(10);
+
+          this.testName = "Name to select for";
+          responses.responses[0].source.collector = this.testName;
+          responses.responses[1].source.collector = this.testName;
+
+          return request.postAsync({
+            url: BASEURL + '/surveys/' + this.surveyId + '/responses',
+            json: responses
+          });
+        });
+      });
+
+      test('for a specific collector', function () {
+        return request.getAsync({
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?collector=' + this.testName
+        }).spread(function (response, body) {
+          response.statusCode.should.equal(200);
+
+          response = JSON.parse(body);
+
+          should.exist(response.stats);
+          response.stats.site['parking-lot'].should.equal(2);
+        });
+      });
+
+    }); // collector suite
+
     test('Ensure stats for a bounding box are within the box', function () {
       return Promise.bind(this)
       .then(function () {
