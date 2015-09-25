@@ -1430,5 +1430,20 @@ suite('Responses', function () {
         done();
       });
     });
+
+    test('Get responses in arbitrary order', function () {
+      return request.getAsync({
+        url: BASEURL + '/surveys/' + surveyId + '/responses?startIndex=0&count=100&sort=none',
+        jar: false
+      }).spread(function (response, body) {
+        response.statusCode.should.equal(200);
+        response.should.be.json;
+        response.headers.should.not.have.property('set-cookie');
+
+        var parsed = JSON.parse(body);
+        parsed.should.have.property('responses');
+      });
+    });
+
   });
 });
