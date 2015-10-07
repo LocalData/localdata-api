@@ -13,12 +13,12 @@
     "async": ">=0.2",
     "bcrypt": ">= 0.5",
     "bluebird": "^2.3.2",
-    "connect-mongo": "~0.6.0",
+    "connect-mongo": "0.8.x",
     "connect-s3": "~0.3.0",
     "cookie-parser": "1.4.x",
     "cuid": "^1.2.4",
     "ejs": "~0.8.3",
-    "express": "3.21.x",
+    "express": "4.x",
     "knox": "~0.9.1",
     "lodash": "~1.0.1",
     "logfmt": "^1.2.0",
@@ -37,7 +37,10 @@
     "redis": "^0.10.1",
     "request": "2.21.x",
     "slugs": "0.1.2",
-    "turf": "^2.0.0"
+    "turf": "^2.0.0",
+    "express-session": "1.11.x",
+    "express-json": "~1.0.0",
+    "body-parser": "~1.14.1"
   },
   "devDependencies": {
     "envrun": "~0.0.2",
