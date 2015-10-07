@@ -615,7 +615,7 @@ suite('Responses', function () {
 
 
     test('Patching a response we if we\'re not logged in', function (done) {
-      request.del({
+      request.patch({
         url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
         json: {
           foo: 'bar'
@@ -650,6 +650,145 @@ suite('Responses', function () {
 
   });
 
+
+  suite('PUT', function () {
+    var surveyId;
+    var id, id2, id3;
+    var ownerJar, strangerJar;
+
+    suiteSetup(function (done) {
+      // Create an account...
+      fixtures.setupUser(function(error, jar1, jar2) {
+        should.exist(jar1);
+        should.exist(jar2);
+
+        ownerJar = jar1;
+        strangerJar = jar2;
+
+        // Create a test survey owned by this user.
+        request.post({url: BASEURL + '/surveys', json: fixtures.surveys, jar: ownerJar}, function (error, response, body) {
+
+          should.not.exist(error);
+          should.exist(body);
+          surveyId = body.surveys[0].id;
+
+          // Add a response
+          request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: data_two, jar: ownerJar},
+            function (error, response, body) {
+            should.not.exist(error);
+            should.exist(body);
+            id = body.responses[0].id;
+            id2 = body.responses[1].id;
+
+            // Add another response with the same objectId as #1
+            var sameAsOne = fixtures.makeResponses(1);
+            sameAsOne.parcel_id = body.responses[0].parcel_id;
+            sameAsOne.object_id = body.responses[0].parcel_id;
+            request.post({url: BASEURL + '/surveys/' + surveyId + '/responses', json: sameAsOne, jar: ownerJar},
+            function (error, response, body) {
+              should.not.exist(error);
+              should.exist(body);
+              id3 = body.responses[0].id;
+              done();
+            });
+
+          });
+        });
+      });
+    });
+
+    test('PUT a modified response', function (done) {
+      request.put({
+          url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+          json: {
+            responses: {
+              foo: 'bar'
+            }
+          },
+          jar: ownerJar
+        },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(204);
+
+          // Check to make sure something was changed.
+          request.get({
+            url: BASEURL + '/surveys/' + surveyId + '/responses/' + id,
+            jar: ownerJar
+          }, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(200);
+            response.should.be.json;
+
+            // Confirm the property was modified
+            var parsed = JSON.parse(body);
+            parsed.should.have.property('response');
+            parsed.response.responses.foo.should.equal('bar');
+
+            // An old property should have been erased
+            should.not.exist(parsed.response.responses.site);
+
+            // Confirm the modified date has updated
+            var created = new Date(parsed.response.created);
+            var modified = new Date(parsed.response.modified);
+            modified.should.be.above(created);
+
+            // Check to make sure the other response for the same object
+            // was NOT changed
+            request.get({
+              url: BASEURL + '/surveys/' + surveyId + '/responses/' + id3,
+              jar: ownerJar
+            }, function (error, response, body) {
+              should.not.exist(error);
+              response.statusCode.should.equal(200);
+              response.should.be.json;
+
+              var parsed = JSON.parse(body);
+              parsed.should.have.property('response');
+              should.not.exist(parsed.response.responses.foo);
+              done();
+            });
+          });
+        }
+      );
+    });
+
+    test('PUT a response we if we\'re not logged in', function (done) {
+      request.put({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        json: {
+          foo: 'bar'
+        },
+        jar: request.jar()
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(401);
+          done();
+        }
+      );
+    });
+
+    test('PUT a response not owned by this user', function (done) {
+      request.put({
+        url: BASEURL + '/surveys/' + surveyId + '/responses/' + id2,
+        json: {
+          foo: 'bar'
+        },
+        jar: strangerJar
+      },
+        function(error, response) {
+          should.not.exist(error);
+          should.exist(response);
+          response.statusCode.should.equal(403);
+          done();
+        }
+      );
+    });
+
+  });
 
   suite('DEL', function () {
     var surveyId;
