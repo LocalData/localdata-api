@@ -92,6 +92,7 @@ suite('Features', function () {
 
   test('Get a parcel by id', function (done) {
     getJSON('/features/detroit-parcels/10004927.', function (error, parsed) {
+      console.log("Got parsed parcels", parsed);
       checkParcels(parsed);
       parsed.features.length.should.equal(1);
       parsed.features.forEach(function (feature) {

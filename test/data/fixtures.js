@@ -2,6 +2,10 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
+// Ignore an invalid self-signed cert
+// http://stackoverflow.com/questions/10888610/ignore-invalid-self-signed-ssl-certificate-in-node-js-with-https-request
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // Libraries
 var request = require('request');
 var makeSlug = require('slugs');
@@ -70,7 +74,7 @@ fixtures.users = [{
 fixtures.clearUsers = function(callback) {
   User.remove({}, function(error, result){
     if(error) {
-      console.log(error);
+      console.log("Error clearing users", error);
     }
     callback();
   });
@@ -100,7 +104,7 @@ fixtures.addUser = function addUser(name, done) {
   }, function (error, response, user) {
     if (error) { return done(error); }
     if (response.statusCode !== 200) {
-      return done(new Error('Received an incorrect status from the API'));
+      return done(new Error('Received an incorrect status from the API: ' + response.statusCode));
     }
     user.password = data.password;
     done(null, jar, user._id, user);
@@ -119,16 +123,20 @@ fixtures.setupUser = function(callback) {
   var idA;
 
   fixtures.clearUsers(function(){
-
     // Create one user
     request.post({
         url: USER_URL,
-        json: fixtures.users[0],
+        body: fixtures.users[0],
+        json: true,
         jar: jarA
       },
       function (error, response, body) {
         if(error) {
           callback(error, null);
+        }
+
+        if (response.statusCode !== 200) {
+          callback(new Error("Error creating user: " + response.statusCode));
         }
 
         idA = body._id;

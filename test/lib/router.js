@@ -12,9 +12,10 @@ var server = require('../../lib/server');
 var key = fs.readFileSync(__dirname + '/../data/test-key.pem', 'utf8');
 var cert = fs.readFileSync(__dirname + '/../data/test-cert.pem', 'utf8');
 
-var proxy = new httpProxy.HttpProxy({
+var proxy = httpProxy.createProxyServer({
+  xfwd: true,
   target: {
-    host: 'localhost', 
+    host: 'localhost',
     port: settings.port
   }
 });
@@ -32,6 +33,7 @@ console.log = function (str) {
 };
 
 var router;
+
 module.exports = {
   run: function start(done) {
     // Start the real server.
@@ -43,7 +45,7 @@ module.exports = {
         key: key,
         cert: cert
       }, function (req, res) {
-        proxy.proxyRequest(req, res);
+        proxy.web(req, res);
       }).listen(settings.testSecurePort, function (error) {
         console.log('info at=test_https_router event=listening port=' + settings.testSecurePort);
         done(error);
