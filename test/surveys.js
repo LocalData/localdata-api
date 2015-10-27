@@ -523,6 +523,7 @@ suite('Surveys', function () {
     test('Getting stats within a time frame', function (done) {
       var firstDate;
       var secondDate;
+
       async.waterfall([
         // First, clear the responses for this survey.
         function (next) {
@@ -531,14 +532,60 @@ suite('Surveys', function () {
 
         // Then, add some responses.
         function (next) {
-          var responses = fixtures.makeResponses(10);
+          var responses = fixtures.makeResponses(2);
           var url = BASEURL + '/surveys/' + id + '/responses';
 
           request.post({url: url, json: responses}, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(201);
-            firstDate = new Date(body.responses[3].created);
-            secondDate = new Date(body.responses[8].created);
+            next(error);
+          });
+        },
+
+        function(next) {
+          var responses = fixtures.makeResponses(1);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            firstDate = new Date(body.responses[0].created);
+            next(error);
+          });
+        },
+
+        function(next) {
+          var responses = fixtures.makeResponses(3);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            next(error);
+          });
+        },
+
+
+        function(next) {
+          var responses = fixtures.makeResponses(1);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
+            secondDate = new Date(body.responses[0].created);
+            next(error);
+          });
+        },
+
+        // Add a couple last responses to bookend
+        function(next) {
+          var responses = fixtures.makeResponses(2);
+          var url = BASEURL + '/surveys/' + id + '/responses';
+
+          request.post({url: url, json: responses}, function (error, response, body) {
+            should.not.exist(error);
+            response.statusCode.should.equal(201);
             next(error);
           });
         },
@@ -554,8 +601,8 @@ suite('Surveys', function () {
 
             should.exist(response.stats);
             should.exist(response.stats.Collectors);
-            response.stats.Collectors.Name.should.equal(4);
-            response.stats.site['parking-lot'].should.equal(4);
+            response.stats.Collectors.Name.should.equal(2);
+            response.stats.site['parking-lot'].should.equal(2);
             response.stats['condition-1']['no response'].should.be.above(0);
 
             next(error);
@@ -591,8 +638,8 @@ suite('Surveys', function () {
 
             should.exist(response.stats);
             should.exist(response.stats.Collectors);
-            response.stats.Collectors.Name.should.equal(5);
-            response.stats.site['parking-lot'].should.equal(5);
+            response.stats.Collectors.Name.should.equal(3);
+            response.stats.site['parking-lot'].should.equal(3);
 
             next(error);
           });
