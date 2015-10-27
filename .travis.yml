@@ -10,8 +10,8 @@ before_script:
   - openssl req -x509 -nodes -days 730 -newkey rsa:1024 -subj "/C=US/ST=MI/L=Detroit/O=Dis/CN=www.example.com" -keyout test/data/test-key.pem -out test/data/test-cert.pem
   - psql -U postgres -c "create extension postgis"
   - psql -c 'create database travis_ci_test;' -U postgres
-  - psql -d travis_ci_test -a -f test/data/schema.sql
   - psql -d travis_ci_test -a -f test/data/features-db.sql
+  - psql -d travis_ci_test -a -f test/data/schema.sql
 env:
   global:
     - secure: "TFbmH2rbf/t/1nMkpS09QcVWbI5AdWqQSDRmuwhIent88AxfdlY4mgtviDdtDZYDN4l/zwBf442ocmiImrCi7ZJsvLBpPtqHs0mDGzOCilVPxIM71Si3BSY3QWjPTG1WSSEHpsFUXz8pWr2hlAGFi6maUEo/KcDHf8xrcJuZHq8="
