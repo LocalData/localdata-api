@@ -4,10 +4,11 @@ SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
+
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-CREATE EXTENSION IF NOT EXISTS plv8 WITH SCHEMA pg_catalog;
-COMMENT ON EXTENSION plv8 IS 'PL/JavaScript (v8) trusted procedural language';
+--CREATE EXTENSION IF NOT EXISTS plv8 WITH SCHEMA pg_catalog;
+--COMMENT ON EXTENSION plv8 IS 'PL/JavaScript (v8) trusted procedural language';
 CREATE EXTENSION IF NOT EXISTS dblink WITH SCHEMA public;
 COMMENT ON EXTENSION dblink IS 'connect to other PostgreSQL databases from within a database';
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
