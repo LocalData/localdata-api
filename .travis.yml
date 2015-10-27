@@ -4,6 +4,8 @@ node_js:
 services:
   - mongodb
   - redis-server
+addons:
+  postgresql: "9.3"
 before_script:
   - openssl req -x509 -nodes -days 730 -newkey rsa:1024 -subj "/C=US/ST=MI/L=Detroit/O=Dis/CN=www.example.com" -keyout test/data/test-key.pem -out test/data/test-cert.pem
   - psql -c 'create database travis_ci_test;' -U postgres
