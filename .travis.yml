@@ -30,3 +30,4 @@ env:
     - TILESERVER_BASE=http://example.com
     - TEST_SECURE_PORT=8888
     - REDIS_URL=http://localhost:6379
+sudo: false
