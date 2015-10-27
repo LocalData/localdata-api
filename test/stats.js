@@ -351,6 +351,9 @@ suite('Stats', function () {
     });
 
     suite('With time boundaries', function () {
+      var firstDate;
+      var secondDate;
+
       setup(function () {
         return Promise.bind(this)
         .then(function () {
@@ -364,7 +367,7 @@ suite('Stats', function () {
         }).spread(function (response, body) {
           // Get the date of the last of those first responses.
           // That will be our baseline start date.
-          this.firstDate = new Date(body.responses[3].created);
+          firstDate = new Date(body.responses[3].created);
 
           // Now, create four more responses
           var responses = fixtures.makeResponses(5);
@@ -372,10 +375,10 @@ suite('Stats', function () {
             url: BASEURL + '/surveys/' + this.surveyId + '/responses',
             json: responses
           });
-        }).spread(function (response, body) {
+        }.bind(this)).spread(function (response, body) {
           // Get the last date of those four.
           // That will be our baseline end date
-          this.secondDate = new Date(body.responses[4].created);
+          secondDate = new Date(body.responses[4].created);
 
           // Add a couple more responses after the baseline range
           var responses = fixtures.makeResponses(6);
@@ -383,12 +386,12 @@ suite('Stats', function () {
             url: BASEURL + '/surveys/' + this.surveyId + '/responses',
             json: responses
           });
-        });
+        }.bind(this));
       });
 
       test('before a time', function () {
         return request.getAsync({
-          url: BASEURL + '/surveys/' + this.surveyId + '/stats?until=' + this.firstDate.getTime()
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?until=' + firstDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
@@ -403,17 +406,12 @@ suite('Stats', function () {
       });
 
       test('after a time', function () {
-        console.log("After a time date", this.firstDate);
-        console.log("After a time date", this.secondDate);
-
         return request.getAsync({
-          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + this.firstDate.getTime()
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + firstDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
           response = JSON.parse(body);
-
-          console.log("After a time body", body);
 
           should.exist(response.stats);
           should.exist(response.stats.Collectors);
@@ -424,7 +422,7 @@ suite('Stats', function () {
 
       test('between two times', function () {
         return request.getAsync({
-          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + this.firstDate.getTime() + '&until=' + this.secondDate.getTime()
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + firstDate.getTime() + '&until=' + secondDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
