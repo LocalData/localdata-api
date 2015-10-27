@@ -24,7 +24,7 @@ env:
     - S3_UPLOAD_DIR=test_uploaded_files
     - EXPORT_BUCKET=locald
     - EXPORT_DIR=test_generated_files
-    - DATABASE_URL=postgresql://loalhost:5432/travis_ci_test
+    - DATABASE_URL=postgresql://localhost:5432/travis_ci_test
     - REMOTE_MOBILE_PREFIX=http://locald.s3-website-us-east-1.amazonaws.com/web/mobile-app
     - REMOTE_ADMIN_PREFIX=http://locald.s3-website-us-east-1.amazonaws.com/web/admin-app
     - CONVERTER_BASE=http://example.com
