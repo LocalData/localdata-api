@@ -70,10 +70,9 @@ suite('Stats', function () {
   });
 
   suite('Overview', function () {
-    setup(function (done) {
+    setup(function () {
       // Clear the responses.
-      fixtures.clearResponsesAsync()
-      .then(done);
+      return fixtures.clearResponsesAsync(this.surveyId);
     });
 
     test('Getting stats for a survey', function () {
@@ -385,12 +384,17 @@ suite('Stats', function () {
       });
 
       test('after a time', function () {
+        console.log("After a time date", this.firstDate);
+        console.log("After a time date", this.secondDate);
+
         return request.getAsync({
           url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + this.firstDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
           response = JSON.parse(body);
+
+          console.log("After a time body", body);
 
           should.exist(response.stats);
           should.exist(response.stats.Collectors);
