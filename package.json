@@ -6,6 +6,9 @@
     "node": "0.10.x",
     "npm": "1.4.x"
   },
+  "scripts": {
+    "test": "mocha --ui tdd --reporter spec -s 500 -t 5000"
+  },
   "dependencies": {
     "async": ">=0.2",
     "bcrypt": ">= 0.5",

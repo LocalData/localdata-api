@@ -1,0 +1,36 @@
+language: node_js
+node_js:
+  - "0.10"
+services:
+  - mongodb
+  - redis-server
+addons:
+  postgresql: "9.3"
+before_script:
+  - openssl req -x509 -nodes -days 730 -newkey rsa:1024 -subj "/C=US/ST=MI/L=Detroit/O=Dis/CN=www.example.com" -keyout test/data/test-key.pem -out test/data/test-cert.pem
+  - psql -U postgres -c "create extension postgis"
+  - psql -c 'create database travis_ci_test;' -U postgres
+  - psql -d travis_ci_test -a -f test/data/features-db.sql
+  - psql -d travis_ci_test -a -f test/data/schema.sql
+env:
+  global:
+    - secure: "TFbmH2rbf/t/1nMkpS09QcVWbI5AdWqQSDRmuwhIent88AxfdlY4mgtviDdtDZYDN4l/zwBf442ocmiImrCi7ZJsvLBpPtqHs0mDGzOCilVPxIM71Si3BSY3QWjPTG1WSSEHpsFUXz8pWr2hlAGFi6maUEo/KcDHf8xrcJuZHq8="
+    - secure: "AV7+wVMYrm4f6vu5NmFts8tARo7eDFDI8E3Rwb2swIlLJnAlc/YUcxZ7Mbiav+Ops7zcWNwgl5oYlNXwPj+AVdrQ9WnxVE+FgKDzkTC/4EDl2h/tqVEOkwVJ4D5EFt5NsF47GvnuTo3v7dTfpXUwXLPqIfgYDQIs3hx43f/kHFM="
+    - secure: "ETzchDuzsHT1PTpWdFJjlz/xydsZQkFPVcY6vcL62T6VZXSxZ2Ev15RBzpl5dM1Kr/8VlLH8MZiW33uXrnryAjtgsVDZmbF2ZarpRxk8bKTLf4UuqYh0aqnmzMivkGkMijgCVM82UgjNUYD0L/+B0Y+mEmXKiCHqBDLXw3oB5uQ="
+    - secure: "jOkCZV/8Cxb4/obiOacu3rR8jKH3mHmkZ+EPAxthrYCyT8o5T/8pbkg4isZpOuKGqoFp/xS1DsmmflMshjKA2zXpGZaZbEY2yHMydMUICDSBtE+VQLqu8lHjM2r38zrtSxxjeWtJBJPmBeJp79p89g3DGSQjjl0a+I7oTWajuMM="
+    - SECRET=TEST
+    - TEST_EMAIL="LocalData <test@localdata.com>"
+    - MONGO=mongodb://localhost:27017/scratchdb
+    - MONGO_NATIVE_PARSER=true
+    - S3_BUCKET=locald
+    - S3_UPLOAD_DIR=test_uploaded_files
+    - EXPORT_BUCKET=locald
+    - EXPORT_DIR=test_generated_files
+    - DATABASE_URL=postgresql://localhost:5432/travis_ci_test
+    - REMOTE_MOBILE_PREFIX=http://locald.s3-website-us-east-1.amazonaws.com/web/mobile-app
+    - REMOTE_ADMIN_PREFIX=http://locald.s3-website-us-east-1.amazonaws.com/web/admin-app
+    - CONVERTER_BASE=http://example.com
+    - TILESERVER_BASE=http://example.com
+    - TEST_SECURE_PORT=8888
+    - REDIS_URL=http://localhost:6379
+sudo: false
