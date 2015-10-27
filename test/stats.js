@@ -354,16 +354,35 @@ suite('Stats', function () {
       setup(function () {
         return Promise.bind(this)
         .then(function () {
-          // Add some responses.
-          var responses = fixtures.makeResponses(10);
+          // Add four fake responses
+          var responses = fixtures.makeResponses(4);
 
           return request.postAsync({
             url: BASEURL + '/surveys/' + this.surveyId + '/responses',
             json: responses
           });
         }).spread(function (response, body) {
+          // Get the date of the last of those first responses.
+          // That will be our baseline start date.
           this.firstDate = new Date(body.responses[3].created);
-          this.secondDate = new Date(body.responses[8].created);
+
+          // Now, create four more responses
+          var responses = fixtures.makeResponses(5);
+          return request.postAsync({
+            url: BASEURL + '/surveys/' + this.surveyId + '/responses',
+            json: responses
+          });
+        }).spread(function (response, body) {
+          // Get the last date of those four.
+          // That will be our baseline end date
+          this.secondDate = new Date(body.responses[4].created);
+
+          // Add a couple more responses after the baseline range
+          var responses = fixtures.makeResponses(6);
+          return request.postAsync({
+            url: BASEURL + '/surveys/' + this.surveyId + '/responses',
+            json: responses
+          });
         });
       });
 
