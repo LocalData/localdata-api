@@ -41,7 +41,7 @@ To test the API, use:
 
 You will need a self-signed certificate for the HTTPS tests. You can generate those using `openssl`:
 
-    $ openssl req -x509 -nodes -days 730 -newkey rsa:1024 -keyout tests/data/test-key.pem -out tests/data/test-cert.pem
+    $ openssl req -x509 -nodes -days 730 -newkey rsa:1024 -keyout test/data/test-key.pem -out test/data/test-cert.pem
 
 You can also pass options to mocha with the `OPTS` variable or specify a test file with the `FILE` variable:
 
