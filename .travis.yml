@@ -9,6 +9,7 @@ before_script:
   - psql -U postgres -c "create extension postgis"
   - psql -d travis_ci_test -a -f test/data/schema.sql
   - psql -d travis_ci_test -a -f test/data/features-db.sql
+  - openssl req -x509 -nodes -days 730 -newkey rsa:1024 -keyout tests/data/test-key.pem -out tests/data/test-cert.pem
 env:
   global:
     - secure: "TFbmH2rbf/t/1nMkpS09QcVWbI5AdWqQSDRmuwhIent88AxfdlY4mgtviDdtDZYDN4l/zwBf442ocmiImrCi7ZJsvLBpPtqHs0mDGzOCilVPxIM71Si3BSY3QWjPTG1WSSEHpsFUXz8pWr2hlAGFi6maUEo/KcDHf8xrcJuZHq8="
