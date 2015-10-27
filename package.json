@@ -7,7 +7,7 @@
     "npm": "1.4.x"
   },
   "scripts": {
-    "test": "make test"
+    "test": "mocha --ui tdd --reporter spec -s 500 -t 5000"
   },
   "dependencies": {
     "async": ">=0.2",
