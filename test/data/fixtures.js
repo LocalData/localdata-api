@@ -35,6 +35,7 @@ fixtures.surveys = {
   } ]
 };
 
+/*
 fixtures.clearResponses = function(callback) {
   Response.remove({}, function(error, result){
     if(error) {
@@ -44,6 +45,25 @@ fixtures.clearResponses = function(callback) {
     callback();
   });
 };
+*/
+
+fixtures.clearResponses = function clearResponses(survey, done) {
+  var query = {};
+  if (done === undefined) {
+    done = survey;
+  } else {
+    query['properties.survey'] = survey;
+  }
+
+  Response.remove(query, function (error, result) {
+    if (error) {
+      done(error);
+      return;
+    }
+    done();
+  });
+};
+
 
 fixtures.clearSurveys = function(callback) {
   Survey.remove({}, function(error, result){
@@ -239,19 +259,3 @@ fixtures.makeResponses = function makeResponses(count, options) {
   return data;
 };
 
-fixtures.clearResponses = function clearResponses(survey, done) {
-  var query = {};
-  if (done === undefined) {
-    done = survey;
-  } else {
-    query['properties.survey'] = survey;
-  }
-
-  Response.remove(query, function (error, result) {
-    if (error) {
-      done(error);
-      return;
-    }
-    done();
-  });
-};

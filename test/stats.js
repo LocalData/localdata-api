@@ -70,9 +70,10 @@ suite('Stats', function () {
   });
 
   suite('Overview', function () {
-    setup(function () {
+    setup(function (done) {
       // Clear the responses.
-      return fixtures.clearResponsesAsync(this.surveyId);
+      fixtures.clearResponsesAsync()
+      .then(done);
     });
 
     test('Getting stats for a survey', function () {
