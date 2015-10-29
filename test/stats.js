@@ -351,25 +351,47 @@ suite('Stats', function () {
     });
 
     suite('With time boundaries', function () {
+      var firstDate;
+      var secondDate;
+
       setup(function () {
         return Promise.bind(this)
         .then(function () {
-          // Add some responses.
-          var responses = fixtures.makeResponses(10);
+          // Add four fake responses
+          var responses = fixtures.makeResponses(4);
 
           return request.postAsync({
             url: BASEURL + '/surveys/' + this.surveyId + '/responses',
             json: responses
           });
         }).spread(function (response, body) {
-          this.firstDate = new Date(body.responses[3].created);
-          this.secondDate = new Date(body.responses[8].created);
-        });
+          // Get the date of the last of those first responses.
+          // That will be our baseline start date.
+          firstDate = new Date(body.responses[3].created);
+
+          // Now, create four more responses
+          var responses = fixtures.makeResponses(5);
+          return request.postAsync({
+            url: BASEURL + '/surveys/' + this.surveyId + '/responses',
+            json: responses
+          });
+        }.bind(this)).spread(function (response, body) {
+          // Get the last date of those four.
+          // That will be our baseline end date
+          secondDate = new Date(body.responses[4].created);
+
+          // Add a couple more responses after the baseline range
+          var responses = fixtures.makeResponses(6);
+          return request.postAsync({
+            url: BASEURL + '/surveys/' + this.surveyId + '/responses',
+            json: responses
+          });
+        }.bind(this));
       });
 
       test('before a time', function () {
         return request.getAsync({
-          url: BASEURL + '/surveys/' + this.surveyId + '/stats?until=' + this.firstDate.getTime()
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?until=' + firstDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
@@ -385,7 +407,7 @@ suite('Stats', function () {
 
       test('after a time', function () {
         return request.getAsync({
-          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + this.firstDate.getTime()
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + firstDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
@@ -400,7 +422,7 @@ suite('Stats', function () {
 
       test('between two times', function () {
         return request.getAsync({
-          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + this.firstDate.getTime() + '&until=' + this.secondDate.getTime()
+          url: BASEURL + '/surveys/' + this.surveyId + '/stats?after=' + firstDate.getTime() + '&until=' + secondDate.getTime()
         }).spread(function (response, body) {
           response.statusCode.should.equal(200);
 
