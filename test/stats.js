@@ -415,8 +415,8 @@ suite('Stats', function () {
 
           should.exist(response.stats);
           should.exist(response.stats.Collectors);
-          response.stats.Collectors.Name.should.equal(6);
-          response.stats.site['parking-lot'].should.equal(6);
+          response.stats.Collectors.Name.should.equal(11);
+          response.stats.site['parking-lot'].should.equal(11);
         });
       });
 
