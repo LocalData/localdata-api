@@ -228,7 +228,7 @@ fixtures.makeResponses = function makeResponses(count, options) {
   }
   var i;
   for (i = 0; i < count; i += 1) {
-    var num = parcelBase + i;
+    var num = Math.floor(Math.random() * 10000);
     data.responses.push(makeResponse(num.toString(), num.toString() + ' A'));
   }
 

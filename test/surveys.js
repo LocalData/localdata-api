@@ -538,7 +538,9 @@ suite('Surveys', function () {
           request.post({url: url, json: responses}, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(201);
-            next(error);
+            setTimeout(function(){
+              next(error);
+            }, 200);
           });
         },
 
@@ -550,7 +552,9 @@ suite('Surveys', function () {
             should.not.exist(error);
             response.statusCode.should.equal(201);
             firstDate = new Date(body.responses[0].created);
-            next(error);
+            setTimeout(function(){
+              next(error);
+            }, 200);
           });
         },
 
@@ -561,10 +565,11 @@ suite('Surveys', function () {
           request.post({url: url, json: responses}, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(201);
-            next(error);
+            setTimeout(function(){
+              next(error);
+            }, 200);
           });
         },
-
 
         function(next) {
           var responses = fixtures.makeResponses(1);
@@ -574,7 +579,9 @@ suite('Surveys', function () {
             should.not.exist(error);
             response.statusCode.should.equal(201);
             secondDate = new Date(body.responses[0].created);
-            next(error);
+            setTimeout(function(){
+              next(error);
+            }, 200);
           });
         },
 
@@ -586,7 +593,9 @@ suite('Surveys', function () {
           request.post({url: url, json: responses}, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(201);
-            next(error);
+            setTimeout(function(){
+              next(error);
+            }, 200);
           });
         },
 
@@ -601,8 +610,8 @@ suite('Surveys', function () {
 
             should.exist(response.stats);
             should.exist(response.stats.Collectors);
-            response.stats.Collectors.Name.should.equal(2);
-            response.stats.site['parking-lot'].should.equal(2);
+            response.stats.Collectors.Name.should.equal(3);
+            response.stats.site['parking-lot'].should.equal(3);
             response.stats['condition-1']['no response'].should.be.above(0);
 
             next(error);
@@ -638,8 +647,8 @@ suite('Surveys', function () {
 
             should.exist(response.stats);
             should.exist(response.stats.Collectors);
-            response.stats.Collectors.Name.should.equal(3);
-            response.stats.site['parking-lot'].should.equal(3);
+            response.stats.Collectors.Name.should.equal(4);
+            response.stats.site['parking-lot'].should.equal(4);
 
             next(error);
           });
