@@ -26,7 +26,6 @@ suite('Compress', function () {
   setup(function (done) {
     fixtures.setupUser(function (error, jarA, jarB, idA, idB) {
       if (error) { return done(error); }
-      console.log("Set up user!");
       jar = jarA;
       done();
     });

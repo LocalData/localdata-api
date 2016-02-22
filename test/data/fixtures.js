@@ -2,6 +2,10 @@
 /*globals suite, test, setup, suiteSetup, suiteTeardown, done, teardown */
 'use strict';
 
+// Ignore an invalid self-signed cert
+// http://stackoverflow.com/questions/10888610/ignore-invalid-self-signed-ssl-certificate-in-node-js-with-https-request
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // Libraries
 var request = require('request');
 var makeSlug = require('slugs');
@@ -69,8 +73,10 @@ fixtures.users = [{
 
 fixtures.clearUsers = function(callback) {
   User.remove({}, function(error, result){
+    console.log("Cleared users", error, result);
+
     if(error) {
-      console.log(error);
+      console.log("Error clearing users", error);
     }
     callback();
   });
@@ -119,14 +125,16 @@ fixtures.setupUser = function(callback) {
   var idA;
 
   fixtures.clearUsers(function(){
-
     // Create one user
+    console.log("About to create user", fixtures.users[0]);
     request.post({
         url: USER_URL,
         json: fixtures.users[0],
         jar: jarA
       },
       function (error, response, body) {
+        console.log("CREATED USER", error, body);
+
         if(error) {
           callback(error, null);
         }

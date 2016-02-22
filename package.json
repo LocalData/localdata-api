@@ -1,9 +1,9 @@
 {
   "name": "survey-api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "engines": {
-    "node": "0.10.x",
+    "node": "4.2.x",
     "npm": "1.4.x"
   },
   "scripts": {
@@ -15,13 +15,14 @@
     "bluebird": "^2.3.2",
     "body-parser": "~1.14.1",
     "compression": "^1.6.1",
+    "connect-busboy": "0.0.2",
     "connect-mongo": "~1.1.0",
+    "connect-multiparty": "^2.0.0",
     "connect-s3": "~0.3.0",
     "cookie-parser": "1.4.x",
     "cuid": "^1.2.4",
     "ejs": "~0.8.3",
     "express": "4.x",
-    "express-json": "~1.0.0",
     "express-session": "^1.11.3",
     "knox": "~0.9.1",
     "lodash": "~4.0",
@@ -31,6 +32,7 @@
     "moment": "2.8.x",
     "moment-range": "1.0.x",
     "mongoose": "3.8.16",
+    "multer": "^1.1.0",
     "newrelic": "^1.15.1",
     "node-resque": "^0.8.4",
     "node-uuid": "1.3.3",
@@ -40,7 +42,7 @@
     "pg": "~4.4.6",
     "pg-native": "^1.10.0",
     "redis": "^0.10.1",
-    "request": "2.21.x",
+    "request": "~2.67.0",
     "slugs": "0.1.2",
     "turf": "^2.0.0"
   },
