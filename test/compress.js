@@ -40,6 +40,7 @@ suite('Compress', function () {
         },
         jar: jar
       }, function (error, response, body) {
+        console.log("Compress error", body);
         should.not.exist(error);
         response.statusCode.should.equal(200);
         response.headers.should.have.property('content-encoding');

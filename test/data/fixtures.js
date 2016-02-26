@@ -126,10 +126,11 @@ fixtures.setupUser = function(callback) {
 
   fixtures.clearUsers(function(){
     // Create one user
-    console.log("About to create user", fixtures.users[0]);
+    console.log("About to create user", fixtures.users[0], USER_URL);
     request.post({
         url: USER_URL,
-        json: fixtures.users[0],
+        body: fixtures.users[0],
+        json: true,
         jar: jarA
       },
       function (error, response, body) {
