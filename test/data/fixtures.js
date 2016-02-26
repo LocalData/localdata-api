@@ -73,8 +73,6 @@ fixtures.users = [{
 
 fixtures.clearUsers = function(callback) {
   User.remove({}, function(error, result){
-    console.log("Cleared users", error, result);
-
     if(error) {
       console.log("Error clearing users", error);
     }
