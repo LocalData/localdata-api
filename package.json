@@ -51,6 +51,6 @@
     "mocha": "1.21.x",
     "mongodb": ">= 1.2.8",
     "should": "~3.3",
-    "http-proxy": "~0.10.2"
+    "http-proxy": "~1.13"
   }
 }
