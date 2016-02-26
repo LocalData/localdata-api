@@ -13,6 +13,7 @@ var key = fs.readFileSync(__dirname + '/../data/test-key.pem', 'utf8');
 var cert = fs.readFileSync(__dirname + '/../data/test-cert.pem', 'utf8');
 
 var proxy = httpProxy.createProxyServer({
+  xfwd: true,
   target: {
     host: 'localhost',
     port: settings.port
