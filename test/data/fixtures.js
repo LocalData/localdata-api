@@ -106,7 +106,7 @@ fixtures.addUser = function addUser(name, done) {
   }, function (error, response, user) {
     if (error) { return done(error); }
     if (response.statusCode !== 200) {
-      return done(new Error('Received an incorrect status from the API'));
+      return done(new Error('Received an incorrect status from the API: ' + response.statusCode));
     }
     user.password = data.password;
     done(null, jar, user._id, user);
@@ -126,7 +126,7 @@ fixtures.setupUser = function(callback) {
 
   fixtures.clearUsers(function(){
     // Create one user
-    console.log("About to create user", fixtures.users[0], USER_URL);
+    console.log("About to create user", USER_URL);
     request.post({
         url: USER_URL,
         body: fixtures.users[0],
@@ -134,10 +134,14 @@ fixtures.setupUser = function(callback) {
         jar: jarA
       },
       function (error, response, body) {
-        console.log("CREATED USER", error, body);
+        console.log("Response from user creation:", response.statusCode, error, body);
 
         if(error) {
           callback(error, null);
+        }
+
+        if (response.statusCode !== 200) {
+          callback(new Error("Error creating user: " + response.statusCode));
         }
 
         idA = body._id;

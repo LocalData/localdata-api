@@ -35,10 +35,8 @@ var router;
 
 module.exports = {
   run: function start(done) {
-    console.log("Trying to start the server");
     // Start the real server.
     server.run(function (error) {
-      console.log("Running the server", error);
       if (error) { return done(error); }
 
       // Start the HTTPS router.
