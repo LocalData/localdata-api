@@ -124,7 +124,6 @@ fixtures.setupUser = function(callback) {
 
   fixtures.clearUsers(function(){
     // Create one user
-    console.log("About to create user", USER_URL);
     request.post({
         url: USER_URL,
         body: fixtures.users[0],
@@ -132,8 +131,6 @@ fixtures.setupUser = function(callback) {
         jar: jarA
       },
       function (error, response, body) {
-        console.log("Response from user creation:", response.statusCode, error, body);
-
         if(error) {
           callback(error, null);
         }
