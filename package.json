@@ -25,7 +25,7 @@
     "express": "4.x",
     "express-session": "^1.11.3",
     "knox": "~0.9.1",
-    "lodash": "~4.0",
+    "lodash": "~3.10",
     "logfmt": "^1.2.0",
     "lru-cache": "2.2.2",
     "method-override": "2.3.x",

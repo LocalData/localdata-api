@@ -236,7 +236,7 @@ suite('Stats', function () {
           url: BASEURL +
                '/surveys/' + this.surveyId +
                '/responses/' + this.responseId,
-          jar: this.userAJar,
+          jar: this.userAJar
         });
       }).spread(function (response, body) {
         response.statusCode.should.equal(204);
@@ -1091,7 +1091,8 @@ suite('Stats', function () {
         data.stats.should.have.property('total');
         data.stats.should.have.property('activity');
 
-        var entries = _(this.responses).map('entries').flatten();
+        var entries = _(this.responses).pluck('entries').flatten();
+
         var trueCount = entries.size();
         data.stats.total.should.equal(trueCount);
 
@@ -1106,6 +1107,7 @@ suite('Stats', function () {
             var trueYear = m.format('YYYY');
             return year === trueYear && month === trueMonth;
           }).value().length;
+
 
           item.count.should.equal(trueCount);
         });
@@ -1132,8 +1134,8 @@ suite('Stats', function () {
         data.stats.should.have.property('total');
         data.stats.should.have.property('activity');
 
-        var entries = _(this.responses).map('entries').flatten();
-        entries = entries.where({ responses: { 'evenodd': 'even'}});
+        var entries = _(this.responses).pluck('entries').flatten();
+        entries = entries.filter({ responses: { 'evenodd': 'even'}});
         var trueCount = entries.size();
         data.stats.total.should.equal(trueCount);
 
