@@ -123,9 +123,7 @@ suite('Users -', function () {
       fixtures.clearUsers(function (error) {
         should.not.exist(error);
         User.create(generateUser(), function(error, userOne) {
-          // console.log("First user ", userOne);
           User.create(generateUser(), function(error, userTwo){
-            // console.log("Second user ", userTwo);
             should.exist(error);
             done();
           });
@@ -271,6 +269,7 @@ suite('Users -', function () {
       async.series([
         // Clear users
         fixtures.clearUsers,
+
         // Add a new user
         function (next) {
           fixtures.addUser('API Login Tester', function (error, newJar, newId, newUser) {
@@ -279,18 +278,28 @@ suite('Users -', function () {
             next();
           });
         },
+
         // Logout, just to be sure
         function (next) {
           request.get({ url: BASE_LOGOUT_URL }, next);
         },
+
         // Try logging in
         function (next) {
           // Then, let's log in.
-          request.post({url: LOGIN_URL, json: user}, function (error, response, body) {
+          var jar = request.jar();
+          request.post({
+            url: LOGIN_URL,
+            json: user,
+            jar: jar
+          }, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(302);
 
-            request.get({url: HTTP_USER_URL}, function (error, response, body){
+            request.get({
+              url: HTTP_USER_URL,
+              jar: jar
+            }, function (error, response, body){
               should.not.exist(error);
               response.statusCode.should.equal(200);
               response.should.be.json;
@@ -341,11 +350,19 @@ suite('Users -', function () {
           user.email = user.email.toUpperCase();
 
           // Try logging in
-          request.post({url: LOGIN_URL, json: user}, function (error, response, body) {
+          var jar = request.jar();
+          request.post({
+            url: LOGIN_URL,
+            json: user,
+            jar: jar
+          }, function (error, response, body) {
             should.not.exist(error);
             response.statusCode.should.equal(302);
 
-            request.get({url: HTTP_USER_URL}, function (error, response, body){
+            request.get({
+              url: HTTP_USER_URL,
+              jar: jar
+            }, function (error, response, body){
               should.not.exist(error);
               response.statusCode.should.equal(200);
               response.should.be.json;

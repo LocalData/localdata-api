@@ -236,7 +236,7 @@ suite('Stats', function () {
           url: BASEURL +
                '/surveys/' + this.surveyId +
                '/responses/' + this.responseId,
-          jar: this.userAJar,
+          jar: this.userAJar
         });
       }).spread(function (response, body) {
         response.statusCode.should.equal(204);
@@ -644,7 +644,7 @@ suite('Stats', function () {
         // 24 hours of data at 6-minute resolution (but we return sparse data)
         data.stats.activity.length.should.below((now - start) / resolution + 1);
 
-        var entries = _(this.responses).pluck('entries').flatten();
+        var entries = _(this.responses).map('entries').flatten();
         var trueCount = entries.filter(function (entry) {
           return entry.created > start;
         }).value().length;
@@ -710,7 +710,7 @@ suite('Stats', function () {
                   point[0] < east &&
                   point[1] > south &&
                   point[1] < north);
-        }).pluck('entries')
+        }).map('entries')
         .flatten()
         .filter(function (entry) {
           return entry.created > start && entry.created <= now;
@@ -765,7 +765,7 @@ suite('Stats', function () {
         // 24 hours of data at 6-minute resolution (but we return sparse data)
         data.stats.activity.length.should.below((now - start) / resolution + 1);
 
-        var entries = _(this.responses).pluck('entries').flatten();
+        var entries = _(this.responses).map('entries').flatten();
         var trueCount = entries.filter(function (entry) {
           return entry.created > start;
         }).value().length;
@@ -811,7 +811,7 @@ suite('Stats', function () {
         data.stats.resolution.should.equal(resolution);
 
         var entries = _(this.responses)
-        .pluck('entries')
+        .map('entries')
         .flatten()
         .filter(function (entry) {
           return (entry.created > start &&
@@ -1092,6 +1092,7 @@ suite('Stats', function () {
         data.stats.should.have.property('activity');
 
         var entries = _(this.responses).pluck('entries').flatten();
+
         var trueCount = entries.size();
         data.stats.total.should.equal(trueCount);
 
@@ -1106,6 +1107,7 @@ suite('Stats', function () {
             var trueYear = m.format('YYYY');
             return year === trueYear && month === trueMonth;
           }).value().length;
+
 
           item.count.should.equal(trueCount);
         });
@@ -1133,7 +1135,7 @@ suite('Stats', function () {
         data.stats.should.have.property('activity');
 
         var entries = _(this.responses).pluck('entries').flatten();
-        entries = entries.where({ responses: { 'evenodd': 'even'}});
+        entries = entries.filter({ responses: { 'evenodd': 'even'}});
         var trueCount = entries.size();
         data.stats.total.should.equal(trueCount);
 
